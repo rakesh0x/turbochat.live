@@ -59,7 +59,7 @@ Question:
 
 payload = {
     "model": "phi3",
-    "prompt": "hi there",
+    "prompt": prompt,
     "stream": False
 }
 
