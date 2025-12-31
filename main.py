@@ -37,11 +37,34 @@ vectorstore = FAISS.from_documents(chunks, embeddings)
 # -----------------------------
 # Query
 # -----------------------------
-query = "Explain React hooks"
+query = "what is the latest version of react"
 
-docs = vectorstore.similarity_search(query, k=4)
+#store elements based on scores
+docs_score = vectorstore.similarity_search_with_score(query, k=4)
 
-context = "\n\n".join(d.page_content for d in docs)
+#cosine similarity to compare distance 
+def cosine_similarity(distance):
+    return 1/(1 + distance)
+
+#Thresholding filtering
+SIMILARITY_THRESHOLD = 0.3
+filtered_docs = []
+
+for doc, distance in docs_score:
+    distance = float(distance)
+    similarity = 1 / (1 + distance)
+
+    if similarity >= SIMILARITY_THRESHOLD:
+        filtered_docs.append((doc, similarity))
+
+if not filtered_docs:
+    print("I don't know")
+    exit()
+
+context = "\n\n".join(
+    f"[score: {score:.2f}]\n{doc.page_content}"
+    for doc, score in filtered_docs
+)
 
 # -----------------------------
 # Call Ollama (Phi-3)

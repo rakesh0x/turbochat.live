@@ -2,11 +2,9 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 
-
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (compatible; SimpleCrawler/1.0)"
 }
-
 
 def clean_text(html):
     soup = BeautifulSoup(html, "html.parser")
@@ -62,9 +60,8 @@ def crawl_site(start_url, max_pages=20):
 
     return data
 
-
 if __name__ == "__main__":
-    pages = crawl_site("http://youtube.com", max_pages=10)
+    pages = crawl_site("https://github.com/rakesh0x", max_pages=10)
 
     print(f"\nCrawled {len(pages)} pages\n")
 
