@@ -60,12 +60,15 @@ def crawl_site(start_url, max_pages=20):
 
     return data
 
-if __name__ == "__main__":
-    pages = crawl_site("https://github.com/rakesh0x", max_pages=10)
+def get_data(site_to_crawl):
+    pages = crawl_site(site_to_crawl, max_pages=10)
 
     print(f"\nCrawled {len(pages)} pages\n")
 
-    for page in pages:
+    for page in pages: 
         print("URL:", page["url"])
-        print(page["content"][:1000])
-        print("-" * 80)
+        print(page["content"][:50])
+        print("" * 80)
+
+if __name__ == "__main__":
+    pages = get_data()

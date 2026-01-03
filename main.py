@@ -5,6 +5,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
+from scraper.fetch_html import get_data
 # -----------------------------
 # Config
 # -----------------------------
@@ -13,9 +14,11 @@ OLLAMA_URL = "http://localhost:11434/api/generate"
 # -----------------------------
 # Load documents
 # -----------------------------
-loader = TextLoader("text.txt")
-documents = loader.load()
+with open("output.txt", "w") as f:
+    get_data("https://github.com/rakesh0x")
 
+loader = TextLoader("output.txt")
+documents = loader.load()
 # -----------------------------
 # Split documents
 # -----------------------------
@@ -37,7 +40,7 @@ vectorstore = FAISS.from_documents(chunks, embeddings)
 # -----------------------------
 # Query
 # -----------------------------
-query = "what is the latest version of react"
+query = "how many public repositories are their in my github"
 
 #store elements based on scores
 docs_score = vectorstore.similarity_search_with_score(query, k=4)
