@@ -1,0 +1,25 @@
+# Core HTTP
+requests>=2.31.0
+
+# LangChain core + community integrations
+langchain>=0.1.16
+langchain-community>=0.0.32
+langchain-text-splitters>=0.0.1
+langchain-openai>=0.1.6
+
+# Vector store
+faiss-cpu>=1.7.4
+
+# Embeddings
+sentence-transformers>=2.2.2
+langchain-huggingface>=0.0.6
+
+# HTML parsing / scraping (very likely needed by get_data)
+beautifulsoup4>=4.12.2
+lxml>=5.1.0
+
+# Optional but commonly required
+tqdm>=4.66.1
+numpy>=1.26.0
+
+beautifulsoup4>=4.12.2

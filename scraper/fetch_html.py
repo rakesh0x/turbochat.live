@@ -15,7 +15,6 @@ def clean_text(html):
     text = soup.get_text(separator=" ")
     return " ".join(text.split())
 
-
 def normalize_url(url):
     parsed = urlparse(url)
     return f"{parsed.scheme}://{parsed.netloc}{parsed.path}".rstrip("/")
@@ -64,11 +63,14 @@ def get_data(site_to_crawl):
     pages = crawl_site(site_to_crawl, max_pages=10)
 
     print(f"\nCrawled {len(pages)} pages\n")
-
+    all_text = []
     for page in pages: 
         print("URL:", page["url"])
         print(page["content"][:50])
-        print("" * 80)
+        print("" * 10000)
+        all_text.append(page["content"])
+
+        return "\n\n".join(all_text)
 
 if __name__ == "__main__":
     pages = get_data()
