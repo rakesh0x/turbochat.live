@@ -68,7 +68,7 @@ def get_data(site_to_crawl):
 
     for page in pages:
         print("URL:", page["url"])
-        print(page["content"][:50])
+        print(page["content"][:10000])
         print("-" * 100)
 
         all_text.append(page["content"])
