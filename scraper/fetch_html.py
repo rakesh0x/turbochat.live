@@ -63,14 +63,18 @@ def get_data(site_to_crawl):
     pages = crawl_site(site_to_crawl, max_pages=10)
 
     print(f"\nCrawled {len(pages)} pages\n")
+
     all_text = []
-    for page in pages: 
+
+    for page in pages:
         print("URL:", page["url"])
         print(page["content"][:50])
-        print("" * 10000)
+        print("-" * 100)
+
         all_text.append(page["content"])
 
-        return "\n\n".join(all_text)
+    return "\n\n".join(all_text)
+
 
 if __name__ == "__main__":
     pages = get_data()
