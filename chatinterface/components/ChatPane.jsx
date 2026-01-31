@@ -9,16 +9,16 @@ import { cls, timeAgo } from "./utils"
 function ThinkingMessage({ onPause }) {
   return (
     <Message role="assistant">
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1">
-          <div className="h-2 w-2 animate-bounce rounded-full bg-zinc-400 [animation-delay:-0.3s]"></div>
-          <div className="h-2 w-2 animate-bounce rounded-full bg-zinc-400 [animation-delay:-0.15s]"></div>
-          <div className="h-2 w-2 animate-bounce rounded-full bg-zinc-400"></div>
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1.5">
+          <div className="h-2 w-2 animate-bounce rounded-full bg-primary/60 [animation-delay:-0.3s]"></div>
+          <div className="h-2 w-2 animate-bounce rounded-full bg-primary/60 [animation-delay:-0.15s]"></div>
+          <div className="h-2 w-2 animate-bounce rounded-full bg-primary/60"></div>
         </div>
-        <span className="text-sm text-zinc-500">AI is thinking...</span>
+        <span className="text-sm text-muted-foreground">AI is thinking...</span>
         <button
           onClick={onPause}
-          className="ml-auto inline-flex items-center gap-1 rounded-full border border-zinc-300 px-2 py-1 text-xs text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+          className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/50 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/80 transition-premium"
         >
           <Square className="h-3 w-3" /> Pause
         </button>
@@ -73,58 +73,70 @@ const ChatPane = forwardRef(function ChatPane(
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col">
-      <div className="flex-1 space-y-5 overflow-y-auto px-4 py-6 sm:px-8">
-        <div className="mb-2 text-3xl font-serif tracking-tight sm:text-4xl md:text-5xl">
-          <span className="block leading-[1.05] font-sans text-2xl">{conversation.title}</span>
-        </div>
-        <div className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
-          Updated {timeAgo(conversation.updatedAt)} · {count} messages
-        </div>
-
-        <div className="mb-6 flex flex-wrap gap-2 border-b border-zinc-200 pb-5 dark:border-zinc-800">
-          {tags.map((t) => (
-            <span
-              key={t}
-              className="inline-flex items-center rounded-full border border-zinc-200 px-3 py-1 text-xs text-zinc-700 dark:border-zinc-800 dark:text-zinc-200"
-            >
-              {t}
+    <div className="flex h-full min-h-0 flex-1 flex-col bg-gradient-to-b from-background to-muted/30">
+      <div className="flex-1 space-y-6 overflow-y-auto px-4 py-8 sm:px-8 lg:px-12 scrollbar-premium">
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-3">
+            <span className="text-2xl sm:text-3xl font-semibold tracking-tight text-gradient">{conversation.title}</span>
+          </div>
+          <div className="mb-6 text-sm text-muted-foreground flex items-center gap-2">
+            <span className="inline-flex items-center gap-1">
+              Updated {timeAgo(conversation.updatedAt)}
             </span>
-          ))}
+            <span className="text-border">•</span>
+            <span>{count} messages</span>
+          </div>
+
+          <div className="mb-8 flex flex-wrap gap-2 border-b border-border/50 pb-6">
+            {tags.map((t) => (
+              <span
+                key={t}
+                className="inline-flex items-center rounded-full border border-border/60 bg-accent/50 px-3 py-1.5 text-xs font-medium text-accent-foreground hover:bg-accent/80 transition-premium cursor-default"
+              >
+                {t}
+              </span>
+            ))}
+          </div>
         </div>
 
         {messages.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-zinc-300 p-6 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-            No messages yet. Say hello to start.
+          <div className="rounded-2xl border border-dashed border-border/60 bg-card/50 p-8 text-center">
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl gradient-primary text-white shadow-md mb-4">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <p className="text-sm font-medium text-foreground mb-1">Start a conversation</p>
+            <p className="text-xs text-muted-foreground">Type your message below to begin chatting with AI</p>
           </div>
         ) : (
-          <>
+          <div className="space-y-6">
             {messages.map((m) => (
               <div key={m.id} className="space-y-2">
                 {editingId === m.id ? (
-                  <div className={cls("rounded-2xl border p-2", "border-zinc-200 dark:border-zinc-800")}>
+                  <div className={cls("rounded-2xl border p-3 shadow-premium", "border-border/60 bg-card")}>
                     <textarea
                       value={draft}
                       onChange={(e) => setDraft(e.target.value)}
-                      className="w-full resize-y rounded-xl bg-transparent p-2 text-sm outline-none"
+                      className="w-full resize-y rounded-xl bg-background/50 p-3 text-sm outline-none border border-border/40 focus:border-primary focus:ring-2 focus:ring-ring/20 transition-premium"
                       rows={3}
                     />
-                    <div className="mt-2 flex items-center gap-2">
+                    <div className="mt-3 flex items-center gap-2">
                       <button
                         onClick={saveEdit}
-                        className="inline-flex items-center gap-1 rounded-full bg-zinc-900 px-3 py-1.5 text-xs text-white dark:bg-white dark:text-zinc-900"
+                        className="inline-flex items-center gap-1.5 rounded-full gradient-primary px-4 py-2 text-xs font-medium text-white shadow-sm hover:shadow-md transition-premium"
                       >
                         <Check className="h-3.5 w-3.5" /> Save
                       </button>
                       <button
                         onClick={saveAndResend}
-                        className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background px-4 py-2 text-xs font-medium hover:bg-accent/80 transition-premium"
                       >
                         <RefreshCw className="h-3.5 w-3.5" /> Save & Resend
                       </button>
                       <button
                         onClick={cancelEdit}
-                        className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs"
+                        className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs text-muted-foreground hover:text-foreground transition-premium"
                       >
                         <X className="h-3.5 w-3.5" /> Cancel
                       </button>
@@ -134,15 +146,15 @@ const ChatPane = forwardRef(function ChatPane(
                   <Message role={m.role}>
                     <div className="whitespace-pre-wrap">{m.content}</div>
                     {m.role === "user" && (
-                      <div className="mt-1 flex gap-2 text-[11px] text-zinc-500">
-                        <button className="inline-flex items-center gap-1 hover:underline" onClick={() => startEdit(m)}>
-                          <Pencil className="h-3.5 w-3.5" /> Edit
+                      <div className="mt-2 flex gap-3 text-[11px] text-white/70">
+                        <button className="inline-flex items-center gap-1 hover:text-white transition-colors" onClick={() => startEdit(m)}>
+                          <Pencil className="h-3 w-3" /> Edit
                         </button>
                         <button
-                          className="inline-flex items-center gap-1 hover:underline"
+                          className="inline-flex items-center gap-1 hover:text-white transition-colors"
                           onClick={() => onResendMessage?.(m.id)}
                         >
-                          <RefreshCw className="h-3.5 w-3.5" /> Resend
+                          <RefreshCw className="h-3 w-3" /> Resend
                         </button>
                       </div>
                     )}
@@ -151,7 +163,7 @@ const ChatPane = forwardRef(function ChatPane(
               </div>
             ))}
             {isThinking && <ThinkingMessage onPause={onPauseThinking} />}
-          </>
+          </div>
         )}
       </div>
 

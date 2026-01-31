@@ -766,23 +766,34 @@ function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const messageContent = input;
     setInput('');
     setIsTyping(true);
 
     try {
-      const res = await fetch(`/api/chatbots/${chatbot.id}/message`, {
+      // Call Python LLM backend
+      const res = await fetch('http://localhost:8000/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: input, sessionId: sessionId.current })
+        body: JSON.stringify({ 
+          message: messageContent, 
+          conversation_id: sessionId.current 
+        })
       });
       const data = await res.json();
       
-      setTimeout(() => {
-        setMessages(prev => [...prev, data.message]);
-        setIsTyping(false);
-      }, 1000);
+      const aiMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: data.response,
+        timestamp: new Date().toISOString()
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+      setIsTyping(false);
     } catch (error) {
-      toast.error('Failed to send message');
+      console.error('Failed to send message:', error);
+      toast.error('Failed to connect to AI. Make sure the Python server is running.');
       setIsTyping(false);
     }
   };

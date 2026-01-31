@@ -134,14 +134,14 @@ export default function Sidebar({
       <>
         <motion.aside
           initial={{ width: 320 }}
-          animate={{ width: 64 }}
-          transition={{ type: "spring", stiffness: 260, damping: 28 }}
-          className="z-50 flex h-full shrink-0 flex-col border-r border-zinc-200/60 bg-white dark:border-zinc-800 dark:bg-zinc-900"
+          animate={{ width: 68 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="z-50 flex h-full shrink-0 flex-col border-r border-border/50 bg-gradient-to-b from-sidebar to-sidebar/95 backdrop-blur-xl shadow-premium dark:shadow-none"
         >
-          <div className="flex items-center justify-center border-b border-zinc-200/60 px-3 py-3 dark:border-zinc-800">
+          <div className="flex items-center justify-center border-b border-border/50 px-3 py-4">
             <button
               onClick={() => setSidebarCollapsed(false)}
-              className="rounded-xl p-2 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-zinc-800"
+              className="rounded-xl p-2.5 text-muted-foreground hover:text-foreground hover:bg-accent/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-premium"
               aria-label="Open sidebar"
               title="Open sidebar"
             >
@@ -149,39 +149,39 @@ export default function Sidebar({
             </button>
           </div>
 
-          <div className="flex flex-1 flex-col items-center gap-2 pt-4">
+          <div className="flex flex-1 flex-col items-center gap-1.5 pt-4 px-2">
             <button
               onClick={handleNewChatClick}
-              className="rounded-xl p-2.5 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-zinc-800 transition-colors"
+              className="w-full rounded-xl p-2.5 gradient-primary text-white shadow-sm hover:shadow-md hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-premium"
               title="New Chat"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-5 w-5 mx-auto" />
             </button>
 
             <button
               onClick={handleSearchClick}
-              className="rounded-xl p-2.5 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-zinc-800 transition-colors"
+              className="w-full rounded-xl p-2.5 text-muted-foreground hover:text-foreground hover:bg-accent/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-premium"
               title="Search chats"
             >
-              <SearchIcon className="h-5 w-5" />
+              <SearchIcon className="h-5 w-5 mx-auto" />
             </button>
 
             <button
               onClick={handleFoldersClick}
-              className="rounded-xl p-2.5 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-zinc-800 transition-colors"
+              className="w-full rounded-xl p-2.5 text-muted-foreground hover:text-foreground hover:bg-accent/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-premium"
               title="Folders"
             >
-              <FolderIcon className="h-5 w-5" />
+              <FolderIcon className="h-5 w-5 mx-auto" />
             </button>
           </div>
 
-          <div className="mt-auto flex flex-col items-center gap-2 pb-4">
+          <div className="mt-auto flex flex-col items-center gap-1.5 pb-4 px-2">
             <SettingsPopover>
               <button
-                className="rounded-xl p-2.5 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-zinc-800 transition-colors"
+                className="w-full rounded-xl p-2.5 text-muted-foreground hover:text-foreground hover:bg-accent/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-premium"
                 title="Settings"
               >
-                <Settings className="h-5 w-5" />
+                <Settings className="h-5 w-5 mx-auto" />
               </button>
             </SettingsPopover>
           </div>
@@ -222,23 +222,23 @@ export default function Sidebar({
             initial={{ x: -340 }}
             animate={{ x: open ? 0 : 0 }}
             exit={{ x: -340 }}
-            transition={{ type: "spring", stiffness: 260, damping: 28 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className={cls(
-              "z-50 flex h-full w-80 shrink-0 flex-col border-r border-zinc-200/60 bg-white dark:border-zinc-800 dark:bg-zinc-900",
+              "z-50 flex h-full w-80 shrink-0 flex-col border-r border-border/50 bg-gradient-to-b from-sidebar to-sidebar/95 backdrop-blur-xl shadow-premium dark:shadow-none",
               "fixed inset-y-0 left-0 md:static md:translate-x-0",
             )}
           >
-            <div className="flex items-center gap-2 border-b border-zinc-200/60 px-3 py-3 dark:border-zinc-800">
-              <div className="flex items-center gap-2">
-                <div className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-sm dark:from-zinc-200 dark:to-zinc-300 dark:text-zinc-900">
+            <div className="flex items-center gap-3 border-b border-border/50 px-4 py-4">
+              <div className="flex items-center gap-3">
+                <div className="grid h-9 w-9 place-items-center rounded-xl gradient-primary text-white shadow-md glow-subtle">
                   <Asterisk className="h-4 w-4" />
                 </div>
-                <div className="text-sm font-semibold tracking-tight">AI Assistant</div>
+                <div className="text-sm font-semibold tracking-tight text-gradient">AI Assistant</div>
               </div>
               <div className="ml-auto flex items-center gap-1">
                 <button
                   onClick={() => setSidebarCollapsed(true)}
-                  className="hidden md:block rounded-xl p-2 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-zinc-800"
+                  className="hidden md:block rounded-xl p-2 text-muted-foreground hover:text-foreground hover:bg-accent/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-premium"
                   aria-label="Close sidebar"
                   title="Close sidebar"
                 >
@@ -247,7 +247,7 @@ export default function Sidebar({
 
                 <button
                   onClick={onClose}
-                  className="md:hidden rounded-xl p-2 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-zinc-800"
+                  className="md:hidden rounded-xl p-2 text-muted-foreground hover:text-foreground hover:bg-accent/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-premium"
                   aria-label="Close sidebar"
                 >
                   <PanelLeftClose className="h-5 w-5" />
@@ -255,37 +255,37 @@ export default function Sidebar({
               </div>
             </div>
 
-            <div className="px-3 pt-3">
+            <div className="px-4 pt-4">
               <label htmlFor="search" className="sr-only">
                 Search conversations
               </label>
-              <div className="relative">
-                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+              <div className="relative group">
+                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
                 <input
                   id="search"
                   ref={searchRef}
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search…"
+                  placeholder="Search conversations…"
                   onClick={() => setShowSearchModal(true)}
                   onFocus={() => setShowSearchModal(true)}
-                  className="w-full rounded-full border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm outline-none ring-0 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-zinc-800 dark:bg-zinc-950/50"
+                  className="w-full rounded-xl border border-border/60 bg-background/50 py-2.5 pl-10 pr-4 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring/20 focus:bg-background transition-premium"
                 />
               </div>
             </div>
 
-            <div className="px-3 pt-3">
+            <div className="px-4 pt-3">
               <button
                 onClick={createNewChat}
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-white dark:text-zinc-900"
+                className="flex w-full items-center justify-center gap-2 rounded-xl gradient-primary px-4 py-2.5 text-sm font-medium text-white shadow-md hover:shadow-lg hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-premium"
                 title="New Chat (⌘N)"
               >
                 <Plus className="h-4 w-4" /> Start New Chat
               </button>
             </div>
 
-            <nav className="mt-4 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-2 pb-4">
+            <nav className="mt-4 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pb-4 scrollbar-premium">
               <SidebarSection
                 icon={<Star className="h-4 w-4" />}
                 title="PINNED CHATS"
@@ -293,8 +293,9 @@ export default function Sidebar({
                 onToggle={() => setCollapsed((s) => ({ ...s, pinned: !s.pinned }))}
               >
                 {pinned.length === 0 ? (
-                  <div className="select-none rounded-lg border border-dashed border-zinc-200 px-3 py-3 text-center text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                    Pin important threads for quick access.
+                  <div className="select-none rounded-xl border border-dashed border-border/60 bg-accent/30 px-4 py-4 text-center text-xs text-muted-foreground">
+                    <Star className="h-4 w-4 mx-auto mb-1.5 text-primary/50" />
+                    Pin important threads for quick access
                   </div>
                 ) : (
                   pinned.map((c) => (
@@ -316,7 +317,8 @@ export default function Sidebar({
                 onToggle={() => setCollapsed((s) => ({ ...s, recent: !s.recent }))}
               >
                 {recent.length === 0 ? (
-                  <div className="select-none rounded-lg border border-dashed border-zinc-200 px-3 py-3 text-center text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                  <div className="select-none rounded-xl border border-dashed border-border/60 bg-accent/30 px-4 py-4 text-center text-xs text-muted-foreground">
+                    <Clock className="h-4 w-4 mx-auto mb-1.5 text-primary/50" />
                     No conversations yet. Start a new one!
                   </div>
                 ) : (
@@ -342,7 +344,7 @@ export default function Sidebar({
                 <div className="-mx-1">
                   <button
                     onClick={() => setShowCreateFolderModal(true)}
-                    className="mb-2 inline-flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    className="mb-2 inline-flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 transition-premium"
                   >
                     <Plus className="h-4 w-4" /> Create folder
                   </button>
@@ -372,7 +374,7 @@ export default function Sidebar({
                 <div className="-mx-1">
                   <button
                     onClick={() => setShowCreateTemplateModal(true)}
-                    className="mb-2 inline-flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    className="mb-2 inline-flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 transition-premium"
                   >
                     <Plus className="h-4 w-4" /> Create template
                   </button>
@@ -389,18 +391,19 @@ export default function Sidebar({
                   ))}
 
                   {(!templates || templates.length === 0) && (
-                    <div className="select-none rounded-lg border border-dashed border-zinc-200 px-3 py-3 text-center text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                      No templates yet. Create your first prompt template.
+                    <div className="select-none rounded-xl border border-dashed border-border/60 bg-accent/30 px-4 py-4 text-center text-xs text-muted-foreground">
+                      <FileText className="h-4 w-4 mx-auto mb-1.5 text-primary/50" />
+                      Create your first prompt template
                     </div>
                   )}
                 </div>
               </SidebarSection>
             </nav>
 
-            <div className="mt-auto border-t border-zinc-200/60 px-3 py-3 dark:border-zinc-800">
+            <div className="mt-auto border-t border-border/50 px-4 py-4">
               <div className="flex items-center gap-2">
                 <SettingsPopover>
-                  <button className="inline-flex items-center gap-2 rounded-lg px-2 py-2 text-sm hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-zinc-800">
+                  <button className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-premium">
                     <Settings className="h-4 w-4" /> Settings
                   </button>
                 </SettingsPopover>
@@ -408,13 +411,16 @@ export default function Sidebar({
                   <ThemeToggle theme={theme} setTheme={setTheme} />
                 </div>
               </div>
-              <div className="mt-2 flex items-center gap-2 rounded-xl bg-zinc-50 p-2 dark:bg-zinc-800/60">
-                <div className="grid h-8 w-8 place-items-center rounded-full bg-zinc-900 text-xs font-bold text-white dark:bg-white dark:text-zinc-900">
+              <div className="mt-3 flex items-center gap-3 rounded-xl bg-accent/60 p-3 border border-border/40 hover:bg-accent/80 transition-premium cursor-pointer">
+                <div className="grid h-9 w-9 place-items-center rounded-full gradient-primary text-xs font-bold text-white shadow-sm">
                   JD
                 </div>
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-medium">John Doe</div>
-                  <div className="truncate text-xs text-zinc-500 dark:text-zinc-400">Pro workspace</div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold">John Doe</div>
+                  <div className="truncate text-xs text-muted-foreground flex items-center gap-1">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Pro workspace
+                  </div>
                 </div>
               </div>
             </div>

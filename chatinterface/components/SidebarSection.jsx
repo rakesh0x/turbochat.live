@@ -7,14 +7,14 @@ export default function SidebarSection({ icon, title, children, collapsed, onTog
     <section>
       <button
         onClick={onToggle}
-        className="sticky top-0 z-10 -mx-2 mb-1 flex w-[calc(100%+16px)] items-center gap-2 border-y border-transparent bg-gradient-to-b from-white to-white/70 px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-500 backdrop-blur hover:text-zinc-700 dark:from-zinc-900 dark:to-zinc-900/70 dark:hover:text-zinc-300"
+        className="sticky top-0 z-10 -mx-2 mb-1.5 flex w-[calc(100%+16px)] items-center gap-2 border-y border-transparent bg-gradient-to-b from-sidebar to-sidebar/80 px-3 py-2.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground backdrop-blur-sm hover:text-foreground transition-premium"
         aria-expanded={!collapsed}
       >
-        <span className="mr-1" aria-hidden>
+        <span className="mr-0.5 text-muted-foreground/70" aria-hidden>
           {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
         </span>
         <span className="flex items-center gap-2">
-          <span className="opacity-70" aria-hidden>
+          <span className="text-primary/70" aria-hidden>
             {icon}
           </span>
           {title}
@@ -26,8 +26,8 @@ export default function SidebarSection({ icon, title, children, collapsed, onTog
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.18 }}
-            className="space-y-0.5"
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            className="space-y-1"
           >
             {children}
           </motion.div>

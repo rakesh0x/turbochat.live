@@ -35,7 +35,6 @@ interface AnalyticsData {
 
 const generateId = () => crypto.randomUUID();
 
-// Mock data store
 let chatbots = [
   {
     id: '1',
@@ -45,7 +44,7 @@ let chatbots = [
     pagesScraped: 45,
     lastUpdated: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    model: 'GPT-4 Turbo',
+    model: 'GPT-5.2-Codex',
     monthlyMessages: 1243,
     color: '#3b82f6'
   },
@@ -57,7 +56,7 @@ let chatbots = [
     pagesScraped: 23,
     lastUpdated: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-    model: 'GPT-4 Turbo',
+    model: 'GPT-5.2-Codex',
     monthlyMessages: 567,
     color: '#8b5cf6'
   },
@@ -69,7 +68,7 @@ let chatbots = [
     pagesScraped: 12,
     lastUpdated: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-    model: 'GPT-4 Turbo',
+    model: 'GPT-5.2-Codex',
     monthlyMessages: 892,
     color: '#10b981'
   }
@@ -87,8 +86,17 @@ const mockMessages = [
 
 const getRandomMessage = () => mockMessages[Math.floor(Math.random() * mockMessages.length)];
 
-export async function GET(request: NextRequest) {
-  const { pathname } = new URL(request.url);
+// Helper to get pathname from slug params
+function getPathname(params: { slug: string[] }): string {
+  return '/api/' + params.slug.join('/');
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string[] }> }
+) {
+  const { slug } = await params;
+  const pathname = getPathname({ slug });
   
   // Get all chatbots
   if (pathname === '/api/chatbots') {
@@ -157,21 +165,24 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ error: 'Not found' }, { status: 404 });
 }
 
-export async function POST(request: NextRequest) {
-  const { pathname } = new URL(request.url);
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string[] }> }
+) {
+  const { slug } = await params;
+  const pathname = getPathname({ slug });
   const body = await request.json();
   
-  // Create new chatbot
   if (pathname === '/api/chatbots') {
     const newChatbot = {
       id: generateId(),
       name: body.name || `Chatbot ${chatbots.length + 1}`,
       website: body.website,
-      status: 'training',
+      status: 'training' as const,
       pagesScraped: 0,
       lastUpdated: new Date().toISOString(),
       createdAt: new Date().toISOString(),
-      model: 'GPT-4 Turbo',
+      model: 'GPT-5.2-Codex',
       monthlyMessages: 0,
       color: `#${Math.floor(Math.random()*16777215).toString(16)}`
     };
@@ -181,7 +192,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ chatbot: newChatbot });
   }
   
-  // Send message to chatbot
   const messageMatch = pathname.match(/\/api\/chatbots\/([^\/]+)\/message/);
   if (messageMatch) {
     const chatbotId = messageMatch[1];
@@ -229,8 +239,12 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ error: 'Not found' }, { status: 404 });
 }
 
-export async function DELETE(request: NextRequest) {
-  const { pathname } = new URL(request.url);
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string[] }> }
+) {
+  const { slug } = await params;
+  const pathname = getPathname({ slug });
   
   const chatbotIdMatch = pathname.match(/\/api\/chatbots\/([^\/]+)$/);
   if (chatbotIdMatch) {
@@ -245,8 +259,12 @@ export async function DELETE(request: NextRequest) {
   return NextResponse.json({ error: 'Not found' }, { status: 404 });
 }
 
-export async function PUT(request: NextRequest) {
-  const { pathname } = new URL(request.url);
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string[] }> }
+) {
+  const { slug } = await params;
+  const pathname = getPathname({ slug });
   const body = await request.json();
   
   const chatbotIdMatch = pathname.match(/\/api\/chatbots\/([^\/]+)$/);

@@ -154,7 +154,7 @@ export default function AIAssistantUI() {
     setFolders((prev) => [...prev, { id: Math.random().toString(36).slice(2), name }])
   }
 
-  function sendMessage(convId, content) {
+  async function sendMessage(convId, content) {
     if (!content.trim()) return
     const now = new Date().toISOString()
     const userMsg = { id: Math.random().toString(36).slice(2), role: "user", content, createdAt: now }
@@ -177,18 +177,36 @@ export default function AIAssistantUI() {
     setThinkingConvId(convId)
 
     const currentConvId = convId
-    setTimeout(() => {
-      // Always clear thinking state and generate response for this specific conversation
+    
+    try {
+      // Call Python backend API
+      const response = await fetch("http://localhost:8000/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: content,
+          conversation_id: currentConvId,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
       setIsThinking(false)
       setThinkingConvId(null)
+      
       setConversations((prev) =>
         prev.map((c) => {
           if (c.id !== currentConvId) return c
-          const ack = `Got it — I'll help with that.`
           const asstMsg = {
             id: Math.random().toString(36).slice(2),
             role: "assistant",
-            content: ack,
+            content: data.response,
             createdAt: new Date().toISOString(),
           }
           const msgs = [...(c.messages || []), asstMsg]
@@ -201,7 +219,31 @@ export default function AIAssistantUI() {
           }
         }),
       )
-    }, 2000)
+    } catch (error) {
+      console.error("Failed to get response:", error)
+      setIsThinking(false)
+      setThinkingConvId(null)
+      
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id !== currentConvId) return c
+          const errorMsg = {
+            id: Math.random().toString(36).slice(2),
+            role: "assistant",
+            content: "Sorry, I couldn't connect to the AI service. Please make sure the Python server is running.",
+            createdAt: new Date().toISOString(),
+          }
+          const msgs = [...(c.messages || []), errorMsg]
+          return {
+            ...c,
+            messages: msgs,
+            updatedAt: new Date().toISOString(),
+            messageCount: msgs.length,
+            preview: errorMsg.content.slice(0, 80),
+          }
+        }),
+      )
+    }
   }
 
   function editMessage(convId, messageId, newContent) {

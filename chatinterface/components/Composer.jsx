@@ -69,11 +69,11 @@ const Composer = forwardRef(function Composer({ onSend, busy }, ref) {
   const hasContent = value.trim().length > 0
 
   return (
-    <div className="border-t border-zinc-200/60 p-4 dark:border-zinc-800">
+    <div className="border-t border-border/40 bg-gradient-to-t from-muted/50 to-transparent p-4 pb-6">
       <div
         className={cls(
-          "mx-auto flex flex-col rounded-3xl border bg-white shadow-sm dark:bg-zinc-950 transition-all duration-200",
-          "max-w-3xl border-zinc-200 dark:border-zinc-800",
+          "mx-auto flex flex-col rounded-2xl border bg-card/80 backdrop-blur-sm shadow-premium transition-all duration-200",
+          "max-w-3xl border-border/60 hover:border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/20",
         )}
       >
         {/* Textarea area - grows upward */}
@@ -85,7 +85,7 @@ const Composer = forwardRef(function Composer({ onSend, busy }, ref) {
             placeholder="How can I help you today?"
             rows={1}
             className={cls(
-              "w-full resize-none bg-transparent text-sm outline-none placeholder:text-zinc-400 transition-all duration-200",
+              "w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground transition-all duration-200",
               "min-h-[24px] text-left leading-6",
             )}
             onKeyDown={(e) => {
@@ -101,16 +101,16 @@ const Composer = forwardRef(function Composer({ onSend, busy }, ref) {
         <div className="flex items-center justify-between px-3 pb-3">
           <ComposerActionsPopover>
             <button
-              className="inline-flex shrink-0 items-center justify-center rounded-full p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 transition-colors"
+              className="inline-flex shrink-0 items-center justify-center rounded-xl p-2.5 text-muted-foreground hover:text-foreground hover:bg-accent/80 transition-premium"
               title="Add attachment"
             >
               <Plus className="h-5 w-5" />
             </button>
           </ComposerActionsPopover>
 
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
-              className="inline-flex items-center justify-center rounded-full p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 transition-colors"
+              className="inline-flex items-center justify-center rounded-xl p-2.5 text-muted-foreground hover:text-foreground hover:bg-accent/80 transition-premium"
               title="Voice input"
             >
               <Mic className="h-5 w-5" />
@@ -119,10 +119,10 @@ const Composer = forwardRef(function Composer({ onSend, busy }, ref) {
               onClick={handleSend}
               disabled={sending || busy || !hasContent}
               className={cls(
-                "inline-flex shrink-0 items-center justify-center rounded-full p-2.5 transition-colors",
+                "inline-flex shrink-0 items-center justify-center rounded-xl p-2.5 transition-premium",
                 hasContent
-                  ? "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
-                  : "bg-zinc-200 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-600 cursor-not-allowed",
+                  ? "gradient-primary text-white shadow-md hover:shadow-lg hover:scale-[1.02]"
+                  : "bg-muted text-muted-foreground cursor-not-allowed",
               )}
             >
               {sending || busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
@@ -131,7 +131,7 @@ const Composer = forwardRef(function Composer({ onSend, busy }, ref) {
         </div>
       </div>
 
-      <div className="mx-auto mt-2 max-w-3xl px-1 text-center text-[11px] text-zinc-400 dark:text-zinc-500">
+      <div className="mx-auto mt-3 max-w-3xl px-1 text-center text-[11px] text-muted-foreground/70">
         AI can make mistakes. Check important info.
       </div>
     </div>
