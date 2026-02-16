@@ -1,150 +1,390 @@
-"""FastAPI server to connect the chat interface with the LLM backend."""
+"""FastAPI server for ChatBot AI with persistence and background training using Ollama."""
 import os
 import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 import json
 import unicodedata
 import re
+import uuid
+from datetime import datetime
+from typing import List, Optional
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
 from pinecone import Pinecone
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
+from database import get_db_connection, init_db
+from scraper.fetch_html import get_data
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
 load_dotenv()
 
-# FastAPI app
-app = FastAPI(title="Chat API", version="1.0.0")
+# Initialize Database
+init_db()
 
-# CORS - Allow requests from Next.js frontend
+# FastAPI app
+app = FastAPI(title="ChatBot AI API", version="1.0.0")
+
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False, # Must be False if allow_origins is ["*"]
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Configuration
-OLLAMA_URL = "http://localhost:11434/api/generate"
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434/api/generate")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-INDEX_NAME = "chatbot"
-NAMESPACE = "__default__"
-
-# Persistent HTTP session
-session = requests.Session()
-retry_strategy = Retry(
-    total=3,
-    backoff_factor=1,
-    status_forcelist=[500, 502, 503, 504],
-)
-adapter = HTTPAdapter(max_retries=retry_strategy, pool_connections=10, pool_maxsize=10)
-session.mount("http://", adapter)
-session.mount("https://", adapter)
+INDEX_NAME = os.getenv("PINECONE_INDEX", "chatbot")
+DEFAULT_MODEL = os.getenv("LLM_MODEL", "phi3")
 
 # Pinecone setup
 pc = Pinecone(api_key=PINECONE_API_KEY)
 index = pc.Index(INDEX_NAME)
 
+# Thread pool for sync tasks
+executor = ThreadPoolExecutor(max_workers=10)
 
-# Request/Response models
+# Models
+class ChatbotBase(BaseModel):
+    name: str
+    website: str
+
+class ChatbotCreate(ChatbotBase):
+    pass
+
+class ChatbotSchema(ChatbotBase):
+    id: str
+    status: str
+    pagesScraped: int
+    monthlyMessages: int
+    lastUpdated: str
+    createdAt: str
+    model: str
+    color: Optional[str] = None
+
 class ChatRequest(BaseModel):
     message: str
-    conversation_id: str | None = None
+    conversation_id: Optional[str] = None
 
 class ChatResponse(BaseModel):
     response: str
-    conversation_id: str | None = None
+    conversation_id: Optional[str] = None
 
-def ask_question(query: str) -> str:
+# Helper Functions
+def clean_text(text: str) -> str:
+    if not text: return ""
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(c for c in text if not unicodedata.combining(c))
+    text = re.sub(r"[^\x00-\x7F]+", "", text)
+    return text
+
+def train_chatbot_sync(chatbot_id: str, website: str):
+    """Sync task for threadpool to scrape and upsert."""
+    try:
+        print(f"Starting training for {chatbot_id} at {website}")
+        raw_text = get_data(website)
+        
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=500,
+            chunk_overlap=50,
+        )
+        
+        chunks = splitter.split_text(raw_text)
+        chunks = [clean_text(chunk) for chunk in chunks]
+        
+        records = [
+            {
+                "_id": f"{chatbot_id}-chunk-{i}",
+                "chunk_text": chunk,
+            }
+            for i, chunk in enumerate(chunks)
+        ]
+        
+        # Upsert to Pinecone
+        BATCH_SIZE = 96
+        for i in range(0, len(records), BATCH_SIZE):
+            batch = records[i:i + BATCH_SIZE]
+            index.upsert_records(
+                namespace=chatbot_id,
+                records=batch,
+            )
+            
+        # Update database status
+        conn = get_db_connection()
+        conn.execute(
+            "UPDATE chatbots SET status = ?, pages_scraped = ?, last_updated = ? WHERE id = ?",
+            ("active", len(chunks), datetime.now().isoformat(), chatbot_id)
+        )
+        conn.commit()
+        conn.close()
+        print(f"Chatbot {chatbot_id} trained successfully with {len(chunks)} chunks.")
+        
+    except Exception as e:
+        print(f"Error training chatbot {chatbot_id}: {e}")
+        try:
+            conn = get_db_connection()
+            conn.execute("UPDATE chatbots SET status = ? WHERE id = ?", ("error", chatbot_id))
+            conn.commit()
+            conn.close()
+        except:
+            pass
+
+async def train_chatbot_task(chatbot_id: str, website: str):
+    """Wrapper to run the sync task in a thread."""
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(executor, train_chatbot_sync, chatbot_id, website)
+
+def get_ollama_response(prompt: str, model: str) -> str:
+    """Sync helper for Ollama call."""
+    try:
+        res = requests.post(
+            OLLAMA_URL,
+            json={
+                "model": model,
+                "prompt": prompt,
+                "stream": False,
+            },
+            timeout=60
+        )
+        res.raise_for_status()
+        return res.json()["response"]
+    except Exception as e:
+        print(f"Ollama error: {e}")
+        raise e
+
+async def ask_question(chatbot_id: str, query: str, history: List[dict] = []) -> str:
     """Query Pinecone for context and send to Ollama for response."""
-    # Search Pinecone for relevant context
-    results = index.search(
-        namespace=NAMESPACE,
-        query={
-            "top_k": 5,
-            "inputs": {"text": query},
-        },
-    )
+    loop = asyncio.get_event_loop()
+    
+    standalone_query = query
+    if history:
+        history_text = "\n".join([f"{m['role']}: {m['content']}" for m in history[-3:]])
+        print(f"History for re-writing:\n{history_text}")
+        rewrite_prompt = f"""Instructions: Convert the user's latest question into a standalone search query. Replace nouns like "he", "she", "it", "they", "this", "that" with the actual names or topics mentioned in the history.
+Output only the search query.
 
-    context = "\n\n".join(
-        hit["fields"]["chunk_text"]
-        for hit in results.result.hits
-    )
+Example:
+History:
+user: Who is Rakesh?
+assistant: Rakesh is a developer.
+Question: What are his projects?
+Search Query: what are Rakesh's projects?
 
-    # Build prompt with context
+Conversation History:
+{history_text}
+
+Latest Question: {query}
+Search Query:"""
+        try:
+            standalone_query = await loop.run_in_executor(executor, get_ollama_response, rewrite_prompt, DEFAULT_MODEL)
+            standalone_query = standalone_query.strip().split("\n")[0].replace("Search Query:", "").strip()
+            print(f"Re-written query: '{standalone_query}' (Original: '{query}')")
+        except:
+            standalone_query = query
+            print(f"Re-write failed, using original: {query}")
+
+    # 2. Pinecone search with increased top_k
+    try:
+        results = await loop.run_in_executor(
+            executor, 
+            lambda: index.search(
+                namespace=chatbot_id,
+                query={
+                    "top_k": 7,
+                    "inputs": {"text": standalone_query},
+                },
+            )
+        )
+        
+        context = "\n\n".join(
+            hit["fields"]["chunk_text"]
+            for hit in results.result.hits
+        )
+    except Exception as e:
+        print(f"Pinecone search error: {e}")
+        context = ""
+
+    # 3. Strict Prompting
     if context.strip():
-        prompt = f"""
-Answer the question using the context below when relevant.
-If the context doesn't help, use your general knowledge to answer.
+        prompt = f"""You are Enclose AI Assistant. Answer the question ONLY using the Context below.
+Rules:
+1. If the answer is not in the context, say "I haven't been trained on this yet."
+2. Do NOT use outside knowledge.
+3. Keep it brief and factual.
 
 Context:
 {context}
 
-Question:
-{query}
-"""
+Question: {query}
+Answer:"""
     else:
-        prompt = f"""
-Answer the following question using your knowledge:
+        prompt = f"""You are Enclose AI Assistant. 
+The user asked: {query}
+Since you have no training data for this topic, politely say you don't know the answer yet."""
 
-Question:
-{query}
-"""
-    prompt = unicodedata.normalize("NFKD", prompt)
+    prompt = clean_text(prompt)
+    
+    # Call Ollama in thread
+    response = await loop.run_in_executor(executor, get_ollama_response, prompt, DEFAULT_MODEL)
+    return response.strip()
 
-    # Send to Ollama
-    response = session.post(
-        OLLAMA_URL,
-        headers={"Content-Type": "application/json; charset=utf-8"},
-        data=json.dumps(
-            {
-                "model": "phi3",
-                "prompt": prompt,
-                "stream": False,
-            },
-            ensure_ascii=False,
-        ).encode("utf-8"),
-        timeout=60,
+# Endpoints
+@app.get("/api/chatbots", response_model=List[ChatbotSchema])
+async def list_chatbots():
+    conn = get_db_connection()
+    rows = conn.execute("SELECT * FROM chatbots").fetchall()
+    conn.close()
+    
+    return [
+        ChatbotSchema(
+            id=row["id"],
+            name=row["name"],
+            website=row["website"],
+            status=row["status"],
+            pagesScraped=row["pages_scraped"],
+            monthlyMessages=row["monthly_messages"],
+            lastUpdated=row["last_updated"],
+            createdAt=row["created_at"],
+            model=row["model"],
+            color=row["color"]
+        ) for row in rows
+    ]
+
+@app.post("/api/chatbots", response_model=ChatbotSchema)
+async def create_chatbot(chatbot: ChatbotCreate, background_tasks: BackgroundTasks):
+    chatbot_id = str(uuid.uuid4())
+    now = datetime.now().isoformat()
+    
+    conn = get_db_connection()
+    conn.execute(
+        "INSERT INTO chatbots (id, name, website, status, last_updated, created_at, model) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (chatbot_id, chatbot.name, chatbot.website, "training", now, now, DEFAULT_MODEL)
+    )
+    conn.commit()
+    conn.close()
+    
+    background_tasks.add_task(train_chatbot_task, chatbot_id, chatbot.website)
+    
+    return ChatbotSchema(
+        id=chatbot_id,
+        name=chatbot.name,
+        website=chatbot.website,
+        status="training",
+        pagesScraped=0,
+        monthlyMessages=0,
+        lastUpdated=now,
+        createdAt=now,
+        model=DEFAULT_MODEL
     )
 
-    response.raise_for_status()
-    return response.json()["response"]
-
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint."""
-    return {"status": "healthy", "service": "chat-api"}
-
-
-@app.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
-    """
-    Send a message to the LLM and get a response.
-    
-    This endpoint:
-    1. Takes the user's message
-    2. Queries Pinecone for relevant context (RAG)
-    3. Sends the query + context to Ollama
-    4. Returns the LLM response
-    """
+@app.delete("/api/chatbots/{chatbot_id}")
+async def delete_chatbot(chatbot_id: str):
+    conn = get_db_connection()
+    conn.execute("DELETE FROM chatbots WHERE id = ?", (chatbot_id,))
+    conn.commit()
+    conn.close()
     try:
-        response = ask_question(request.message)
+        index.delete(delete_all=True, namespace=chatbot_id)
+    except:
+        pass
+    return {"status": "success"}
+
+@app.get("/api/stats")
+async def get_stats():
+    conn = get_db_connection()
+    total_chatbots = conn.execute("SELECT COUNT(*) FROM chatbots").fetchone()[0]
+    total_pages = conn.execute("SELECT SUM(pages_scraped) FROM chatbots").fetchone()[0] or 0
+    total_messages = conn.execute("SELECT SUM(monthly_messages) FROM chatbots").fetchone()[0] or 0
+    training_bots = conn.execute("SELECT COUNT(*) FROM chatbots WHERE status = 'training'").fetchone()[0]
+    conn.close()
+    
+    return {
+        "totalChatbots": total_chatbots,
+        "totalPages": total_pages,
+        "totalMessages": total_messages,
+        "trainingBots": training_bots,
+        "activeBots": total_chatbots - training_bots
+    }
+
+@app.get("/api/analytics")
+async def get_analytics():
+    # Mock analytics for the UI
+    return {
+        "messagesOverTime": [
+            {"date": "Feb 1", "messages": 120},
+            {"date": "Feb 5", "messages": 450},
+            {"date": "Feb 10", "messages": 380}
+        ],
+        "topQuestions": [
+            {"question": "How do I sign up?", "count": 45},
+            {"question": "What is the pricing?", "count": 32}
+        ]
+    }
+
+@app.post("/api/chatbots/{chatbot_id}/chat", response_model=ChatResponse)
+async def chat(chatbot_id: str, request: ChatRequest):
+    try:
+        print(f"Chat request for bot {chatbot_id}")
+        
+        # Fetch history for query re-writing
+        history = []
+        if request.conversation_id:
+            conn = get_db_connection()
+            rows = conn.execute(
+                "SELECT role, content FROM messages WHERE chatbot_id = ? AND conversation_id = ? ORDER BY timestamp DESC LIMIT 5",
+                (chatbot_id, request.conversation_id)
+            ).fetchall()
+            conn.close()
+            history = [{"role": row["role"], "content": row["content"]} for row in reversed(rows)]
+
+        response = await ask_question(chatbot_id, request.message, history)
+        
+        conn = get_db_connection()
+        conn.execute("UPDATE chatbots SET monthly_messages = monthly_messages + 1 WHERE id = ?", (chatbot_id,))
+        conn.execute(
+            "INSERT INTO messages (id, chatbot_id, role, content, timestamp, conversation_id) VALUES (?, ?, ?, ?, ?, ?)",
+            (str(uuid.uuid4()), chatbot_id, "user", request.message, datetime.now().isoformat(), request.conversation_id)
+        )
+        conn.execute(
+            "INSERT INTO messages (id, chatbot_id, role, content, timestamp, conversation_id) VALUES (?, ?, ?, ?, ?, ?)",
+            (str(uuid.uuid4()), chatbot_id, "assistant", response, datetime.now().isoformat(), request.conversation_id)
+        )
+        conn.commit()
+        conn.close()
+        
         return ChatResponse(
             response=response,
             conversation_id=request.conversation_id
         )
-    except requests.exceptions.ConnectionError:
-        raise HTTPException(
-            status_code=503,
-            detail="Cannot connect to Ollama. Make sure it's running (ollama serve)."
-        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/chatbots/{chatbot_id}/conversation")
+async def get_conversation(chatbot_id: str, sessionId: str = "default"):
+    conn = get_db_connection()
+    rows = conn.execute(
+        "SELECT * FROM messages WHERE chatbot_id = ? AND conversation_id = ? ORDER BY timestamp ASC",
+        (chatbot_id, sessionId)
+    ).fetchall()
+    conn.close()
+    
+    return {
+        "messages": [
+            {"id": row["id"], "role": row["role"], "content": row["content"], "timestamp": row["timestamp"]}
+            for row in rows
+        ]
+    }
+
+@app.get("/health")
+async def health():
+    return {"status": "healthy"}
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)

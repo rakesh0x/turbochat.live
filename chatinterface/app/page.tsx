@@ -2,28 +2,30 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  LayoutDashboard, 
-  Plus, 
-  Bot, 
-  Database, 
-  PlayCircle, 
-  Rocket, 
-  BarChart3, 
-  CreditCard, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Plus,
+  Bot,
+  Database,
+  PlayCircle,
+  Rocket,
+  BarChart3,
+  CreditCard,
+  Settings,
   Bell,
   Globe,
   Loader2,
   Check,
   Copy,
   Github,
+  Download,
+  Trash2,
+  ExternalLink,
+  Search,
   Zap,
   TrendingUp,
   MessageSquare,
   Activity,
-  Download,
-  Trash2,
   RefreshCw,
   Send,
   ArrowUpRight,
@@ -41,15 +43,15 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { Toaster } from '@/components/ui/sonner';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
   DialogTitle,
   DialogFooter
 } from '@/components/ui/dialog';
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -141,7 +143,7 @@ const menuItems: MenuItem[] = [
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('dashboard');
-  const [chatbots, setChatbots] = useState([]);
+  const [chatbots, setChatbots] = useState<any[]>([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState(null);
@@ -158,12 +160,12 @@ export default function App() {
         fetch('/api/stats'),
         fetch('/api/analytics')
       ]);
-      
+
       const chatbotsData = await chatbotsRes.json();
       const statsData = await statsRes.json();
       const analyticsData = await analyticsRes.json();
-      
-      setChatbots(chatbotsData.chatbots || []);
+
+      setChatbots(Array.isArray(chatbotsData) ? chatbotsData : []);
       setStats(statsData);
       setAnalytics(analyticsData);
     } catch (error) {
@@ -177,16 +179,14 @@ export default function App() {
   return (
     <div className="flex h-screen bg-background">
       <Toaster />
-      
+
       {/* Sidebar */}
       <aside className="w-64 border-r flex flex-col">
         {/* Logo */}
         <div className="h-14 flex items-center px-6 border-b">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-foreground flex items-center justify-center">
-              <Bot className="w-4 h-4 text-background" />
-            </div>
-            <span className="font-semibold text-sm">ChatBot AI</span>
+
+            <span className="font-semibold text-sm">Enclose AI</span>
           </div>
         </div>
 
@@ -216,7 +216,7 @@ export default function App() {
                   <AvatarFallback className="text-xs">JD</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 text-left min-w-0">
-                  <div className="text-sm font-medium truncate">John Doe</div>
+                  <div className="text-sm font-medium truncate">Rakesh Jha</div>
                   <div className="text-xs text-muted-foreground truncate">john@example.com</div>
                 </div>
                 <ChevronDown className="w-4 h-4 ml-2" />
@@ -239,7 +239,7 @@ export default function App() {
               {menuItems.find(item => item.id === currentPage)?.label || 'Dashboard'}
             </h1>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="w-4 h-4" />
@@ -420,15 +420,17 @@ function CreateChatbotPage({ onComplete }: { onComplete: () => void }) {
     }
 
     try {
-      await fetch('/api/chatbots', {
+      const res = await fetch('/api/chatbots', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: chatbotName, website: url })
       });
-      
+
+      if (!res.ok) throw new Error('Failed to create chatbot');
+
       setStep(3);
       toast.success('Chatbot created successfully!');
-      
+
       setTimeout(() => {
         onComplete();
       }, 3000);
@@ -447,9 +449,8 @@ function CreateChatbotPage({ onComplete }: { onComplete: () => void }) {
           {[1, 2, 3].map((s, i) => (
             <div key={s} className="flex items-center flex-1">
               <div className="flex flex-col items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  step >= s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                }`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step >= s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                  }`}>
                   {step > s ? <Check className="w-4 h-4" /> : s}
                 </div>
                 <span className="text-xs text-muted-foreground mt-2">
@@ -457,9 +458,8 @@ function CreateChatbotPage({ onComplete }: { onComplete: () => void }) {
                 </span>
               </div>
               {i < 2 && (
-                <div className={`flex-1 h-0.5 mx-2 ${
-                  step > s ? 'bg-primary' : 'bg-muted'
-                }`} />
+                <div className={`flex-1 h-0.5 mx-2 ${step > s ? 'bg-primary' : 'bg-muted'
+                  }`} />
               )}
             </div>
           ))}
@@ -476,16 +476,16 @@ function CreateChatbotPage({ onComplete }: { onComplete: () => void }) {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Website URL</Label>
-              <Input 
-                placeholder="https://example.com" 
+              <Input
+                placeholder="https://example.com"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
               />
             </div>
             <div className="space-y-2">
               <Label>Chatbot Name</Label>
-              <Input 
-                placeholder="Customer Support Bot" 
+              <Input
+                placeholder="Customer Support Bot"
                 value={chatbotName}
                 onChange={(e) => setChatbotName(e.target.value)}
               />
@@ -497,7 +497,7 @@ function CreateChatbotPage({ onComplete }: { onComplete: () => void }) {
             </div>
           </CardContent>
           <CardContent className="pt-0">
-            <Button 
+            <Button
               onClick={() => { setStep(2); setTimeout(simulateScraping, 500); }}
               disabled={!url || !chatbotName}
               className="w-full"
@@ -771,29 +771,31 @@ function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
     setIsTyping(true);
 
     try {
-      // Call Python LLM backend
-      const res = await fetch('http://localhost:8000/chat', {
+      // Call Python LLM backend via proxy
+      const res = await fetch(`/api/chatbots/${chatbot.id}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          message: messageContent, 
-          conversation_id: sessionId.current 
+        body: JSON.stringify({
+          message: messageContent,
+          conversation_id: sessionId.current
         })
       });
+
+      if (!res.ok) throw new Error('Failed to send message');
       const data = await res.json();
-      
+
       const aiMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: data.response,
         timestamp: new Date().toISOString()
       };
-      
+
       setMessages(prev => [...prev, aiMessage]);
       setIsTyping(false);
     } catch (error) {
       console.error('Failed to send message:', error);
-      toast.error('Failed to connect to AI. Make sure the Python server is running.');
+      toast.error('Failed to connect to AI. Make sure the backend server is running.');
       setIsTyping(false);
     }
   };
@@ -841,8 +843,8 @@ function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
             </div>
           </div>
           <Separator />
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="w-full"
             size="sm"
             onClick={() => { setMessages([]); sessionId.current = `session-${Date.now()}`; }}
@@ -878,11 +880,10 @@ function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
                     key={msg.id}
                     className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`max-w-[80%] rounded-lg px-4 py-2 text-sm ${
-                      msg.role === 'user' 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'bg-muted'
-                    }`}>
+                    <div className={`max-w-[80%] rounded-lg px-4 py-2 text-sm ${msg.role === 'user'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted'
+                      }`}>
                       {msg.content}
                     </div>
                   </div>
@@ -906,13 +907,13 @@ function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
           {/* Input */}
           <div className="p-4 border-t">
             <div className="flex gap-2">
-              <Input 
+              <Input
                 placeholder="Type your message..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSend()}
               />
-              <Button 
+              <Button
                 onClick={handleSend}
                 disabled={!input.trim() || isTyping}
                 size="icon"
@@ -931,11 +932,21 @@ function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
 function DeployPage({ chatbot }: { chatbot: any }) {
   const [copied, setCopied] = useState(false);
 
-  const scriptCode = chatbot ? `<script src="https://chatbot.ai/widget.js"></script>
+  const [host, setHost] = useState('');
+
+  useEffect(() => {
+    setHost(window.location.origin);
+  }, []);
+
+  const reliableHost = host.replace('localhost', '127.0.0.1');
+
+  const scriptCode = chatbot ? `<script src="${reliableHost}/widget.js"></script>
 <script>
-  ChatbotWidget.init({
-    chatbotId: "${chatbot.id}",
-    position: "bottom-right"
+  window.addEventListener('load', function() {
+    ChatbotWidget.init({
+      chatbotId: "${chatbot.id}",
+      apiUrl: "${reliableHost}/api"
+    });
   });
 </script>` : '';
 
@@ -959,27 +970,28 @@ function DeployPage({ chatbot }: { chatbot: any }) {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <Tabs defaultValue="script" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="script">Script Embed</TabsTrigger>
-          <TabsTrigger value="react">React</TabsTrigger>
-          <TabsTrigger value="api">API</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="embed">Quick Embed</TabsTrigger>
+          <TabsTrigger value="github">GitHub Export</TabsTrigger>
+          <TabsTrigger value="react">React UI</TabsTrigger>
+          <TabsTrigger value="api">API Ref</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="script" className="space-y-4">
+        <TabsContent value="embed" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Script Embed</CardTitle>
-              <CardDescription>Add this script to your website</CardDescription>
+              <CardTitle>One-Line Embed</CardTitle>
+              <CardDescription>Paste this onto any website to reveal the chat widget.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="relative">
-                <pre className="p-4 rounded-lg bg-muted text-sm overflow-x-auto">
+                <pre className="p-4 rounded-lg bg-muted text-sm overflow-x-auto border">
                   <code>{scriptCode}</code>
                 </pre>
-                <Button 
+                <Button
                   size="sm"
                   variant="outline"
-                  className="absolute top-2 right-2"
+                  className="absolute top-2 right-2 backdrop-blur-sm"
                   onClick={() => handleCopy(scriptCode)}
                 >
                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -989,7 +1001,107 @@ function DeployPage({ chatbot }: { chatbot: any }) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="react">
+        <TabsContent value="github" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>GitHub / Self-Hosting Bundle</CardTitle>
+              <CardDescription>Give your users their own repository assets.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl border bg-card space-y-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Github className="w-5 h-5 text-primary" />
+                  </div>
+                  <h4 className="font-semibold text-sm">Option A: GitHub Repo</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Users can download this bundle, commit to GitHub, and enable GitHub Pages for instant hosting.
+                  </p>
+                  <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => {
+                    const blob = new Blob([`# My Chatbot: ${chatbot.name}
+
+This repository contains my AI Chatbot frontend, powered by [ChatBot AI RAG-as-a-Service].
+
+## Deployment
+1. Upload to GitHub.
+2. Enable GitHub Pages.
+3. Your bot is live!
+`], { type: 'text/plain' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'README.md';
+                    a.click();
+
+                    // Also trigger the HTML download
+                    setTimeout(() => {
+                      const htmlBlob = new Blob([`<!DOCTYPE html><html><head><title>${chatbot.name}</title></head><body><script src="${reliableHost}/widget.js"></script><script>window.addEventListener('load', function(){ChatbotWidget.init({chatbotId: "${chatbot.id}", apiUrl: "${reliableHost}/api"});});</script></body></html>`], { type: 'text/html' });
+                      const htmlUrl = window.URL.createObjectURL(htmlBlob);
+                      const htmlA = document.createElement('a');
+                      htmlA.href = htmlUrl;
+                      htmlA.download = 'index.html';
+                      htmlA.click();
+                    }, 500);
+                  }}>
+                    <Download className="w-3 h-3" />
+                    Download Repo Bundle
+                  </Button>
+                </div>
+
+                <div className="p-4 rounded-xl border bg-card space-y-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Rocket className="w-5 h-5 text-primary" />
+                  </div>
+                  <h4 className="font-semibold text-sm">Option B: All-in-One Site</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    A single HTML file containing both the structure and the interactive widget. Perfect for landing pages.
+                  </p>
+                  <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => {
+                    const htmlBlob = new Blob([`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${chatbot.name} - AI Chat</title>
+    <style>
+        body { margin: 0; font-family: system-ui; background: #000; color: #fff; height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .hero { text-align: center; }
+        h1 { font-size: 3rem; margin-bottom: 0.5rem; }
+        p { color: #888; }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>${chatbot.name}</h1>
+        <p>AI Assistant Powered by RAG-as-a-Service</p>
+    </div>
+    <script src="${reliableHost}/widget.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            ChatbotWidget.init({
+                chatbotId: "${chatbot.id}",
+                apiUrl: "${reliableHost}/api"
+            });
+        });
+    </script>
+</body>
+</html>`], { type: 'text/html' });
+                    const htmlUrl = window.URL.createObjectURL(htmlBlob);
+                    const htmlA = document.createElement('a');
+                    htmlA.href = htmlUrl;
+                    htmlA.download = 'index.html';
+                    htmlA.click();
+                  }}>
+                    <Download className="w-3 h-3" />
+                    Export index.html
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="react" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>React Component</CardTitle>
@@ -1012,19 +1124,19 @@ function DeployPage({ chatbot }: { chatbot: any }) {
             <CardContent>
               <div className="space-y-3">
                 <div className="p-3 rounded-lg border">
-                  <div className="text-sm font-medium mb-1">Endpoint</div>
-                  <code className="text-xs text-muted-foreground">https://api.chatbot.ai/v1</code>
+                  <div className="text-sm font-medium mb-1">Base Endpoint</div>
+                  <code className="text-xs text-muted-foreground">{host}/api</code>
                 </div>
                 <div className="p-3 rounded-lg border">
-                  <div className="text-sm font-medium mb-1">Rate Limit</div>
-                  <code className="text-xs text-muted-foreground">100 req/min</code>
+                  <div className="text-sm font-medium mb-1">Auth</div>
+                  <code className="text-xs text-muted-foreground">None (Public)</code>
                 </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </div >
   );
 }
 
@@ -1097,11 +1209,11 @@ function AnalyticsPage({ analytics }: { analytics: Analytics | null }) {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="date" className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                 <YAxis className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--background))', 
-                    border: '1px solid hsl(var(--border))', 
-                    borderRadius: '8px' 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--background))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
                   }}
                 />
                 <Line type="monotone" dataKey="messages" stroke="hsl(var(--primary))" strokeWidth={2} />
