@@ -1,5 +1,8 @@
+"use client"
+
 import { Check } from "lucide-react"
 import Link from "next/link"
+import { signInWithGoogle } from "@/lib/auth"
 
 const plans = [
   {
@@ -67,16 +70,14 @@ export function PricingSection() {
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`p-8 rounded-2xl border flex flex-col h-full ${
-                plan.highlighted ? "bg-zinc-100 border-zinc-100" : "bg-zinc-900/50 border-zinc-800/50"
-              }`}
+              className={`p-8 rounded-2xl border flex flex-col h-full ${plan.highlighted ? "bg-zinc-100 border-zinc-100" : "bg-zinc-900/50 border-zinc-800/50"
+                }`}
             >
               {/* Plan Header */}
               <div className="mb-6">
                 <h3
-                  className={`font-heading text-xl font-semibold mb-2 ${
-                    plan.highlighted ? "text-zinc-900" : "text-zinc-100"
-                  }`}
+                  className={`font-heading text-xl font-semibold mb-2 ${plan.highlighted ? "text-zinc-900" : "text-zinc-100"
+                    }`}
                 >
                   {plan.name}
                 </h3>
@@ -104,16 +105,15 @@ export function PricingSection() {
               </ul>
 
               {/* CTA */}
-              <Link
-                href="#"
-                className={`block w-full py-3 px-6 text-center rounded-full font-medium text-sm transition-colors mt-auto ${
-                  plan.highlighted
+              <button
+                onClick={() => signInWithGoogle()}
+                className={`block w-full py-3 px-6 text-center rounded-full font-medium text-sm transition-colors mt-auto ${plan.highlighted
                     ? "bg-zinc-900 text-zinc-100 hover:bg-zinc-800"
                     : "bg-zinc-800 text-zinc-100 hover:bg-zinc-700"
-                }`}
+                  }`}
               >
                 {plan.cta}
-              </Link>
+              </button>
             </div>
           ))}
         </div>

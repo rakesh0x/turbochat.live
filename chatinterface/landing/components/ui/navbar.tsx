@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { signInWithGoogle } from "@/lib/auth"
 
 const navLinks = [
   { href: "#features", label: "Features" },
@@ -25,12 +26,12 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
-          <Link
-            href="/login"
+          <button
+            onClick={() => signInWithGoogle()}
             className="ml-2 px-4 py-1.5 text-sm rounded-full bg-zinc-100 text-zinc-900 font-medium hover:bg-zinc-200 transition-colors"
           >
             Sign in
-          </Link>
+          </button>
         </div>
       </nav>
     </header>
