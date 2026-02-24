@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { signInWithGoogle } from "@/lib/auth"
+import { signInWithGoogle } from "@/landing/lib/auth"
 
 const navLinks = [
   { href: "#features", label: "Features" },

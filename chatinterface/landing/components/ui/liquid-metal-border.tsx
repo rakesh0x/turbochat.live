@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { LiquidMetal } from "@paper-design/shaders-react"
-import { cn } from "@/lib/utils"
+import { cn } from "@/landing/lib/utils"
 
 interface LiquidMetalBorderProps {
   children: React.ReactNode

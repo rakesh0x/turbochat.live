@@ -1,11 +1,11 @@
-import { Navbar } from "@/components/ui/navbar"
-import { HeroSection } from "@/components/sections/hero-section"
-import { ImpactSection } from "@/components/sections/impact-section"
-import { FeaturesSection } from "@/components/sections/feature-section"
-import { TestimonialsSection } from "@/components/sections/testinomials-section"
-import { PricingSection } from "@/components/sections/pricing-section"
-import { CtaSection } from "@/components/sections/cta-section"
-import { FooterSection } from "@/components/sections/footer-section"
+import { Navbar } from "@/landing/components/ui/navbar"
+import { HeroSection } from "@/landing/components/sections/hero-section"
+import { ImpactSection } from "@/landing/components/sections/impact-section"
+import { FeaturesSection } from "@/landing/components/sections/feature-section"
+import { TestimonialsSection } from "@/landing/components/sections/testinomials-section"
+import { PricingSection } from "@/landing/components/sections/pricing-section"
+import { CtaSection } from "@/landing/components/sections/cta-section"
+import { FooterSection } from "@/landing/components/sections/footer-section"
 
 export default function Home() {
   return (

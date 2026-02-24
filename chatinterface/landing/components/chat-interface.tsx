@@ -32,17 +32,17 @@ import {
   MoreHorizontal,
   ChevronDown
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/landing/components/ui/button';
+import { Input } from '@/landing/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/landing/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/landing/components/ui/tabs';
+import { Badge } from '@/landing/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/landing/components/ui/avatar';
+import { Progress } from '@/landing/components/ui/progress';
+import { Separator } from '@/landing/components/ui/separator';
+import { ScrollArea } from '@/landing/components/ui/scroll-area';
 import { toast } from 'sonner';
-import { Toaster } from '@/components/ui/sonner';
+import { Toaster } from '@/landing/components/ui/sonner';
 import {
   Dialog,
   DialogContent,
@@ -50,24 +50,24 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter
-} from '@/components/ui/dialog';
+} from '@/landing/components/ui/dialog';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+} from '@/landing/components/ui/select';
+import { Textarea } from '@/landing/components/ui/textarea';
+import { Switch } from '@/landing/components/ui/switch';
+import { Label } from '@/landing/components/ui/label';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@/landing/components/ui/dropdown-menu';
 
 interface MenuItem {
   icon: React.ComponentType<{ className?: string }>;

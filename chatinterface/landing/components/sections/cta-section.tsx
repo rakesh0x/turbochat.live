@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
-import { LiquidCtaButton } from "@/components/buttons/liquid-cta-button"
+import { LiquidCtaButton } from "@/landing/components/buttons/liquid-cta-button"
 
 export function CtaSection() {
   return (

@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { TestimonialsColumn } from "@/components/ui/testinomials-column"
+import { TestimonialsColumn } from "@/landing/components/ui/testinomials-column"
 
 const testimonials = [
   {

@@ -2,7 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Manrope } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
-import { LenisProvider } from "@/components/provider/lenis-provider"
+import { LenisProvider } from "@/landing/components/provider/lenis-provider"
 import "./globals.css"
 
 const manrope = Manrope({
