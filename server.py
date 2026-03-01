@@ -8,7 +8,6 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 import asyncio
-from transformers import pipeline
 import torch
 from concurrent.futures import ThreadPoolExecutor
 
