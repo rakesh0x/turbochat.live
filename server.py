@@ -8,7 +8,6 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 import asyncio
-import torch
 from concurrent.futures import ThreadPoolExecutor
 
 from pinecone import Pinecone
