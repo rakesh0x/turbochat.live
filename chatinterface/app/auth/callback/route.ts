@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/landing/lib/supabase/server'
+import { redirect } from 'next/dist/server/api-utils'
 
 export async function GET(request: Request) {
+    const supabase = await createClient()
     const { searchParams, origin } = new URL(request.url)
     const code = searchParams.get('code')
     console.log("got the code:", code)
@@ -11,13 +13,18 @@ export async function GET(request: Request) {
     console.log("got next:", next)
 
     if (code) {
-        const supabase = await createClient()
         const { error } = await supabase.auth.exchangeCodeForSession(code)
         if (!error) {
             return NextResponse.redirect(`${origin}${next}`)
         }
     }
 
-    // return the user to an error page with instructions
+    // Check if we have a user anyway (e.g. session already exists)
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (user) {
+        return NextResponse.redirect(`${origin}${next}`)
+    }
+
     return NextResponse.redirect(`${origin}/auth/auth-code-error`)
 }

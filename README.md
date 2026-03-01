@@ -1,6 +1,6 @@
 # 🤖 Supercharged AI Chatbot Platform
 
-A production-ready, self-hosted AI chatbot platform. Scrape websites, train on your data, and embed a floating chat widget on any site. Works with local AI (**Ollama**) or cloud AI (**OpenAI**).
+A production-ready, self-hosted AI chatbot platform. Scrape websites, train on your data, and embed a floating chat widget on any site. Uses OpenAI GPT-4 for all AI responses.
 
 ## 🚀 One-Minute Setup (Docker)
 
@@ -14,7 +14,7 @@ The fastest way to get started is using Docker Compose:
 2.  **Configure Environment**:
     ```bash
     cp .env.example .env
-    # Edit .env and add your PINECONE_API_KEY
+    # Edit .env and add your PINECONE_API_KEY and OPENAI_API_KEY
     ```
 3.  **Launch**:
     ```bash
@@ -32,8 +32,7 @@ The fastest way to get started is using Docker Compose:
 - **Database**: SQLite (Persistent metadata and chat history)
 - **Vector DB**: Pinecone (Serverless)
 - **AI Models**: 
-    - **Ollama**: Default local model (phi3)
-    - **OpenAI**: Optional GPT-4o integration
+  - **OpenAI GPT-4**: All responses are generated using OpenAI GPT-4 API
 
 ---
 

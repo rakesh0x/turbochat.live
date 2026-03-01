@@ -1,4 +1,4 @@
-"""FastAPI server for ChatBot AI with persistence and background training using Ollama."""
+"""FastAPI server for ChatBot AI with persistence and background training using OpenAI GPT-4."""
 import os
 import requests
 import json
@@ -8,6 +8,8 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 import asyncio
+from transformers import pipeline
+import torch
 from concurrent.futures import ThreadPoolExecutor
 
 from pinecone import Pinecone
@@ -38,10 +40,24 @@ app.add_middleware(
 )
 
 # Configuration
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434/api/generate")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 INDEX_NAME = os.getenv("PINECONE_INDEX", "chatbot")
-DEFAULT_MODEL = os.getenv("LLM_MODEL", "phi3")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
+from openai import OpenAI
+import google.generativeai as genai
+# OpenAI setup
+client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+
+# Gemini setup
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+
+# Provider Logic
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai").lower()
 
 # Pinecone setup
 pc = Pinecone(api_key=PINECONE_API_KEY)
@@ -140,23 +156,39 @@ async def train_chatbot_task(chatbot_id: str, website: str):
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(executor, train_chatbot_sync, chatbot_id, website)
 
-def get_ollama_response(prompt: str, model: str) -> str:
-    """Sync helper for Ollama call."""
+def get_openai_response(prompt: str, model: str = OPENAI_MODEL) -> str:
+    """Sync helper for OpenAI GPT-4 call."""
+    if not client:
+        return "OpenAI API key not configured."
     try:
-        res = requests.post(
-            OLLAMA_URL,
-            json={
-                "model": model,
-                "prompt": prompt,
-                "stream": False,
-            },
-            timeout=60
+        completion = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1024,
+            temperature=0.7
         )
-        res.raise_for_status()
-        return res.json()["response"]
+        return completion.choices[0].message.content
     except Exception as e:
-        print(f"Ollama error: {e}")
-        raise e
+        print(f"OpenAI error: {e}")
+        return "Sorry, I couldn't generate a response."
+
+def get_gemini_response(prompt: str, model: str = GEMINI_MODEL) -> str:
+    """Sync helper for Gemini call."""
+    if not GEMINI_API_KEY:
+        return "Gemini API key not configured."
+    try:
+        model_instance = genai.GenerativeModel(model)
+        response = model_instance.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        print(f"Gemini error: {e}")
+        return "Sorry, I couldn't generate a response."
+
+def get_llm_response(prompt: str) -> str:
+    """Helper to choose LLM provider."""
+    if LLM_PROVIDER == "gemini":
+        return get_gemini_response(prompt)
+    return get_openai_response(prompt)
 
 async def ask_question(chatbot_id: str, query: str, history: List[dict] = []) -> str:
     """Query Pinecone for context and send to Ollama for response."""
@@ -182,7 +214,7 @@ Conversation History:
 Latest Question: {query}
 Search Query:"""
         try:
-            standalone_query = await loop.run_in_executor(executor, get_ollama_response, rewrite_prompt, DEFAULT_MODEL)
+            standalone_query = await loop.run_in_executor(executor, get_llm_response, rewrite_prompt)
             standalone_query = standalone_query.strip().split("\n")[0].replace("Search Query:", "").strip()
             print(f"Re-written query: '{standalone_query}' (Original: '{query}')")
         except:
@@ -230,8 +262,8 @@ Since you have no training data for this topic, politely say you don't know the 
 
     prompt = clean_text(prompt)
     
-    # Call Ollama in thread
-    response = await loop.run_in_executor(executor, get_ollama_response, prompt, DEFAULT_MODEL)
+    # Call LLM in thread
+    response = await loop.run_in_executor(executor, get_llm_response, prompt)
     return response.strip()
 
 # Endpoints
@@ -264,7 +296,7 @@ async def create_chatbot(chatbot: ChatbotCreate, background_tasks: BackgroundTas
     conn = get_db_connection()
     conn.execute(
         "INSERT INTO chatbots (id, name, website, status, last_updated, created_at, model) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        (chatbot_id, chatbot.name, chatbot.website, "training", now, now, DEFAULT_MODEL)
+        (chatbot_id, chatbot.name, chatbot.website, "training", now, now, OPENAI_MODEL)
     )
     conn.commit()
     conn.close()
@@ -280,7 +312,7 @@ async def create_chatbot(chatbot: ChatbotCreate, background_tasks: BackgroundTas
         monthlyMessages=0,
         lastUpdated=now,
         createdAt=now,
-        model=DEFAULT_MODEL
+        model=OPENAI_MODEL
     )
 
 @app.delete("/api/chatbots/{chatbot_id}")
