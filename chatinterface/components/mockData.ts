@@ -1,0 +1,201 @@
+import { makeId } from "./utils"
+
+export interface Message {
+    id: string;
+    role: "user" | "assistant";
+    content: string;
+    createdAt: string;
+    editedAt?: string;
+}
+
+export interface Conversation {
+    id: string;
+    title: string;
+    updatedAt: string;
+    messageCount: number;
+    preview: string;
+    pinned: boolean;
+    folder: string | null;
+    messages: Message[];
+}
+
+export interface Template {
+    id: string;
+    name: string;
+    content: string;
+    snippet: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Folder {
+    id: string;
+    name: string;
+}
+
+export const INITIAL_CONVERSATIONS: Conversation[] = [
+    {
+        id: "c1",
+        title: "Marketing plan for launch",
+        updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        messageCount: 12,
+        preview: "Drafting a 4-week GTM plan with channels, KPIs, and budget...",
+        pinned: true,
+        folder: "Work Projects",
+        messages: [
+            {
+                id: makeId("m"),
+                role: "user",
+                content: "Draft a 4-week GTM plan.",
+                createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+            },
+            {
+                id: makeId("m"),
+                role: "assistant",
+                content: "Sure — phases, owners, risks, and KPIs coming up.",
+                createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000 + 60000).toISOString(),
+            },
+        ],
+    },
+    {
+        id: "c2",
+        title: "Research: vector databases vs RAG",
+        updatedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+        messageCount: 22,
+        preview: "Compare pgvector, Milvus, and Weaviate. Cost + latency notes...",
+        pinned: false,
+        folder: "Code Reviews",
+        messages: [],
+    },
+    {
+        id: "c3",
+        title: "Trip checklist – Paris with family",
+        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+        messageCount: 9,
+        preview: "Packing list, museum tickets, metro pass options, and cafés...",
+        pinned: false,
+        folder: "Personal",
+        messages: [],
+    },
+    {
+        id: "c4",
+        title: "Refactor prompt templates for support",
+        updatedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+        messageCount: 17,
+        preview: "Turn macros into reusable templates with variables and guardrails...",
+        pinned: true,
+        folder: "Work Projects",
+        messages: [],
+    },
+    {
+        id: "c5",
+        title: "Bug triage notes",
+        updatedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+        messageCount: 6,
+        preview: "Priorities: login rate limit, streaming flicker, retry policy...",
+        pinned: false,
+        folder: "Work Projects",
+        messages: [],
+    },
+    {
+        id: "c6",
+        title: "AI agent: inbox clean-up flow",
+        updatedAt: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
+        messageCount: 31,
+        preview: "Classifier → summarize → bulk actions with undo and logs...",
+        pinned: false,
+        folder: "Work Projects",
+        messages: [],
+    },
+    {
+        id: "c7",
+        title: "Weekly review – personal goals",
+        updatedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+        messageCount: 8,
+        preview: "Sleep routine, gym cadence, reading list, dopamine detox...",
+        pinned: false,
+        folder: "Personal",
+        messages: [],
+    },
+    {
+        id: "c8",
+        title: "Code review: message composer",
+        updatedAt: new Date(Date.now() - 50 * 60 * 1000).toISOString(),
+        messageCount: 14,
+        preview: "Edge cases: IME input, paste images, drag-n-drop, retries...",
+        pinned: false,
+        folder: "Code Reviews",
+        messages: [],
+    },
+    {
+        id: "c9",
+        title: "LLM evals – rubric + dataset",
+        updatedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+        messageCount: 40,
+        preview: "BLEU vs human eval, task matrix, hallucination checks...",
+        pinned: false,
+        folder: "Work Projects",
+        messages: [],
+    },
+    {
+        id: "c10",
+        title: "Prompt library – onboarding",
+        updatedAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+        messageCount: 11,
+        preview: "Create intro prompts for HR, IT, and support with guardrails...",
+        pinned: false,
+        folder: "Work Projects",
+        messages: [],
+    },
+    {
+        id: "c11",
+        title: "Grocery budgeting – monthly",
+        updatedAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000).toISOString(),
+        messageCount: 5,
+        preview: "Track cost per meal, reduce waste, and plan bulk buys...",
+        pinned: false,
+        folder: "Personal",
+        messages: [],
+    },
+]
+
+export const INITIAL_TEMPLATES: Template[] = [
+    {
+        id: "t1",
+        name: "Bug Report",
+        content: `**Bug Report**\n\n**Description:**\nBrief description of the issue\n\n**Steps to Reproduce:**\n1. Step one\n2. Step two\n3. Step three\n\n**Expected Behavior:**\nWhat should happen\n\n**Actual Behavior:**\nWhat actually happens\n\n**Environment:**\n- Browser/OS:\n- Version:\n- Additional context:`,
+        snippet: "Structured bug report template with steps to reproduce...",
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+        id: "t2",
+        name: "Daily Standup",
+        content: `**Daily Standup Update**\n\n**Yesterday:**\n- Completed task A\n- Made progress on task B\n\n**Today:**\n- Plan to work on task C\n- Continue with task B\n\n**Blockers:**\n- None / List any blockers here\n\n**Notes:**\nAny additional context or updates`,
+        snippet: "Daily standup format with yesterday, today, and blockers...",
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+        updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+        id: "t3",
+        name: "Code Review",
+        content: `**Code Review Checklist**\n\n**Scope:**\nWhat changes are being reviewed\n\n**Key Areas to Focus:**\n- Logic correctness\n- Performance implications\n- Security considerations\n- Test coverage\n\n**Questions:**\n- Any specific concerns?\n- Performance impact?\n- Breaking changes?\n\n**Testing:**\n- Unit tests added/updated?\n- Manual testing completed?`,
+        snippet: "Comprehensive code review checklist and questions...",
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+        updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+        id: "t4",
+        name: "Meeting Notes",
+        content: `**Meeting Notes - [Meeting Title]**\n\n**Date:** [Date]\n**Attendees:** [List attendees]\n\n**Agenda:**\n1. Topic 1\n2. Topic 2\n3. Topic 3\n\n**Key Decisions:**\n- Decision 1\n- Decision 2\n\n**Action Items:**\n- [ ] Task 1 - @person - Due: [date]\n- [ ] Task 2 - @person - Due: [date]\n\n**Next Steps:**\nWhat happens next\n\n**Notes:**\nAdditional context and discussion points`,
+        snippet: "Meeting notes template with agenda, decisions, and action items...",
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+]
+
+export const INITIAL_FOLDERS: Folder[] = [
+    { id: "f1", name: "Work Projects" },
+    { id: "f2", name: "Personal" },
+    { id: "f3", name: "Code Reviews" },
+]
