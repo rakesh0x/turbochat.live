@@ -31,7 +31,7 @@ def close_pool():
 def init_db():
     """Create tables if they don't exist."""
     conn = get_db_connection()
-P    try:
+    try:
         cur = conn.cursor()
 
         # Chatbots table
