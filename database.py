@@ -6,10 +6,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+database_url = os.getenv('DATABASE_URL')
 
 # Connection pool (min 1 connection, max 10)
-pool = SimpleConnectionPool(1, 10, DATABASE_URL)
+pool = SimpleConnectionPool(1, 10, database_url)
 
 
 def get_db_connection():
@@ -17,7 +17,6 @@ def get_db_connection():
     conn = pool.getconn()
     conn.autocommit = False
     return conn
-
 
 def release_db_connection(conn):
     """Return a connection to the pool."""
@@ -32,7 +31,7 @@ def close_pool():
 def init_db():
     """Create tables if they don't exist."""
     conn = get_db_connection()
-    try:
+P    try:
         cur = conn.cursor()
 
         # Chatbots table
