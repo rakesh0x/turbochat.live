@@ -1,49 +1,79 @@
-import sqlite3
 import os
-from datetime import datetime
+import psycopg2
+from psycopg2.pool import SimpleConnectionPool
+from psycopg2.extras import RealDictCursor
+from dotenv import load_dotenv
 
-DB_PATH = os.getenv("DB_PATH", "chatbot.db")
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+# Connection pool (min 1 connection, max 10)
+pool = SimpleConnectionPool(1, 10, DATABASE_URL)
+
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    """Get a connection from the pool with RealDictCursor factory."""
+    conn = pool.getconn()
+    conn.autocommit = False
     return conn
 
+
+def release_db_connection(conn):
+    """Return a connection to the pool."""
+    pool.putconn(conn)
+
+
+def close_pool():
+    """Close all connections in the pool."""
+    pool.closeall()
+
+
 def init_db():
+    """Create tables if they don't exist."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # Chatbots table
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS chatbots (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        website TEXT NOT NULL,
-        status TEXT NOT NULL,
-        pages_scraped INTEGER DEFAULT 0,
-        monthly_messages INTEGER DEFAULT 0,
-        last_updated TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        model TEXT DEFAULT 'phi3',
-        color TEXT
-    )
-    ''')
-    
-    # Messages/Conversations table (optional but good for persistence)
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS messages (
-        id TEXT PRIMARY KEY,
-        chatbot_id TEXT NOT NULL,
-        role TEXT NOT NULL,
-        content TEXT NOT NULL,
-        timestamp TEXT NOT NULL,
-        conversation_id TEXT,
-        FOREIGN KEY (chatbot_id) REFERENCES chatbots (id)
-    )
-    ''')
-    
-    conn.commit()
-    conn.close()
+    try:
+        cur = conn.cursor()
+
+        # Chatbots table
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS chatbots (
+                id VARCHAR(255) PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                website VARCHAR(500) NOT NULL,
+                status VARCHAR(50) NOT NULL DEFAULT 'training',
+                pages_scraped INT NOT NULL DEFAULT 0,
+                monthly_messages INT NOT NULL DEFAULT 0,
+                last_updated TIMESTAMP NOT NULL,
+                created_at TIMESTAMP NOT NULL,
+                model VARCHAR(50) NOT NULL DEFAULT 'gpt-4o-mini',
+                color VARCHAR(50)
+            )
+        """)
+
+        # Messages table
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS messages (
+                id VARCHAR(255) PRIMARY KEY,
+                chatbot_id VARCHAR(255) NOT NULL,
+                role VARCHAR(50) NOT NULL,
+                content TEXT NOT NULL,
+                timestamp TIMESTAMP NOT NULL,
+                conversation_id VARCHAR(255),
+                FOREIGN KEY (chatbot_id) REFERENCES chatbots (id) ON DELETE CASCADE
+            )
+        """)
+
+        conn.commit()
+        cur.close()
+        print("Database tables initialized successfully.")
+    except Exception as e:
+        conn.rollback()
+        print(f"Error initializing database: {e}")
+        raise
+    finally:
+        release_db_connection(conn)
+
 
 if __name__ == "__main__":
     init_db()

@@ -11,12 +11,12 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
 from pinecone import Pinecone
+from psycopg2.extras import RealDictCursor
+from database import get_db_connection, release_db_connection, init_db, close_pool
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
-
-from database import get_db_connection, init_db
 from scraper.fetch_html import get_data
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
@@ -131,21 +131,27 @@ def train_chatbot_sync(chatbot_id: str, website: str):
             
         # Update database status
         conn = get_db_connection()
-        conn.execute(
-            "UPDATE chatbots SET status = ?, pages_scraped = ?, last_updated = ? WHERE id = ?",
-            ("active", len(chunks), datetime.now().isoformat(), chatbot_id)
-        )
-        conn.commit()
-        conn.close()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "UPDATE chatbots SET status = %s, pages_scraped = %s, last_updated = %s WHERE id = %s",
+                ("active", len(chunks), datetime.now().isoformat(), chatbot_id)
+            )
+            conn.commit()
+            cur.close()
+        finally:
+            release_db_connection(conn)
         print(f"Chatbot {chatbot_id} trained successfully with {len(chunks)} chunks.")
         
     except Exception as e:
         print(f"Error training chatbot {chatbot_id}: {e}")
         try:
             conn = get_db_connection()
-            conn.execute("UPDATE chatbots SET status = ? WHERE id = ?", ("error", chatbot_id))
+            cur = conn.cursor()
+            cur.execute("UPDATE chatbots SET status = %s WHERE id = %s", ("error", chatbot_id))
             conn.commit()
-            conn.close()
+            cur.close()
+            release_db_connection(conn)
         except:
             pass
 
@@ -268,8 +274,13 @@ Since you have no training data for this topic, politely say you don't know the 
 @app.get("/api/chatbots", response_model=List[ChatbotSchema])
 async def list_chatbots():
     conn = get_db_connection()
-    rows = conn.execute("SELECT * FROM chatbots").fetchall()
-    conn.close()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT * FROM chatbots")
+        rows = cur.fetchall()
+        cur.close()
+    finally:
+        release_db_connection(conn)
     
     return [
         ChatbotSchema(
@@ -279,8 +290,8 @@ async def list_chatbots():
             status=row["status"],
             pagesScraped=row["pages_scraped"],
             monthlyMessages=row["monthly_messages"],
-            lastUpdated=row["last_updated"],
-            createdAt=row["created_at"],
+            lastUpdated=str(row["last_updated"]),
+            createdAt=str(row["created_at"]),
             model=row["model"],
             color=row["color"]
         ) for row in rows
@@ -292,12 +303,16 @@ async def create_chatbot(chatbot: ChatbotCreate, background_tasks: BackgroundTas
     now = datetime.now().isoformat()
     
     conn = get_db_connection()
-    conn.execute(
-        "INSERT INTO chatbots (id, name, website, status, last_updated, created_at, model) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        (chatbot_id, chatbot.name, chatbot.website, "training", now, now, OPENAI_MODEL)
-    )
-    conn.commit()
-    conn.close()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO chatbots (id, name, website, status, last_updated, created_at, model) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            (chatbot_id, chatbot.name, chatbot.website, "training", now, now, OPENAI_MODEL)
+        )
+        conn.commit()
+        cur.close()
+    finally:
+        release_db_connection(conn)
     
     background_tasks.add_task(train_chatbot_task, chatbot_id, chatbot.website)
     
@@ -316,9 +331,13 @@ async def create_chatbot(chatbot: ChatbotCreate, background_tasks: BackgroundTas
 @app.delete("/api/chatbots/{chatbot_id}")
 async def delete_chatbot(chatbot_id: str):
     conn = get_db_connection()
-    conn.execute("DELETE FROM chatbots WHERE id = ?", (chatbot_id,))
-    conn.commit()
-    conn.close()
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM chatbots WHERE id = %s", (chatbot_id,))
+        conn.commit()
+        cur.close()
+    finally:
+        release_db_connection(conn)
     try:
         index.delete(delete_all=True, namespace=chatbot_id)
     except:
@@ -328,11 +347,19 @@ async def delete_chatbot(chatbot_id: str):
 @app.get("/api/stats")
 async def get_stats():
     conn = get_db_connection()
-    total_chatbots = conn.execute("SELECT COUNT(*) FROM chatbots").fetchone()[0]
-    total_pages = conn.execute("SELECT SUM(pages_scraped) FROM chatbots").fetchone()[0] or 0
-    total_messages = conn.execute("SELECT SUM(monthly_messages) FROM chatbots").fetchone()[0] or 0
-    training_bots = conn.execute("SELECT COUNT(*) FROM chatbots WHERE status = 'training'").fetchone()[0]
-    conn.close()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM chatbots")
+        total_chatbots = cur.fetchone()[0]
+        cur.execute("SELECT COALESCE(SUM(pages_scraped), 0) FROM chatbots")
+        total_pages = cur.fetchone()[0]
+        cur.execute("SELECT COALESCE(SUM(monthly_messages), 0) FROM chatbots")
+        total_messages = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM chatbots WHERE status = 'training'")
+        training_bots = cur.fetchone()[0]
+        cur.close()
+    finally:
+        release_db_connection(conn)
     
     return {
         "totalChatbots": total_chatbots,
@@ -366,27 +393,36 @@ async def chat(chatbot_id: str, request: ChatRequest):
         history = []
         if request.conversation_id:
             conn = get_db_connection()
-            rows = conn.execute(
-                "SELECT role, content FROM messages WHERE chatbot_id = ? AND conversation_id = ? ORDER BY timestamp DESC LIMIT 5",
-                (chatbot_id, request.conversation_id)
-            ).fetchall()
-            conn.close()
+            try:
+                cur = conn.cursor(cursor_factory=RealDictCursor)
+                cur.execute(
+                    "SELECT role, content FROM messages WHERE chatbot_id = %s AND conversation_id = %s ORDER BY timestamp DESC LIMIT 5",
+                    (chatbot_id, request.conversation_id)
+                )
+                rows = cur.fetchall()
+                cur.close()
+            finally:
+                release_db_connection(conn)
             history = [{"role": row["role"], "content": row["content"]} for row in reversed(rows)]
 
         response = await ask_question(chatbot_id, request.message, history)
         
         conn = get_db_connection()
-        conn.execute("UPDATE chatbots SET monthly_messages = monthly_messages + 1 WHERE id = ?", (chatbot_id,))
-        conn.execute(
-            "INSERT INTO messages (id, chatbot_id, role, content, timestamp, conversation_id) VALUES (?, ?, ?, ?, ?, ?)",
-            (str(uuid.uuid4()), chatbot_id, "user", request.message, datetime.now().isoformat(), request.conversation_id)
-        )
-        conn.execute(
-            "INSERT INTO messages (id, chatbot_id, role, content, timestamp, conversation_id) VALUES (?, ?, ?, ?, ?, ?)",
-            (str(uuid.uuid4()), chatbot_id, "assistant", response, datetime.now().isoformat(), request.conversation_id)
-        )
-        conn.commit()
-        conn.close()
+        try:
+            cur = conn.cursor()
+            cur.execute("UPDATE chatbots SET monthly_messages = monthly_messages + 1 WHERE id = %s", (chatbot_id,))
+            cur.execute(
+                "INSERT INTO messages (id, chatbot_id, role, content, timestamp, conversation_id) VALUES (%s, %s, %s, %s, %s, %s)",
+                (str(uuid.uuid4()), chatbot_id, "user", request.message, datetime.now().isoformat(), request.conversation_id)
+            )
+            cur.execute(
+                "INSERT INTO messages (id, chatbot_id, role, content, timestamp, conversation_id) VALUES (%s, %s, %s, %s, %s, %s)",
+                (str(uuid.uuid4()), chatbot_id, "assistant", response, datetime.now().isoformat(), request.conversation_id)
+            )
+            conn.commit()
+            cur.close()
+        finally:
+            release_db_connection(conn)
         
         return ChatResponse(
             response=response,
@@ -398,18 +434,28 @@ async def chat(chatbot_id: str, request: ChatRequest):
 @app.get("/api/chatbots/{chatbot_id}/conversation")
 async def get_conversation(chatbot_id: str, sessionId: str = "default"):
     conn = get_db_connection()
-    rows = conn.execute(
-        "SELECT * FROM messages WHERE chatbot_id = ? AND conversation_id = ? ORDER BY timestamp ASC",
-        (chatbot_id, sessionId)
-    ).fetchall()
-    conn.close()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            "SELECT * FROM messages WHERE chatbot_id = %s AND conversation_id = %s ORDER BY timestamp ASC",
+            (chatbot_id, sessionId)
+        )
+        rows = cur.fetchall()
+        cur.close()
+    finally:
+        release_db_connection(conn)
     
     return {
         "messages": [
-            {"id": row["id"], "role": row["role"], "content": row["content"], "timestamp": row["timestamp"]}
+            {"id": row["id"], "role": row["role"], "content": row["content"], "timestamp": str(row["timestamp"])}
             for row in rows
         ]
     }
+
+@app.on_event("shutdown")
+def shutdown_event():
+    close_pool()
+    print("Database connection pool closed.")
 
 @app.get("/health")
 async def health():
