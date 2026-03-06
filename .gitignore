@@ -171,3 +171,5 @@ ollama_log.txt
 !next-env.d.ts
 !components.json
 !.env.example
+.vercel
+.env*.local

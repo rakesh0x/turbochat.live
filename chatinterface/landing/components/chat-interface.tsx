@@ -30,8 +30,11 @@ import {
   Send,
   ArrowUpRight,
   MoreHorizontal,
-  ChevronDown
+  ChevronDown,
+  LogOut
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/landing/lib/supabase/client';
 import { Button } from '@/landing/components/ui/button';
 import { Input } from '@/landing/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/landing/components/ui/card';
@@ -148,6 +151,14 @@ export function ChatInterface() {
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState(null);
   const [selectedChatbot, setSelectedChatbot] = useState(null);
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/');
+    router.refresh();
+  };
 
   useEffect(() => {
     fetchData();
@@ -224,7 +235,10 @@ export function ChatInterface() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Logout</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -247,6 +261,10 @@ export function ChatInterface() {
             </Button>
             <Button variant="outline" size="sm">
               <span className="text-sm">Workspace</span>
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-destructive">
+              <LogOut className="w-4 h-4 mr-2" />
+              <span className="text-sm">Logout</span>
             </Button>
           </div>
         </header>
