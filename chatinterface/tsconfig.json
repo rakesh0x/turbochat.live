@@ -41,7 +41,6 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
-    "landing"
+    "node_modules"
   ]
 }
