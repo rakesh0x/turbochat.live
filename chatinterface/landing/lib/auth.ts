@@ -1,4 +1,4 @@
-import { createClient } from "@/landing/lib/supabase/client";
+import { createClient } from "./supabase/client";
 
 export async function signInWithGoogle() {
     const supabase = createClient();
