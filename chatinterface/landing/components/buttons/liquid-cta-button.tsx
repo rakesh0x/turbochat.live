@@ -3,8 +3,8 @@
 import type React from "react"
 
 import { ArrowRight } from "lucide-react"
-import { LiquidMetalBorder } from "@/components/ui/liquid-metal-border"
-import { cn } from "@/lib/utils"
+import { LiquidMetalBorder } from "@/landing/components/ui/liquid-metal-border"
+import { cn } from "@/landing/lib/utils"
 
 interface LiquidCtaButtonProps {
   children: React.ReactNode
