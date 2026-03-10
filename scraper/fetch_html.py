@@ -1,80 +1,72 @@
-import requests
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
+import os
+from firecrawl import FirecrawlApp
+from dotenv import load_dotenv
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (compatible; SimpleCrawler/1.0)"
-}
+load_dotenv()
 
-def clean_text(html):
-    soup = BeautifulSoup(html, "html.parser")
+def get_data(site_to_crawl: str, limit: int = 10) -> str:
+    """
+    Crawls a website using Firecrawl and returns combined markdown content.
+    
+    Args:
+        site_to_crawl (str): The starting URL to crawl.
+        limit (int): Maximum number of pages to crawl.
+        
+    Returns:
+        str: Combined markdown content of all crawled pages.
+    """
+    api_key = os.getenv("FIRECRAWL_API_KEY")
+    if not api_key:
+        print("Warning: FIRECRAWL_API_KEY not found in environment variables.")
+        return "Error: FIRECRAWL_API_KEY is missing. Please add it to your .env file."
 
-    for tag in soup(["script", "style", "nav", "footer", "header", "aside"]):
-        tag.decompose()
+    app = FirecrawlApp(api_key=api_key)
 
-    text = soup.get_text(separator=" ")
-    return " ".join(text.split())
+    print(f"Starting Firecrawl for: {site_to_crawl} (limit: {limit})")
+    
+    try:
+        # Firecrawl's crawl method in v4 returns a CrawlJob object.
+        # It handles multi-page crawling based on the limit and scrape options.
+        crawl_result = app.crawl(
+            site_to_crawl,
+            limit=limit,
+            scrape_options={
+                "formats": ["markdown"]
+            }
+        )
 
-def normalize_url(url):
-    parsed = urlparse(url)
-    return f"{parsed.scheme}://{parsed.netloc}{parsed.path}".rstrip("/")
+        # Each item in 'crawl_result.data' is a Document object in SDK v4.
+        pages = getattr(crawl_result, 'data', [])
+        
+        if not pages:
+            print(f"Firecrawl returned no data in results for {site_to_crawl}.")
+            return ""
+        
+        print(f"Crawled {len(pages)} pages using Firecrawl.")
 
+        all_text = []
+        for page in pages:
+            # Document objects have 'markdown' and 'metadata' attributes
+            url = "Unknown URL"
+            if hasattr(page, 'metadata') and isinstance(page.metadata, dict) and 'sourceURL' in page.metadata:
+                url = page.metadata['sourceURL']
+            elif hasattr(page, 'url'):
+                url = page.url
+                
+            content = getattr(page, 'markdown', '')
+            if content:
+                all_text.append(f"Source: {url}\n\n{content}")
 
-def crawl_site(start_url, max_pages=20):
-    visited = set()
-    to_visit = [normalize_url(start_url)]
-    data = []
+        return "\n\n---\n\n".join(all_text)
 
-    while to_visit and len(visited) < max_pages:
-        url = to_visit.pop(0)
-
-        if url in visited:
-            continue
-
-        try:
-            print(f"Crawling: {url}")
-            res = requests.get(url, headers=HEADERS, timeout=10)
-            res.raise_for_status()
-        except Exception as e:
-            print("Failed:", e)
-            continue
-
-        visited.add(url)
-
-        html = res.text
-        text = clean_text(html)
-
-        data.append({
-            "url": url,
-            "content": text
-        })
-
-        soup = BeautifulSoup(html, "html.parser")
-        for a in soup.find_all("a", href=True):
-            link = urljoin(url, a["href"])
-            link = normalize_url(link)
-
-            if link and link not in visited and link not in to_visit:
-                to_visit.append(link)
-
-    return data
-
-def get_data(site_to_crawl):
-    pages = crawl_site(site_to_crawl, max_pages=10)
-
-    print(f"\nCrawled {len(pages)} pages\n")
-
-    all_text = []
-
-    for page in pages:
-        print("URL:", page["url"])
-        print(page["content"][:10000])
-        print("-" * 100)
-
-        all_text.append(page["content"])
-
-    return "\n\n".join(all_text)
-
+    except Exception as e:
+        print(f"Firecrawl error: {e}")
+        return f"Error during crawling: {str(e)}"
 
 if __name__ == "__main__":
-    pages = get_data()
+    # Test block
+    test_url = "https://example.com"
+    print("Testing Firecrawl scraper...")
+    data = get_data(test_url, limit=1)
+    print("Result preview:")
+    print(data[:500])

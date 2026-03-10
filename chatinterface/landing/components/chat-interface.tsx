@@ -415,46 +415,74 @@ function CreateChatbotPage({ onComplete }: { onComplete: () => void }) {
   const [step, setStep] = useState(1);
   const [url, setUrl] = useState('');
   const [chatbotName, setChatbotName] = useState('');
+  const [crawlLimit, setCrawlLimit] = useState(10);
   const [progress, setProgress] = useState(0);
   const [logs, setLogs] = useState<Array<{ text: string; timestamp: string }>>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const simulateScraping = async () => {
+  const startRealTraining = async () => {
     setIsProcessing(true);
-    const steps = [
-      { message: 'Validating URL...', progress: 10 },
-      { message: 'Discovering pages...', progress: 25 },
-      { message: 'Scraping content from 23 pages...', progress: 50 },
-      { message: 'Processing and cleaning data...', progress: 70 },
-      { message: 'Creating embeddings...', progress: 85 },
-      { message: 'Training chatbot model...', progress: 95 },
-      { message: 'Finalizing chatbot...', progress: 100 },
-    ];
-
-    for (const step of steps) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setLogs(prev => [...prev, { text: step.message, timestamp: new Date().toLocaleTimeString() }]);
-      setProgress(step.progress);
-    }
+    setLogs([{ text: 'Initializing Firecrawl...', timestamp: new Date().toLocaleTimeString() }]);
+    setProgress(10);
 
     try {
+      // 1. Create the chatbot (starts background training)
       const res = await fetch('/api/chatbots', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: chatbotName, website: url })
+        body: JSON.stringify({ 
+          name: chatbotName, 
+          website: url,
+          limit: crawlLimit 
+        })
       });
 
       if (!res.ok) throw new Error('Failed to create chatbot');
+      const newBot = await res.json();
+      const botId = newBot.id;
 
-      setStep(3);
-      toast.success('Chatbot created successfully!');
+      setLogs(prev => [...prev, { text: 'Bot created. Starting site crawl...', timestamp: new Date().toLocaleTimeString() }]);
+      setProgress(30);
 
-      setTimeout(() => {
-        onComplete();
+      // 2. Poll for status
+      let attempts = 0;
+      const pollInterval = setInterval(async () => {
+        attempts++;
+        try {
+          const statusRes = await fetch('/api/chatbots');
+          const chatbots = await statusRes.json();
+          const currentBot = chatbots.find((b: any) => b.id === botId);
+
+          if (!currentBot) return;
+
+          if (currentBot.status === 'active') {
+            clearInterval(pollInterval);
+            setLogs(prev => [...prev, { text: `Success! Crawled ${currentBot.pagesScraped} pages.`, timestamp: new Date().toLocaleTimeString() }]);
+            setProgress(100);
+            setIsProcessing(false);
+            setStep(3);
+            setTimeout(onComplete, 3000);
+          } else if (currentBot.status === 'error') {
+            clearInterval(pollInterval);
+            setLogs(prev => [...prev, { text: 'Error during crawling. Please check logs.', timestamp: new Date().toLocaleTimeString() }]);
+            setIsProcessing(false);
+            toast.error('Training failed.');
+          } else {
+            // Still training
+            const dynamicProgress = Math.min(95, 30 + (attempts * 2));
+            setProgress(dynamicProgress);
+            if (attempts % 5 === 0) {
+              setLogs(prev => [...prev, { text: 'Firecrawl is still working...', timestamp: new Date().toLocaleTimeString() }]);
+            }
+          }
+        } catch (err) {
+          console.error('Polling error:', err);
+        }
       }, 3000);
+
     } catch (error) {
+      console.error('Failed to start training:', error);
       toast.error('Failed to create chatbot');
-    } finally {
       setIsProcessing(false);
     }
   };
@@ -497,7 +525,7 @@ function CreateChatbotPage({ onComplete }: { onComplete: () => void }) {
               <Input
                 placeholder="https://example.com"
                 value={url}
-                onChange={(e) => setUrl(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUrl(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -505,18 +533,31 @@ function CreateChatbotPage({ onComplete }: { onComplete: () => void }) {
               <Input
                 placeholder="Customer Support Bot"
                 value={chatbotName}
-                onChange={(e) => setChatbotName(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setChatbotName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label>Crawl Limit (Pages)</Label>
+                <span className="text-xs font-mono text-muted-foreground">{crawlLimit} pages</span>
+              </div>
+              <Input
+                type="number"
+                min={1}
+                max={100}
+                value={crawlLimit}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCrawlLimit(parseInt(e.target.value) || 10)}
               />
             </div>
             <div className="p-4 rounded-lg border bg-muted/50">
               <p className="text-sm text-muted-foreground">
-                We'll scrape your website, process the content, and train an AI model. This usually takes 2-5 minutes.
+                Powered by Firecrawl. We'll crawl up to {crawlLimit} pages, extract Markdown content, and train your AI.
               </p>
             </div>
           </CardContent>
           <CardContent className="pt-0">
             <Button
-              onClick={() => { setStep(2); setTimeout(simulateScraping, 500); }}
+              onClick={() => { setStep(2); startRealTraining(); }}
               disabled={!url || !chatbotName}
               className="w-full"
             >

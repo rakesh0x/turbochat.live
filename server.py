@@ -70,7 +70,7 @@ class ChatbotBase(BaseModel):
     website: str
 
 class ChatbotCreate(ChatbotBase):
-    pass
+    limit: Optional[int] = 10
 
 class ChatbotSchema(ChatbotBase):
     id: str
@@ -98,13 +98,14 @@ def clean_text(text: str) -> str:
     text = re.sub(r"[^\x00-\x7F]+", "", text)
     return text
 
-def train_chatbot_sync(chatbot_id: str, website: str):
+def train_chatbot_sync(chatbot_id: str, website: str, limit: int = 10):
     """Sync task for threadpool to scrape and upsert."""
     try:
-        print(f"Starting training for {chatbot_id} at {website}")
-        raw_text = get_data(website)
+        print(f"Starting training for {chatbot_id} at {website} with limit {limit}", flush=True)
+        raw_text = get_data(website, limit=limit)
         
-        splitter = RecursiveCharacterTextSplitter(
+        splitter = RecursiveCharacterTextSplitter.from_language(
+            language="markdown",
             chunk_size=500,
             chunk_overlap=50,
         )
@@ -141,7 +142,7 @@ def train_chatbot_sync(chatbot_id: str, website: str):
             cur.close()
         finally:
             release_db_connection(conn)
-        print(f"Chatbot {chatbot_id} trained successfully with {len(chunks)} chunks.")
+        print(f"Chatbot {chatbot_id} trained successfully with {len(chunks)} chunks.", flush=True)
         
     except Exception as e:
         print(f"Error training chatbot {chatbot_id}: {e}")
@@ -155,10 +156,10 @@ def train_chatbot_sync(chatbot_id: str, website: str):
         except:
             pass
 
-async def train_chatbot_task(chatbot_id: str, website: str):
+async def train_chatbot_task(chatbot_id: str, website: str, limit: int = 10):
     """Wrapper to run the sync task in a thread."""
     loop = asyncio.get_event_loop()
-    await loop.run_in_executor(executor, train_chatbot_sync, chatbot_id, website)
+    await loop.run_in_executor(executor, train_chatbot_sync, chatbot_id, website, limit)
 
 def get_openai_response(prompt: str, model: str = OPENAI_MODEL) -> str:
     """Sync helper for OpenAI GPT-4 call."""
@@ -314,7 +315,7 @@ async def create_chatbot(chatbot: ChatbotCreate, background_tasks: BackgroundTas
     finally:
         release_db_connection(conn)
     
-    background_tasks.add_task(train_chatbot_task, chatbot_id, chatbot.website)
+    background_tasks.add_task(train_chatbot_task, chatbot_id, chatbot.website, chatbot.limit or 10)
     
     return ChatbotSchema(
         id=chatbot_id,
