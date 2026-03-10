@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import { Zap, Globe, Code2, Sparkles, ArrowRight, MessageSquare } from "lucide-react"
-import { Card, CardContent } from "@/landing/components/ui/card"
+import { Card, CardContent } from "../ui/card"
 
 const integrationLogos = [
   { name: "WordPress" },

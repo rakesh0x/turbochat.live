@@ -1,6 +1,6 @@
-import { createClient } from "@/lib/supabase/client"
+import { createClient } from "../../lib/supabase/client"
 import { redirect } from "next/navigation"
-import { ChatInterface } from "@/components/chat-interface"
+import { ChatInterface } from "../../components/chat-interface"
 
 export default async function DashboardPage() {
     const supabase = await createClient()

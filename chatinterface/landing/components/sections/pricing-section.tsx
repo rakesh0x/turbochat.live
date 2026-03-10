@@ -2,7 +2,7 @@
 
 import { Check } from "lucide-react"
 import Link from "next/link"
-import { signInWithGoogle } from "@/landing/lib/auth"
+import { signInWithGoogle } from "../../lib/auth"
 
 const plans = [
   {

@@ -1,9 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { LiquidCtaButton } from "@/landing/components/buttons/liquid-cta-button"
+import { LiquidCtaButton } from "../buttons/liquid-cta-button"
 import { Sparkles, ExternalLink } from "lucide-react"
-import { Input } from "@/landing/components/ui/input"
+import { Input } from "../ui/input"
 
 export function HeroSection() {
   return (
