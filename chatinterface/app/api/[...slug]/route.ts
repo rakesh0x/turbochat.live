@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:8000';
+const BACKEND_URL = process.env.BACKEND_URL || (process.env.NODE_ENV === 'production' ? 'https://fine-tuning-426l.onrender.com' : 'http://127.0.0.1:8000');
 
 async function proxyRequest(request: NextRequest, slug: string[]) {
   const url = new URL(request.url);
@@ -9,7 +9,6 @@ async function proxyRequest(request: NextRequest, slug: string[]) {
 
   try {
     const headers = new Headers();
-    // Copy only essential headers
     const allowedHeaders = ['content-type', 'accept', 'authorization'];
     request.headers.forEach((value, key) => {
       if (allowedHeaders.includes(key.toLowerCase())) {

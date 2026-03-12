@@ -22,7 +22,7 @@ export async function POST(req: Request) {
       const creditsToAdd = planName.toLowerCase().includes("pro") ? 50 : 10;
 
       // Call internal python backend to update credits
-      const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:8000';
+      const BACKEND_URL = process.env.BACKEND_URL || (process.env.NODE_ENV === 'production' ? 'https://fine-tuning-426l.onrender.com' : 'http://127.0.0.1:8000');
       const updateRes = await fetch(`${BACKEND_URL}/api/internal/webhook/dodo`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

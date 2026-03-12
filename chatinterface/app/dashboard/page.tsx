@@ -11,7 +11,11 @@ export default async function DashboardPage() {
     }
 
     // Check user plan via backend
-    const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:8000';
+    const BACKEND_URL = process.env.BACKEND_URL || (process.env.NODE_ENV === 'production' ? 'https://fine-tuning-426l.onrender.com' : 'http://127.0.0.1:8000');
+    
+    let shouldRedirectToPricing = false;
+    let backendDown = false;
+
     try {
         const res = await fetch(`${BACKEND_URL}/api/users/me`, {
             headers: {
@@ -19,19 +23,28 @@ export default async function DashboardPage() {
             },
             cache: 'no-store'
         });
+        
         if (!res.ok) {
             console.error("Failed to fetch user data, returning to home.");
-            return redirect("/?error=backend_down");
-        }
-        
-        const userData = await res.json();
-        // Redirect logic: no plan AND 0 credits
-        if (userData.plan === 'free' && userData.credits <= 0) {
-             return redirect("/#pricing");
+            backendDown = true;
+        } else {
+            const userData = await res.json();
+            // Redirect logic: no plan AND 0 credits
+            if (userData.plan === 'free' && userData.credits <= 0) {
+                 shouldRedirectToPricing = true;
+            }
         }
     } catch (error) {
         console.error("Dashboard server validation error:", error);
+        backendDown = true;
+    }
+
+    if (backendDown) {
         return redirect("/?error=backend_down");
+    }
+
+    if (shouldRedirectToPricing) {
+        return redirect("/#pricing");
     }
 
     return (
