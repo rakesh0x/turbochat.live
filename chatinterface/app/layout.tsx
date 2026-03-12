@@ -4,7 +4,7 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'Enclose AI - Premium SaaS Dashboard',
+  title: 'SiteChat - Modern Way to Use ChatBots',
   description: 'Build, train, and deploy intelligent AI chatbots for your website',
 };
 

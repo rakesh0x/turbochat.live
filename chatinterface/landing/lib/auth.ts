@@ -1,7 +1,13 @@
 import { createClient } from "./supabase/client";
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(router?: any) {
     const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (session && router) {
+        router.push("/dashboard")
+    }
+
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {

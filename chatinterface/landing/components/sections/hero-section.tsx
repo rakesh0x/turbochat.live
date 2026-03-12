@@ -50,10 +50,10 @@ export function HeroSection() {
         </div>
 
         {/* Hero Video - Premium Showcase */}
-        <div className="mt-20 relative group">
+        <div className="mt-17 relative group">
           {/* Decorative glow behind the video */}
           <div className="absolute -inset-1 bg-gradient-to-r from-zinc-800 via-zinc-700 to-zinc-800 rounded-2xl blur-2xl opacity-20 group-hover:opacity-30 transition duration-1000" />
-          
+
           <div className="relative rounded-2xl border border-zinc-800/50 bg-zinc-900/50 overflow-hidden shadow-2xl backdrop-blur-sm">
             <video
               className="w-full h-auto max-h-[600px] object-cover"
@@ -65,7 +65,7 @@ export function HeroSection() {
               <source src="/hero-video.mp4" type="video/mp4" />
               Your browser does not support the video tag.
             </video>
-            
+
             {/* Overlay gradient for depth */}
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/20 to-transparent pointer-events-none" />
           </div>
