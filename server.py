@@ -2,6 +2,7 @@
 import os
 import requests
 import json
+import base64
 import unicodedata
 import re
 import uuid
@@ -57,12 +58,60 @@ if GEMINI_API_KEY:
 # Provider Logic
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai").lower()
 
+# Supabase setup
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+
 # Pinecone setup
 pc = Pinecone(api_key=PINECONE_API_KEY)
 index = pc.Index(INDEX_NAME)
 
 # Thread pool for sync tasks
 executor = ThreadPoolExecutor(max_workers=10)
+
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends
+
+security = HTTPBearer()
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
+    try:
+        # Decode the JWT payload without verifying signature (since we don't have JWT_SECRET)
+        payload = token.split(".")[1]
+        payload += "=" * ((4 - len(payload) % 4) % 4)
+        decoded = base64.urlsafe_b64decode(payload).decode("utf-8")
+        user_data = json.loads(decoded)
+        user_id = user_data["sub"]
+        email = user_data.get("email", "")
+    except Exception as e:
+        print(f"JWT Decode Error: {e}")
+        raise HTTPException(status_code=401, detail="Invalid token architecture")
+
+    # Ensure user exists in our DB
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+        user_row = cur.fetchone()
+        
+        if not user_row:
+            # Create user if logging in for the first time
+            cur.execute(
+                "INSERT INTO users (id, email, credits, plan) VALUES (%s, %s, %s, %s) RETURNING *",
+                (user_id, email, 0, 'free')
+            )
+            user_row = cur.fetchone()
+        conn.commit()
+        cur.close()
+        return user_row
+    except Exception as e:
+        print(f"Auth DB Error: {e}")
+        conn.rollback()
+        raise HTTPException(status_code=500, detail="Database error during authentication")
+    finally:
+        release_db_connection(conn)
+
 
 # Models
 class ChatbotBase(BaseModel):
@@ -249,9 +298,11 @@ Search Query:"""
 
     # 3. Strict Prompting
     if context.strip():
-        prompt = f"""You are Enclose AI Assistant. Answer the question ONLY using the Context below.
+        prompt = f"""You are SiteChat AI, A SaaS, which just takes the website url and trains the AI assistant on the website content.
 Rules:
-1. If the answer is not in the context, say "I haven't been trained on this yet."
+1. try every possible way to get answer as fast as possible"
+2. try every possible way to answer the question
+3. if you don't have the answer, try to get the context of the data 
 2. Do NOT use outside knowledge.
 3. Keep it brief and factual.
 
@@ -273,11 +324,11 @@ Since you have no training data for this topic, politely say you don't know the 
 
 # Endpoints
 @app.get("/api/chatbots", response_model=List[ChatbotSchema])
-async def list_chatbots():
+async def list_chatbots(user: dict = Depends(get_current_user)):
     conn = get_db_connection()
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("SELECT * FROM chatbots")
+        cur.execute("SELECT * FROM chatbots WHERE user_id = %s", (user["id"],))
         rows = cur.fetchall()
         cur.close()
     finally:
@@ -299,16 +350,25 @@ async def list_chatbots():
     ]
 
 @app.post("/api/chatbots", response_model=ChatbotSchema)
-async def create_chatbot(chatbot: ChatbotCreate, background_tasks: BackgroundTasks):
+async def create_chatbot(chatbot: ChatbotCreate, background_tasks: BackgroundTasks, user: dict = Depends(get_current_user)):
+    if user["credits"] <= 0:
+        raise HTTPException(status_code=402, detail="Insufficient credits. Please upgrade your plan.")
+
     chatbot_id = str(uuid.uuid4())
     now = datetime.now().isoformat()
     
     conn = get_db_connection()
     try:
         cur = conn.cursor()
+        # Deduct 1 credit for creating a chatbot
+        cur.execute("UPDATE users SET credits = credits - 1 WHERE id = %s AND credits > 0", (user["id"],))
+        if cur.rowcount == 0:
+             conn.rollback()
+             raise HTTPException(status_code=402, detail="Insufficient credits.")
+             
         cur.execute(
-            "INSERT INTO chatbots (id, name, website, status, last_updated, created_at, model) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-            (chatbot_id, chatbot.name, chatbot.website, "training", now, now, OPENAI_MODEL)
+            "INSERT INTO chatbots (id, user_id, name, website, status, last_updated, created_at, model) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+            (chatbot_id, user["id"], chatbot.name, chatbot.website, "training", now, now, OPENAI_MODEL)
         )
         conn.commit()
         cur.close()
@@ -330,11 +390,11 @@ async def create_chatbot(chatbot: ChatbotCreate, background_tasks: BackgroundTas
     )
 
 @app.delete("/api/chatbots/{chatbot_id}")
-async def delete_chatbot(chatbot_id: str):
+async def delete_chatbot(chatbot_id: str, user: dict = Depends(get_current_user)):
     conn = get_db_connection()
     try:
         cur = conn.cursor()
-        cur.execute("DELETE FROM chatbots WHERE id = %s", (chatbot_id,))
+        cur.execute("DELETE FROM chatbots WHERE id = %s AND user_id = %s", (chatbot_id, user["id"]))
         conn.commit()
         cur.close()
     finally:
@@ -346,17 +406,17 @@ async def delete_chatbot(chatbot_id: str):
     return {"status": "success"}
 
 @app.get("/api/stats")
-async def get_stats():
+async def get_stats(user: dict = Depends(get_current_user)):
     conn = get_db_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM chatbots")
+        cur.execute("SELECT COUNT(*) FROM chatbots WHERE user_id = %s", (user["id"],))
         total_chatbots = cur.fetchone()[0]
-        cur.execute("SELECT COALESCE(SUM(pages_scraped), 0) FROM chatbots")
+        cur.execute("SELECT COALESCE(SUM(pages_scraped), 0) FROM chatbots WHERE user_id = %s", (user["id"],))
         total_pages = cur.fetchone()[0]
-        cur.execute("SELECT COALESCE(SUM(monthly_messages), 0) FROM chatbots")
+        cur.execute("SELECT COALESCE(SUM(monthly_messages), 0) FROM chatbots WHERE user_id = %s", (user["id"],))
         total_messages = cur.fetchone()[0]
-        cur.execute("SELECT COUNT(*) FROM chatbots WHERE status = 'training'")
+        cur.execute("SELECT COUNT(*) FROM chatbots WHERE status = 'training' AND user_id = %s", (user["id"],))
         training_bots = cur.fetchone()[0]
         cur.close()
     finally:
@@ -368,6 +428,33 @@ async def get_stats():
         "totalMessages": total_messages,
         "trainingBots": training_bots,
         "activeBots": total_chatbots - training_bots
+    }
+
+class WebhookPayload(BaseModel):
+    user_id: str
+    plan: str
+    credits: int
+
+@app.post("/api/internal/webhook/dodo")
+async def dodo_webhook_internal(payload: WebhookPayload):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("UPDATE users SET plan = %s, credits = credits + %s WHERE id = %s", 
+                   (payload.plan, payload.credits, payload.user_id))
+        conn.commit()
+        cur.close()
+        return {"status": "success"}
+    finally:
+        release_db_connection(conn)
+
+@app.get("/api/users/me")
+async def get_user_me(user: dict = Depends(get_current_user)):
+    return {
+        "id": user["id"],
+        "email": user["email"],
+        "credits": user["credits"],
+        "plan": user["plan"]
     }
 
 @app.get("/api/analytics")

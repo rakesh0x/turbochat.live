@@ -86,7 +86,7 @@ export function PricingSection() {
     if (isLoading) return
 
     // TEMPORARY BYPASS FOR TESTING
-    const mockUser = { email: "test@example.com", user_metadata: { full_name: "Test User" } }
+    const mockUser = { id: "test-user-id", email: "test@example.com", user_metadata: { full_name: "Test User" } }
     const currentUser = user || mockUser
 
     if (plan.name === "Pro" && plan.productId) {
@@ -101,6 +101,9 @@ export function PricingSection() {
           customer: {
             email: currentUser.email,
             name: currentUser.user_metadata?.full_name || currentUser.email,
+          },
+          metadata: {
+            user_id: currentUser.id,
           },
           return_url: window.location.origin,
         }

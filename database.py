@@ -34,10 +34,21 @@ def init_db():
     try:
         cur = conn.cursor()
 
+        # Users table
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id VARCHAR(255) PRIMARY KEY,
+                email VARCHAR(255) NOT NULL,
+                credits INT NOT NULL DEFAULT 0,
+                plan VARCHAR(50) NOT NULL DEFAULT 'free'
+            )
+        """)
+
         # Chatbots table
         cur.execute("""
             CREATE TABLE IF NOT EXISTS chatbots (
                 id VARCHAR(255) PRIMARY KEY,
+                user_id VARCHAR(255) NOT NULL,
                 name VARCHAR(255) NOT NULL,
                 website VARCHAR(500) NOT NULL,
                 status VARCHAR(50) NOT NULL DEFAULT 'training',
@@ -46,7 +57,8 @@ def init_db():
                 last_updated TIMESTAMP NOT NULL,
                 created_at TIMESTAMP NOT NULL,
                 model VARCHAR(50) NOT NULL DEFAULT 'gpt-4o-mini',
-                color VARCHAR(50)
+                color VARCHAR(50),
+                FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
             )
         """)
 
@@ -55,11 +67,13 @@ def init_db():
             CREATE TABLE IF NOT EXISTS messages (
                 id VARCHAR(255) PRIMARY KEY,
                 chatbot_id VARCHAR(255) NOT NULL,
+                user_id VARCHAR(255) NOT NULL,
                 role VARCHAR(50) NOT NULL,
                 content TEXT NOT NULL,
                 timestamp TIMESTAMP NOT NULL,
                 conversation_id VARCHAR(255),
-                FOREIGN KEY (chatbot_id) REFERENCES chatbots (id) ON DELETE CASCADE
+                FOREIGN KEY (chatbot_id) REFERENCES chatbots (id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
             )
         """)
 

@@ -151,6 +151,7 @@ export function ChatInterface() {
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState(null);
   const [selectedChatbot, setSelectedChatbot] = useState(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -166,19 +167,29 @@ export function ChatInterface() {
 
   const fetchData = async () => {
     try {
-      const [chatbotsRes, statsRes, analyticsRes] = await Promise.all([
-        fetch('/api/chatbots'),
-        fetch('/api/stats'),
-        fetch('/api/analytics')
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) return;
+
+      const headers = { 'Authorization': `Bearer ${session.access_token}` };
+
+      const [chatbotsRes, statsRes, analyticsRes, userRes] = await Promise.all([
+        fetch('/api/chatbots', { headers }),
+        fetch('/api/stats', { headers }),
+        fetch('/api/analytics', { headers }),
+        fetch('/api/users/me', { headers })
       ]);
 
       const chatbotsData = await chatbotsRes.json();
       const statsData = await statsRes.json();
       const analyticsData = await analyticsRes.json();
+      const userData = await userRes.json();
 
       setChatbots(Array.isArray(chatbotsData) ? chatbotsData : []);
       setStats(statsData);
       setAnalytics(analyticsData);
+      setUserProfile(userData);
     } catch (error) {
       console.error('Failed to fetch data:', error);
       toast.error('Failed to load data');
@@ -228,7 +239,7 @@ export function ChatInterface() {
                 </Avatar>
                 <div className="flex-1 text-left min-w-0">
                   <div className="text-sm font-medium truncate">Rakesh Jha</div>
-                  <div className="text-xs text-muted-foreground truncate">john@example.com</div>
+                  <div className="text-xs text-muted-foreground truncate">{userProfile?.plan || 'Free'} Plan • {userProfile?.credits || 0} Credits</div>
                 </div>
                 <ChevronDown className="w-4 h-4 ml-2" />
               </Button>
@@ -259,8 +270,8 @@ export function ChatInterface() {
               <Bell className="w-4 h-4" />
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full" />
             </Button>
-            <Button variant="outline" size="sm">
-              <span className="text-sm">Workspace</span>
+            <Button variant="outline" size="sm" onClick={() => router.push('/#pricing')}>
+              <span className="text-sm text-yellow-500 font-bold">{userProfile?.credits || 0} Credits</span>
             </Button>
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-destructive">
               <LogOut className="w-4 h-4 mr-2" />
@@ -426,10 +437,18 @@ function CreateChatbotPage({ onComplete }: { onComplete: () => void }) {
     setProgress(10);
 
     try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) return;
+
       // 1. Create the chatbot (starts background training)
       const res = await fetch('/api/chatbots', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}` 
+        },
         body: JSON.stringify({ 
           name: chatbotName, 
           website: url,
@@ -437,7 +456,14 @@ function CreateChatbotPage({ onComplete }: { onComplete: () => void }) {
         })
       });
 
-      if (!res.ok) throw new Error('Failed to create chatbot');
+      if (!res.ok) {
+        if (res.status === 402) {
+          toast.error('Insufficient credits. Please upgrade your plan.');
+          setIsProcessing(false);
+          return;
+        }
+        throw new Error('Failed to create chatbot');
+      }
       const newBot = await res.json();
       const botId = newBot.id;
 
@@ -449,7 +475,9 @@ function CreateChatbotPage({ onComplete }: { onComplete: () => void }) {
       const pollInterval = setInterval(async () => {
         attempts++;
         try {
-          const statusRes = await fetch('/api/chatbots');
+          const statusRes = await fetch('/api/chatbots', {
+            headers: { 'Authorization': `Bearer ${session.access_token}` }
+          });
           const chatbots = await statusRes.json();
           const currentBot = chatbots.find((b: any) => b.id === botId);
 
@@ -655,7 +683,13 @@ function MyChatbotsPage({ chatbots, loading, onSelectChatbot, onRefresh }: MyCha
 
   const handleDelete = async () => {
     try {
-      await fetch(`/api/chatbots/${chatbotToDelete}`, { method: 'DELETE' });
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      await fetch(`/api/chatbots/${chatbotToDelete}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${session?.access_token}` }
+      });
       toast.success('Chatbot deleted');
       onRefresh();
     } catch (error) {
