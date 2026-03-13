@@ -34,7 +34,7 @@ import {
   LogOut
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '../lib/supabase/client';
+import { signOut, useSession } from "next-auth/react";
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -153,32 +153,27 @@ export function ChatInterface() {
   const [selectedChatbot, setSelectedChatbot] = useState(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const router = useRouter();
+  const { data: session } = useSession();
 
   const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push('/');
-    router.refresh();
+    await signOut({ callbackUrl: '/' });
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (session) {
+      fetchData();
+    }
+  }, [session]);
 
   const fetchData = async () => {
     try {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      
       if (!session) return;
 
-      const headers = { 'Authorization': `Bearer ${session.access_token}` };
-
       const [chatbotsRes, statsRes, analyticsRes, userRes] = await Promise.all([
-        fetch('/api/chatbots', { headers }),
-        fetch('/api/stats', { headers }),
-        fetch('/api/analytics', { headers }),
-        fetch('/api/users/me', { headers })
+        fetch('/api/chatbots'),
+        fetch('/api/stats'),
+        fetch('/api/analytics'),
+        fetch('/api/users/me')
       ]);
 
       const chatbotsData = await chatbotsRes.json();
@@ -430,6 +425,7 @@ function CreateChatbotPage({ onComplete }: { onComplete: () => void }) {
   const [progress, setProgress] = useState(0);
   const [logs, setLogs] = useState<Array<{ text: string; timestamp: string }>>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const { data: session } = useSession();
 
   const startRealTraining = async () => {
     setIsProcessing(true);
@@ -437,17 +433,13 @@ function CreateChatbotPage({ onComplete }: { onComplete: () => void }) {
     setProgress(10);
 
     try {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      
       if (!session) return;
 
       // 1. Create the chatbot (starts background training)
       const res = await fetch('/api/chatbots', {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}` 
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ 
           name: chatbotName, 
@@ -475,9 +467,7 @@ function CreateChatbotPage({ onComplete }: { onComplete: () => void }) {
       const pollInterval = setInterval(async () => {
         attempts++;
         try {
-          const statusRes = await fetch('/api/chatbots', {
-            headers: { 'Authorization': `Bearer ${session.access_token}` }
-          });
+          const statusRes = await fetch('/api/chatbots');
           const chatbots = await statusRes.json();
           const currentBot = chatbots.find((b: any) => b.id === botId);
 
@@ -680,15 +670,12 @@ interface MyChatbotsPageProps {
 function MyChatbotsPage({ chatbots, loading, onSelectChatbot, onRefresh }: MyChatbotsPageProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [chatbotToDelete, setChatbotToDelete] = useState<string | null>(null);
+  const { data: session } = useSession();
 
   const handleDelete = async () => {
     try {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      
       await fetch(`/api/chatbots/${chatbotToDelete}`, { 
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${session?.access_token}` }
+        method: 'DELETE'
       });
       toast.success('Chatbot deleted');
       onRefresh();

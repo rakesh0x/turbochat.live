@@ -1,26 +1,10 @@
-import { createClient } from "./supabase/client";
+import { signIn, signOut } from "next-auth/react";
 
 export async function signInWithGoogle(router?: any) {
-    const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    // NextAuth handles the redirect to standard callback internally
+    await signIn("google", { callbackUrl: "/dashboard" });
+}
 
-    if (session && router) {
-        router.push("/dashboard")
-    }
-
-    const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
-        },
-    });
-
-    if (error) {
-        console.error("OAuth error:", error.message);
-        return;
-    }
-
-    if (data.url) {
-        window.location.href = data.url;
-    }
+export async function signOutUser() {
+    await signOut({ callbackUrl: "/" });
 }

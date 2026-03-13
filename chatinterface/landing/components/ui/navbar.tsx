@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { signInWithGoogle } from "../../lib/auth"
-import { createClient } from "../../lib/supabase/client"
+import { useSession } from "next-auth/react"
 
 const navLinks = [
   { href: "#features", label: "Features" },
@@ -14,22 +14,8 @@ const navLinks = [
 
 export function Navbar() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
-  const supabase = createClient()
-
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-    }
-    getUser()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
+  const { data: session } = useSession()
+  const user = session?.user;
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 p-4">

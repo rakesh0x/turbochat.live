@@ -1,11 +1,11 @@
-import { createClient } from "@/landing/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { ChatInterface } from "@/landing/components/chat-interface"
+import { getServerSession } from "next-auth/next"
+import { GET } from "@/app/api/auth/[...nextauth]/route"
 
 export default async function DashboardPage() {
-    const supabase = await createClient()
+    const session: any = await getServerSession(GET as any)
 
-    const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
         return redirect("/")
     }
@@ -13,13 +13,12 @@ export default async function DashboardPage() {
     // Check user plan via backend
     const BACKEND_URL = process.env.BACKEND_URL || (process.env.NODE_ENV === 'production' ? 'https://fine-tuning-426l.onrender.com' : 'http://127.0.0.1:8000');
     
-    let shouldRedirectToPricing = false;
     let backendDown = false;
 
     try {
         const res = await fetch(`${BACKEND_URL}/api/users/me`, {
             headers: {
-                'Authorization': `Bearer ${session.access_token}`
+                'Authorization': `Bearer ${session.accessToken}`
             },
             cache: 'no-store'
         });
@@ -37,14 +36,6 @@ export default async function DashboardPage() {
     } catch (error) {
         console.error("Dashboard server validation error:", error);
         backendDown = true;
-    }
-
-    if (backendDown) {
-        return redirect("/?error=backend_down");
-    }
-
-    if (shouldRedirectToPricing) {
-        return redirect("/#pricing");
     }
 
     return (

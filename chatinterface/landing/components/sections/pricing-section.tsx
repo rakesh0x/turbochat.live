@@ -6,8 +6,8 @@ import { Check } from "lucide-react"
 import Link from "next/link"
 import { signInWithGoogle } from "../../lib/auth"
 import { createCheckoutSession } from "../../lib/dodo-payments"
-import { createClient } from "../../lib/supabase/client"
 import { toast } from "sonner"
+import { useSession } from "next-auth/react"
 
 const plans = [
   {
@@ -59,37 +59,22 @@ const plans = [
 ]
 export function PricingSection() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const supabase = createClient()
-
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        setUser(user)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    getUser()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-      setIsLoading(false)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
+  const { data: session, status } = useSession()
+  const user = session?.user;
+  const isLoading = status === "loading";
 
   const handleCheckout = async (plan: (typeof plans)[0]) => {
     if (isLoading) return
 
     // TEMPORARY BYPASS FOR TESTING
-    const mockUser = { id: "test-user-id", email: "test@example.com", user_metadata: { full_name: "Test User" } }
-    const currentUser = user || mockUser
+    const mockUser = { id: "test-user-id", email: "test@example.com", name: "Test User" }
+    const currentUser: any = user || mockUser
 
     if (plan.name === "Pro" && plan.productId) {
+      if (!currentUser.email) {
+          toast.error("User email is missing");
+          return;
+      }
       try {
         const payload = {
           product_cart: [
@@ -100,7 +85,7 @@ export function PricingSection() {
           ],
           customer: {
             email: currentUser.email,
-            name: currentUser.user_metadata?.full_name || currentUser.email,
+            name: currentUser.name || currentUser.email,
           },
           metadata: {
             user_id: currentUser.id,

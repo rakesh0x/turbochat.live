@@ -6,12 +6,12 @@ import { TestimonialsSection } from "@/landing/components/sections/testinomials-
 import { PricingSection } from "@/landing/components/sections/pricing-section"
 import { CtaSection } from "@/landing/components/sections/cta-section"
 import { FooterSection } from "@/landing/components/sections/footer-section"
-import { createClient } from "@/landing/lib/supabase/server"
 import { redirect } from "next/navigation"
+import { getServerSession } from "next-auth/next"
+import { GET } from "@/app/api/auth/[...nextauth]/route" // Or wherever options are
 
 export default async function Home() {
-  const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const session = await getServerSession(GET as any)
 
   if (session) {
     redirect("/dashboard")
