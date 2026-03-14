@@ -154,6 +154,17 @@ export function ChatInterface() {
   const [userProfile, setUserProfile] = useState<any>(null);
   const router = useRouter();
   const { data: session } = useSession();
+  const remainingCredits = userProfile?.credits ?? 0;
+  const canCreateChatbot = remainingCredits > 0;
+
+  const handleCreatePageAccess = () => {
+    if (!canCreateChatbot) {
+      toast.error('You have 0 credits. Please upgrade to create a chatbot.');
+      setCurrentPage('billing');
+      return;
+    }
+    setCurrentPage('create');
+  };
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: '/' });
@@ -215,7 +226,8 @@ export function ChatInterface() {
                 key={item.id}
                 variant={currentPage === item.id ? 'secondary' : 'ghost'}
                 className="w-full justify-start text-sm font-normal h-9"
-                onClick={() => setCurrentPage(item.id)}
+                onClick={() => item.id === 'create' ? handleCreatePageAccess() : setCurrentPage(item.id)}
+                disabled={item.id === 'create' && !canCreateChatbot}
               >
                 <item.icon className="w-4 h-4 mr-2" />
                 {item.label}
@@ -234,7 +246,7 @@ export function ChatInterface() {
                 </Avatar>
                 <div className="flex-1 text-left min-w-0">
                   <div className="text-sm font-medium truncate">Rakesh Jha</div>
-                  <div className="text-xs text-muted-foreground truncate">{userProfile?.plan || 'Free'} Plan • {userProfile?.credits || 0} Credits</div>
+                  <div className="text-xs text-muted-foreground truncate">{userProfile?.plan || 'Free'} Plan • {remainingCredits} Credits</div>
                 </div>
                 <ChevronDown className="w-4 h-4 ml-2" />
               </Button>
@@ -266,7 +278,7 @@ export function ChatInterface() {
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full" />
             </Button>
             <Button variant="outline" size="sm" onClick={() => router.push('/#pricing')}>
-              <span className="text-sm text-yellow-500 font-bold">{userProfile?.credits || 0} Credits</span>
+              <span className="text-sm text-yellow-500 font-bold">{remainingCredits} Credits</span>
             </Button>
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-destructive">
               <LogOut className="w-4 h-4 mr-2" />
@@ -278,9 +290,33 @@ export function ChatInterface() {
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto">
           <div className="p-6">
-            {currentPage === 'dashboard' && <DashboardPage stats={stats} chatbots={chatbots} loading={loading} />}
-            {currentPage === 'create' && <CreateChatbotPage onComplete={() => { fetchData(); setCurrentPage('chatbots'); }} />}
-            {currentPage === 'chatbots' && <MyChatbotsPage chatbots={chatbots} loading={loading} onSelectChatbot={(bot) => { setSelectedChatbot(bot); setCurrentPage('playground'); }} onRefresh={fetchData} />}
+            {currentPage === 'dashboard' && (
+              <DashboardPage
+                stats={stats}
+                chatbots={chatbots}
+                loading={loading}
+                canCreateChatbot={canCreateChatbot}
+                onCreateChatbot={handleCreatePageAccess}
+              />
+            )}
+            {currentPage === 'create' && (
+              <CreateChatbotPage
+                onComplete={() => { fetchData(); setCurrentPage('chatbots'); }}
+                canCreateChatbot={canCreateChatbot}
+                remainingCredits={remainingCredits}
+                onBlocked={() => setCurrentPage('billing')}
+              />
+            )}
+            {currentPage === 'chatbots' && (
+              <MyChatbotsPage
+                chatbots={chatbots}
+                loading={loading}
+                onSelectChatbot={(bot) => { setSelectedChatbot(bot); setCurrentPage('playground'); }}
+                onRefresh={fetchData}
+                canCreateChatbot={canCreateChatbot}
+                onCreateChatbot={handleCreatePageAccess}
+              />
+            )}
             {currentPage === 'playground' && <PlaygroundPage chatbot={selectedChatbot || chatbots[0]} />}
             {currentPage === 'deploy' && <DeployPage chatbot={selectedChatbot || chatbots[0]} />}
             {currentPage === 'analytics' && <AnalyticsPage analytics={analytics} />}
@@ -299,9 +335,11 @@ interface DashboardPageProps {
   stats: any;
   chatbots: any[];
   loading: boolean;
+  canCreateChatbot: boolean;
+  onCreateChatbot: () => void;
 }
 
-function DashboardPage({ stats, chatbots, loading }: DashboardPageProps) {
+function DashboardPage({ stats, chatbots, loading, canCreateChatbot, onCreateChatbot }: DashboardPageProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -397,7 +435,7 @@ function DashboardPage({ stats, chatbots, loading }: DashboardPageProps) {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Button className="w-full justify-start" variant="outline">
+            <Button className="w-full justify-start" variant="outline" onClick={onCreateChatbot} disabled={!canCreateChatbot}>
               <Plus className="w-4 h-4 mr-2" />
               Create New Chatbot
             </Button>
@@ -417,7 +455,17 @@ function DashboardPage({ stats, chatbots, loading }: DashboardPageProps) {
 }
 
 // Create Chatbot Page
-function CreateChatbotPage({ onComplete }: { onComplete: () => void }) {
+function CreateChatbotPage({
+  onComplete,
+  canCreateChatbot,
+  remainingCredits,
+  onBlocked,
+}: {
+  onComplete: () => void;
+  canCreateChatbot: boolean;
+  remainingCredits: number;
+  onBlocked: () => void;
+}) {
   const [step, setStep] = useState(1);
   const [url, setUrl] = useState('');
   const [chatbotName, setChatbotName] = useState('');
@@ -428,12 +476,33 @@ function CreateChatbotPage({ onComplete }: { onComplete: () => void }) {
   const { data: session } = useSession();
 
   const startRealTraining = async () => {
-    setIsProcessing(true);
-    setLogs([{ text: 'Initializing Firecrawl...', timestamp: new Date().toLocaleTimeString() }]);
-    setProgress(10);
-
     try {
-      if (!session) return;
+      if (!session) {
+        toast.error('Please sign in to create a chatbot.');
+        return;
+      }
+
+      if (!canCreateChatbot) {
+        toast.error('You have 0 credits. Please upgrade to create a chatbot.');
+        onBlocked();
+        return;
+      }
+
+      // Double-check credits right before create to handle stale UI state.
+      const userRes = await fetch('/api/users/me');
+      if (userRes.ok) {
+        const userData = await userRes.json();
+        if ((userData?.credits ?? 0) <= 0) {
+          toast.error('You have 0 credits. Please upgrade to create a chatbot.');
+          onBlocked();
+          return;
+        }
+      }
+
+      setStep(2);
+      setIsProcessing(true);
+      setLogs([{ text: 'Initializing Firecrawl...', timestamp: new Date().toLocaleTimeString() }]);
+      setProgress(10);
 
       // 1. Create the chatbot (starts background training)
       const res = await fetch('/api/chatbots', {
@@ -451,7 +520,9 @@ function CreateChatbotPage({ onComplete }: { onComplete: () => void }) {
       if (!res.ok) {
         if (res.status === 402) {
           toast.error('Insufficient credits. Please upgrade your plan.');
+          setStep(1);
           setIsProcessing(false);
+          onBlocked();
           return;
         }
         throw new Error('Failed to create chatbot');
@@ -501,6 +572,7 @@ function CreateChatbotPage({ onComplete }: { onComplete: () => void }) {
     } catch (error) {
       console.error('Failed to start training:', error);
       toast.error('Failed to create chatbot');
+      setStep(1);
       setIsProcessing(false);
     }
   };
@@ -572,11 +644,18 @@ function CreateChatbotPage({ onComplete }: { onComplete: () => void }) {
                 Powered by Firecrawl. We'll crawl up to {crawlLimit} pages, extract Markdown content, and train your AI.
               </p>
             </div>
+            {!canCreateChatbot && (
+              <div className="p-4 rounded-lg border border-destructive/30 bg-destructive/10">
+                <p className="text-sm text-destructive">
+                  You have {remainingCredits} credits. Upgrade your plan to create a chatbot.
+                </p>
+              </div>
+            )}
           </CardContent>
           <CardContent className="pt-0">
             <Button
-              onClick={() => { setStep(2); startRealTraining(); }}
-              disabled={!url || !chatbotName}
+              onClick={startRealTraining}
+              disabled={!url || !chatbotName || !canCreateChatbot}
               className="w-full"
             >
               Start Training
@@ -665,9 +744,18 @@ interface MyChatbotsPageProps {
   loading: boolean;
   onSelectChatbot: (bot: any) => void;
   onRefresh: () => void;
+  canCreateChatbot: boolean;
+  onCreateChatbot: () => void;
 }
 
-function MyChatbotsPage({ chatbots, loading, onSelectChatbot, onRefresh }: MyChatbotsPageProps) {
+function MyChatbotsPage({
+  chatbots,
+  loading,
+  onSelectChatbot,
+  onRefresh,
+  canCreateChatbot,
+  onCreateChatbot,
+}: MyChatbotsPageProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [chatbotToDelete, setChatbotToDelete] = useState<string | null>(null);
   const { data: session } = useSession();
@@ -704,7 +792,7 @@ function MyChatbotsPage({ chatbots, loading, onSelectChatbot, onRefresh }: MyCha
             <h3 className="text-lg font-semibold">No chatbots yet</h3>
             <p className="text-muted-foreground text-sm mt-1">Create your first chatbot to get started</p>
           </div>
-          <Button>
+          <Button onClick={onCreateChatbot} disabled={!canCreateChatbot}>
             <Plus className="w-4 h-4 mr-2" />
             Create Chatbot
           </Button>
