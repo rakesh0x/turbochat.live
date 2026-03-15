@@ -6,6 +6,8 @@ import { GET } from "@/app/api/auth/[...nextauth]/route"
 export default async function DashboardPage() {
     const session: any = await getServerSession(GET as any)
 
+    let shouldRedirectToPricing = false;
+
     if (!session) {
         return redirect("/")
     }
@@ -30,7 +32,7 @@ export default async function DashboardPage() {
             const userData = await res.json();
             // Redirect logic: no plan AND 0 credits
             if (userData.plan === 'free' && userData.credits <= 0) {
-                 shouldRedirectToPricing = true;
+                shouldRedirectToPricing = true;
             }
         }
     } catch (error) {

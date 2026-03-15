@@ -140,7 +140,6 @@ const menuItems: MenuItem[] = [
   { icon: PlayCircle, label: 'Playground', id: 'playground' },
   { icon: Rocket, label: 'Deploy', id: 'deploy' },
   { icon: BarChart3, label: 'Analytics', id: 'analytics' },
-  { icon: CreditCard, label: 'Billing', id: 'billing' },
   { icon: Settings, label: 'Settings', id: 'settings' },
 ];
 
@@ -320,7 +319,6 @@ export function ChatInterface() {
             {currentPage === 'playground' && <PlaygroundPage chatbot={selectedChatbot || chatbots[0]} />}
             {currentPage === 'deploy' && <DeployPage chatbot={selectedChatbot || chatbots[0]} />}
             {currentPage === 'analytics' && <AnalyticsPage analytics={analytics} />}
-            {currentPage === 'billing' && <BillingPage />}
             {currentPage === 'settings' && <SettingsPage chatbot={selectedChatbot || chatbots[0]} />}
             {currentPage === 'training' && <TrainingPage />}
           </div>
@@ -501,7 +499,7 @@ function CreateChatbotPage({
 
       setStep(2);
       setIsProcessing(true);
-      setLogs([{ text: 'Initializing Firecrawl...', timestamp: new Date().toLocaleTimeString() }]);
+      setLogs([{ text: 'Initializing Crawl4AI...', timestamp: new Date().toLocaleTimeString() }]);
       setProgress(10);
 
       // 1. Create the chatbot (starts background training)
@@ -561,7 +559,7 @@ function CreateChatbotPage({
             const dynamicProgress = Math.min(95, 30 + (attempts * 2));
             setProgress(dynamicProgress);
             if (attempts % 5 === 0) {
-              setLogs(prev => [...prev, { text: 'Firecrawl is still working...', timestamp: new Date().toLocaleTimeString() }]);
+              setLogs(prev => [...prev, { text: 'Crawl4AI is still working...', timestamp: new Date().toLocaleTimeString() }]);
             }
           }
         } catch (err) {
@@ -641,7 +639,7 @@ function CreateChatbotPage({
             </div>
             <div className="p-4 rounded-lg border bg-muted/50">
               <p className="text-sm text-muted-foreground">
-                Powered by Firecrawl. We'll crawl up to {crawlLimit} pages, extract Markdown content, and train your AI.
+                Powered by Crawl4AI. We'll crawl up to {crawlLimit} pages, extract Markdown content, and train your AI.
               </p>
             </div>
             {!canCreateChatbot && (

@@ -15,7 +15,7 @@ psycopg2-binary>=2.9.9
 langchain-text-splitters>=0.0.1
 beautifulsoup4>=4.12.2
 lxml>=5.1.0
-firecrawl-py>=1.0.0
+crawl4ai>=0.4.0
 
 # Async and Utils
 tqdm>=4.66.1
