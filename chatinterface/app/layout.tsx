@@ -5,7 +5,7 @@ import { Analytics } from "@vercel/analytics/next"
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'SiteChat - Modern Way to Use ChatBots',
+  title: 'Turbochat AI - Modern Way to Use ChatBots',
   description: 'Build, train, and deploy intelligent AI chatbots for your website',
 };
 

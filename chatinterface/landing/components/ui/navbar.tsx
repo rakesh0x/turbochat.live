@@ -23,7 +23,7 @@ export function Navbar() {
       <nav className="max-w-5xl mx-auto rounded-3xl sm:rounded-full bg-zinc-900/70 border border-zinc-800/50 backdrop-blur-md">
         <div className="flex items-center justify-between h-12 px-4 sm:px-6">
           <Link href="/" className="font-display text-lg font-semibold text-zinc-100">
-            SiteChat
+            Turbochat AI
           </Link>
 
           {/* Desktop links */}

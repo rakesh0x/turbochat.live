@@ -298,7 +298,7 @@ Search Query:"""
 
     # 3. Strict Prompting
     if context.strip():
-        prompt = f"""You are SiteChat AI, A SaaS, which just takes the website url and trains the AI assistant on the website content.
+        prompt = f"""You are Turbochat AI, A SaaS, which just takes the website url and trains the AI assistant on the website content.
 Rules:
 1. try every possible way to get answer as fast as possible"
 2. try every possible way to answer the question

@@ -29,7 +29,7 @@ export function FooterSection() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="font-display text-xl font-semibold text-zinc-100">
-              SiteChat
+              Turbochat AI
             </Link>
             <p className="mt-4 text-sm text-zinc-500 max-w-xs">
               Build a custom AI chatbot from any URL in seconds. The power of AI for every website.
@@ -81,7 +81,7 @@ export function FooterSection() {
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-zinc-900 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-zinc-600">© {new Date().getFullYear()} SiteChat AI. All rights reserved.</p>
+          <p className="text-sm text-zinc-600">© {new Date().getFullYear()} Turbochat AI. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <Link href="#" className="text-zinc-500 hover:text-zinc-300 transition-colors" aria-label="GitHub">
               <Github className="w-5 h-5" />

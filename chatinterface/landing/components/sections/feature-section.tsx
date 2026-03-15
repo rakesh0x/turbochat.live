@@ -166,7 +166,7 @@ export function FeaturesSection() {
                     <div className="w-1.5 h-1.5 rounded-full bg-zinc-800" />
                   </div>
                   <code className="block text-zinc-300 break-all">
-                    {`<script src="https://sitechat.ai/widget.js" data-id="xyz-123"></script>`}
+                    {`<script src="https://turbochat.live/widget.js" data-id="xyz-123"></script>`}
                   </code>
                 </div>
               </CardContent>
