@@ -140,6 +140,7 @@ const menuItems: MenuItem[] = [
   { icon: PlayCircle, label: 'Playground', id: 'playground' },
   { icon: Rocket, label: 'Deploy', id: 'deploy' },
   { icon: BarChart3, label: 'Analytics', id: 'analytics' },
+  { icon: CreditCard, label: 'Billing', id: 'billing' },
   { icon: Settings, label: 'Settings', id: 'settings' },
 ];
 
@@ -204,16 +205,18 @@ export function ChatInterface() {
   };
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-cyan-50 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100">
       <Toaster />
 
       {/* Sidebar */}
-      <aside className="w-64 border-r flex flex-col">
+      <aside className="w-64 border-r border-slate-200/70 bg-white/80 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/70 flex flex-col">
         {/* Logo */}
-        <div className="h-14 flex items-center px-6 border-b">
+        <div className="h-14 flex items-center px-6 border-b border-slate-200/70 dark:border-slate-800">
           <div className="flex items-center gap-2">
-
-            <span className="font-semibold text-sm">Turbochat</span>
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-slate-900 text-xs font-semibold text-white dark:bg-slate-100 dark:text-slate-900">
+              TC
+            </div>
+            <span className="font-semibold text-sm tracking-tight">Turbochat AI</span>
           </div>
         </div>
 
@@ -224,7 +227,7 @@ export function ChatInterface() {
               <Button
                 key={item.id}
                 variant={currentPage === item.id ? 'secondary' : 'ghost'}
-                className="w-full justify-start text-sm font-normal h-9"
+                className="w-full justify-start text-sm font-normal h-9 rounded-xl"
                 onClick={() => item.id === 'create' ? handleCreatePageAccess() : setCurrentPage(item.id)}
                 disabled={item.id === 'create' && !canCreateChatbot}
               >
@@ -236,10 +239,10 @@ export function ChatInterface() {
         </ScrollArea>
 
         {/* User Profile */}
-        <div className="p-3 border-t">
+        <div className="p-3 border-t border-slate-200/70 dark:border-slate-800">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="w-full justify-start h-auto p-2">
+              <Button variant="ghost" className="w-full justify-start h-auto p-2 rounded-xl">
                 <Avatar className="w-7 h-7 mr-2">
                   <AvatarFallback className="text-xs">JD</AvatarFallback>
                 </Avatar>
@@ -264,9 +267,9 @@ export function ChatInterface() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="h-14 border-b flex items-center justify-between px-6">
+        <header className="h-14 border-b border-slate-200/70 dark:border-slate-800 flex items-center justify-between px-6 bg-white/70 backdrop-blur-xl dark:bg-slate-950/50">
           <div>
-            <h1 className="text-lg font-semibold">
+            <h1 className="text-lg font-semibold tracking-tight">
               {menuItems.find(item => item.id === currentPage)?.label || 'Dashboard'}
             </h1>
           </div>
@@ -276,8 +279,8 @@ export function ChatInterface() {
               <Bell className="w-4 h-4" />
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full" />
             </Button>
-            <Button variant="outline" size="sm" onClick={() => router.push('/pricing')}>
-              <span className="text-sm text-yellow-500 font-bold">{remainingCredits} Credits</span>
+            <Button variant="outline" size="sm" className="rounded-xl border-slate-300/80 dark:border-slate-700" onClick={() => router.push('/pricing')}>
+              <span className="text-sm text-amber-600 dark:text-amber-400 font-bold">{remainingCredits} Credits</span>
             </Button>
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-destructive">
               <LogOut className="w-4 h-4 mr-2" />
@@ -319,6 +322,7 @@ export function ChatInterface() {
             {currentPage === 'playground' && <PlaygroundPage chatbot={selectedChatbot || chatbots[0]} />}
             {currentPage === 'deploy' && <DeployPage chatbot={selectedChatbot || chatbots[0]} />}
             {currentPage === 'analytics' && <AnalyticsPage analytics={analytics} />}
+            {currentPage === 'billing' && <BillingPage />}
             {currentPage === 'settings' && <SettingsPage chatbot={selectedChatbot || chatbots[0]} />}
             {currentPage === 'training' && <TrainingPage />}
           </div>
@@ -671,23 +675,23 @@ function CreateChatbotPage({
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-3xl mx-auto space-y-6">
       {/* Progress Steps */}
-      <div className="mb-8">
+      <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/60">
         <div className="flex items-center justify-between">
           {[1, 2, 3].map((s, i) => (
             <div key={s} className="flex items-center flex-1">
               <div className="flex flex-col items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step >= s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-medium ${step >= s ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
                   }`}>
                   {step > s ? <Check className="w-4 h-4" /> : s}
                 </div>
-                <span className="text-xs text-muted-foreground mt-2">
+                <span className="text-xs text-slate-500 mt-2">
                   {s === 1 ? 'Setup' : s === 2 ? 'Training' : 'Complete'}
                 </span>
               </div>
               {i < 2 && (
-                <div className={`flex-1 h-0.5 mx-2 ${step > s ? 'bg-primary' : 'bg-muted'
+                <div className={`flex-1 h-0.5 mx-2 ${step > s ? 'bg-slate-900 dark:bg-slate-100' : 'bg-slate-200 dark:bg-slate-800'
                   }`} />
               )}
             </div>
@@ -697,7 +701,7 @@ function CreateChatbotPage({
 
       {/* Step 1: Enter URL */}
       {step === 1 && (
-        <Card>
+        <Card className="border-slate-200/80 bg-white/85 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
           <CardHeader>
             <CardTitle>Configure Your Chatbot</CardTitle>
             <CardDescription>Enter your website URL and chatbot details</CardDescription>
@@ -732,13 +736,13 @@ function CreateChatbotPage({
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCrawlLimit(parseInt(e.target.value) || 10)}
               />
             </div>
-            <div className="p-4 rounded-lg border bg-muted/50">
+            <div className="p-4 rounded-xl border border-slate-200/70 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/60">
               <p className="text-sm text-muted-foreground">
                 Powered by Crawl4AI. We'll crawl up to {crawlLimit} pages, extract Markdown content, and train your AI.
               </p>
             </div>
             {!canCreateChatbot && (
-              <div className="p-4 rounded-lg border border-destructive/30 bg-destructive/10">
+              <div className="p-4 rounded-xl border border-destructive/30 bg-destructive/10">
                 <p className="text-sm text-destructive">
                   You have {remainingCredits} credits. Upgrade your plan to create a chatbot.
                 </p>
@@ -749,7 +753,7 @@ function CreateChatbotPage({
             <Button
               onClick={startRealTraining}
               disabled={!url || !chatbotName || !canCreateChatbot}
-              className="w-full"
+              className="w-full rounded-xl"
             >
               Start Training
             </Button>
@@ -759,7 +763,7 @@ function CreateChatbotPage({
 
       {/* Step 2: Training */}
       {step === 2 && (
-        <Card>
+        <Card className="border-slate-200/80 bg-white/85 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
           <CardHeader>
             <CardTitle>Training in Progress</CardTitle>
             <CardDescription>This may take a few minutes</CardDescription>
@@ -773,7 +777,7 @@ function CreateChatbotPage({
               <Progress value={progress} />
             </div>
 
-            <Card>
+            <Card className="border-slate-200/70 dark:border-slate-800">
               <CardHeader>
                 <CardTitle className="text-sm">Training Logs</CardTitle>
               </CardHeader>
@@ -801,25 +805,25 @@ function CreateChatbotPage({
 
       {/* Step 3: Success */}
       {step === 3 && (
-        <Card>
+        <Card className="border-emerald-200/70 bg-gradient-to-br from-white to-emerald-50 shadow-sm dark:border-emerald-900/40 dark:from-slate-950 dark:to-emerald-950/20">
           <CardContent className="pt-12 pb-12 text-center space-y-4">
-            <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
-              <Check className="w-8 h-8 text-primary" />
+            <div className="w-16 h-16 mx-auto rounded-full bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center">
+              <Check className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
               <h2 className="text-2xl font-bold">Chatbot Created!</h2>
               <p className="text-muted-foreground mt-1">Your chatbot is ready to use</p>
             </div>
             <div className="grid grid-cols-3 gap-3 max-w-sm mx-auto">
-              <div className="p-3 rounded-lg border">
+              <div className="p-3 rounded-lg border border-slate-200/70 bg-white/80 dark:border-slate-800 dark:bg-slate-900/70">
                 <div className="text-xl font-bold">23</div>
                 <div className="text-xs text-muted-foreground">Pages</div>
               </div>
-              <div className="p-3 rounded-lg border">
+              <div className="p-3 rounded-lg border border-slate-200/70 bg-white/80 dark:border-slate-800 dark:bg-slate-900/70">
                 <div className="text-xl font-bold">GPT-4</div>
                 <div className="text-xs text-muted-foreground">Model</div>
               </div>
-              <div className="p-3 rounded-lg border">
+              <div className="p-3 rounded-lg border border-slate-200/70 bg-white/80 dark:border-slate-800 dark:bg-slate-900/70">
                 <div className="text-xl font-bold">100%</div>
                 <div className="text-xs text-muted-foreground">Complete</div>
               </div>
@@ -876,10 +880,10 @@ function MyChatbotsPage({
 
   if (chatbots.length === 0) {
     return (
-      <Card className="max-w-2xl mx-auto">
+      <Card className="max-w-2xl mx-auto border-slate-200/80 bg-gradient-to-br from-white to-slate-50 shadow-sm dark:border-slate-800 dark:from-slate-950 dark:to-slate-900">
         <CardContent className="pt-12 pb-12 text-center space-y-4">
-          <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center">
-            <Bot className="w-8 h-8 text-muted-foreground" />
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-slate-900 dark:bg-slate-100 flex items-center justify-center">
+            <Bot className="w-8 h-8 text-white dark:text-slate-900" />
           </div>
           <div>
             <h3 className="text-lg font-semibold">No chatbots yet</h3>
@@ -895,10 +899,10 @@ function MyChatbotsPage({
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-4">
+    <div className="max-w-6xl mx-auto space-y-5">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{chatbots.length} chatbots</p>
-        <Button onClick={onRefresh} variant="outline" size="sm">
+        <Button onClick={onRefresh} variant="outline" size="sm" className="rounded-xl">
           <RefreshCw className="w-4 h-4 mr-2" />
           Refresh
         </Button>
@@ -906,12 +910,12 @@ function MyChatbotsPage({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {chatbots.map((bot) => (
-          <Card key={bot.id} className="hover:shadow-md transition-shadow">
+          <Card key={bot.id} className="border-slate-200/80 bg-white/85 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-800 dark:bg-slate-950/65">
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Bot className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-lg bg-slate-900 dark:bg-slate-100 flex items-center justify-center">
+                    <Bot className="w-5 h-5 text-white dark:text-slate-900" />
                   </div>
                   <div>
                     <CardTitle className="text-base">{bot.name}</CardTitle>
@@ -940,7 +944,7 @@ function MyChatbotsPage({
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Status</span>
-                <Badge variant={bot.status === 'active' ? 'default' : 'secondary'} className="text-xs">
+                <Badge variant={bot.status === 'active' ? 'default' : 'secondary'} className="text-xs capitalize">
                   {bot.status}
                 </Badge>
               </div>
@@ -1063,7 +1067,7 @@ function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
 
   if (!chatbot) {
     return (
-      <Card className="max-w-2xl mx-auto">
+      <Card className="max-w-2xl mx-auto border-slate-200/80 dark:border-slate-800">
         <CardContent className="pt-12 pb-12 text-center">
           <p className="text-muted-foreground">Please select a chatbot to test</p>
         </CardContent>
@@ -1072,13 +1076,13 @@ function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
   }
 
   return (
-    <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
       {/* Chatbot Info */}
-      <Card className="h-fit">
+      <Card className="h-fit border-slate-200/80 bg-white/85 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Bot className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-lg bg-slate-900 dark:bg-slate-100 flex items-center justify-center">
+              <Bot className="w-5 h-5 text-white dark:text-slate-900" />
             </div>
             <div>
               <CardTitle className="text-base">{chatbot.name}</CardTitle>
@@ -1106,7 +1110,7 @@ function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
           <Separator />
           <Button
             variant="outline"
-            className="w-full"
+            className="w-full rounded-xl"
             size="sm"
             onClick={() => { setMessages([]); sessionId.current = `session-${Date.now()}`; }}
           >
@@ -1117,8 +1121,8 @@ function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
       </Card>
 
       {/* Chat Interface */}
-      <Card className="lg:col-span-3 flex flex-col h-[600px]">
-        <CardHeader className="border-b">
+      <Card className="lg:col-span-3 flex flex-col h-[640px] border-slate-200/80 bg-white/85 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+        <CardHeader className="border-b border-slate-200/70 dark:border-slate-800">
           <CardTitle>Chat Playground</CardTitle>
           <CardDescription>Test your chatbot with real conversations</CardDescription>
         </CardHeader>
@@ -1141,9 +1145,9 @@ function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
                     key={msg.id}
                     className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`max-w-[80%] rounded-lg px-4 py-2 text-sm ${msg.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted'
+                    <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${msg.role === 'user'
+                      ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                      : 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100'
                       }`}>
                       {msg.content}
                     </div>
@@ -1151,7 +1155,7 @@ function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
                 ))}
                 {isTyping && (
                   <div className="flex justify-start">
-                    <div className="bg-muted rounded-lg px-4 py-2">
+                    <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl px-4 py-2">
                       <div className="flex gap-1">
                         <div className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '0ms' }} />
                         <div className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -1166,7 +1170,7 @@ function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
           </ScrollArea>
 
           {/* Input */}
-          <div className="p-4 border-t">
+          <div className="p-4 border-t border-slate-200/70 dark:border-slate-800">
             <div className="flex gap-2">
               <Input
                 placeholder="Type your message..."
@@ -1229,9 +1233,9 @@ function DeployPage({ chatbot }: { chatbot: any }) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <Tabs defaultValue="script" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+    <div className="max-w-5xl mx-auto space-y-6">
+      <Tabs defaultValue="embed" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4 rounded-xl bg-white/70 backdrop-blur dark:bg-slate-900/70">
           <TabsTrigger value="embed">Quick Embed</TabsTrigger>
           <TabsTrigger value="github">GitHub Export</TabsTrigger>
           <TabsTrigger value="react">React UI</TabsTrigger>
@@ -1239,7 +1243,7 @@ function DeployPage({ chatbot }: { chatbot: any }) {
         </TabsList>
 
         <TabsContent value="embed" className="space-y-4">
-          <Card>
+          <Card className="border-slate-200/80 bg-white/85 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
             <CardHeader>
               <CardTitle>One-Line Embed</CardTitle>
               <CardDescription>Paste this onto any website to reveal the chat widget.</CardDescription>
@@ -1263,14 +1267,14 @@ function DeployPage({ chatbot }: { chatbot: any }) {
         </TabsContent>
 
         <TabsContent value="github" className="space-y-4">
-          <Card>
+          <Card className="border-slate-200/80 bg-white/85 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
             <CardHeader>
               <CardTitle>GitHub / Self-Hosting Bundle</CardTitle>
               <CardDescription>Give your users their own repository assets.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl border bg-card space-y-3">
+                <div className="p-4 rounded-xl border border-slate-200/70 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/60 space-y-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <Github className="w-5 h-5 text-primary" />
                   </div>
@@ -1309,7 +1313,7 @@ This repository contains my AI Chatbot frontend, powered by [ChatBot AI RAG-as-a
                   </Button>
                 </div>
 
-                <div className="p-4 rounded-xl border bg-card space-y-3">
+                <div className="p-4 rounded-xl border border-slate-200/70 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/60 space-y-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <Rocket className="w-5 h-5 text-primary" />
                   </div>
@@ -1363,7 +1367,7 @@ This repository contains my AI Chatbot frontend, powered by [ChatBot AI RAG-as-a
         </TabsContent>
 
         <TabsContent value="react" className="space-y-4">
-          <Card>
+          <Card className="border-slate-200/80 bg-white/85 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
             <CardHeader>
               <CardTitle>React Component</CardTitle>
               <CardDescription>Install via npm</CardDescription>
@@ -1377,7 +1381,7 @@ This repository contains my AI Chatbot frontend, powered by [ChatBot AI RAG-as-a
         </TabsContent>
 
         <TabsContent value="api">
-          <Card>
+          <Card className="border-slate-200/80 bg-white/85 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
             <CardHeader>
               <CardTitle>API Access</CardTitle>
               <CardDescription>REST API endpoint</CardDescription>
@@ -1413,9 +1417,14 @@ function AnalyticsPage({ analytics }: { analytics: Analytics | null }) {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
+      <section className="rounded-2xl border border-slate-200/70 bg-gradient-to-br from-white to-sky-50 p-5 shadow-sm dark:border-slate-800 dark:from-slate-950 dark:to-slate-900">
+        <h2 className="text-xl font-semibold tracking-tight">Performance Intelligence</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Track response quality, usage trends, and growth signals across your AI assistants.</p>
+      </section>
+
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="border-slate-200/70 bg-white/85 dark:border-slate-800 dark:bg-slate-950/70">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Messages</CardTitle>
             <MessageSquare className="w-4 h-4 text-muted-foreground" />
@@ -1425,7 +1434,7 @@ function AnalyticsPage({ analytics }: { analytics: Analytics | null }) {
             <p className="text-xs text-muted-foreground mt-1">+23% from last month</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-slate-200/70 bg-white/85 dark:border-slate-800 dark:bg-slate-950/70">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Response Time</CardTitle>
             <Zap className="w-4 h-4 text-muted-foreground" />
@@ -1435,7 +1444,7 @@ function AnalyticsPage({ analytics }: { analytics: Analytics | null }) {
             <p className="text-xs text-muted-foreground mt-1">-15% faster</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-slate-200/70 bg-white/85 dark:border-slate-800 dark:bg-slate-950/70">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Satisfaction</CardTitle>
             <TrendingUp className="w-4 h-4 text-muted-foreground" />
@@ -1445,7 +1454,7 @@ function AnalyticsPage({ analytics }: { analytics: Analytics | null }) {
             <p className="text-xs text-muted-foreground mt-1">+5% improvement</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-slate-200/70 bg-white/85 dark:border-slate-800 dark:bg-slate-950/70">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Users</CardTitle>
             <Activity className="w-4 h-4 text-muted-foreground" />
@@ -1459,7 +1468,7 @@ function AnalyticsPage({ analytics }: { analytics: Analytics | null }) {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="border-slate-200/70 bg-white/85 dark:border-slate-800 dark:bg-slate-950/70">
           <CardHeader>
             <CardTitle>Messages Over Time</CardTitle>
             <CardDescription>Last 30 days</CardDescription>
@@ -1483,7 +1492,7 @@ function AnalyticsPage({ analytics }: { analytics: Analytics | null }) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-slate-200/70 bg-white/85 dark:border-slate-800 dark:bg-slate-950/70">
           <CardHeader>
             <CardTitle>Top Questions</CardTitle>
             <CardDescription>Most asked this month</CardDescription>
@@ -1532,8 +1541,13 @@ function BillingPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
+      <section className="rounded-2xl border border-slate-200/70 bg-gradient-to-r from-slate-900 to-slate-700 p-6 text-white shadow-lg dark:border-slate-800 dark:from-slate-100 dark:to-slate-300 dark:text-slate-900">
+        <h2 className="text-2xl font-semibold tracking-tight">Choose the right plan for growth</h2>
+        <p className="mt-2 text-sm text-white/80 dark:text-slate-700">Scale from early traction to enterprise operations without switching platforms.</p>
+      </section>
+
       {/* Usage */}
-      <Card>
+      <Card className="border-slate-200/80 bg-white/85 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
         <CardHeader>
           <CardTitle>Current Usage</CardTitle>
           <CardDescription>Free Plan</CardDescription>
@@ -1559,7 +1573,7 @@ function BillingPage() {
       {/* Pricing */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {plans.map((plan) => (
-          <Card key={plan.name} className={plan.popular ? 'border-primary' : ''}>
+          <Card key={plan.name} className={plan.popular ? 'border-primary shadow-lg ring-1 ring-primary/30' : 'border-slate-200/70 dark:border-slate-800'}>
             {plan.popular && (
               <div className="px-4 pt-4">
                 <Badge>Most Popular</Badge>
@@ -1606,7 +1620,7 @@ function SettingsPage({ chatbot }: { chatbot: any }) {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <Card>
+      <Card className="border-slate-200/80 bg-white/85 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
         <CardHeader>
           <CardTitle>General Settings</CardTitle>
         </CardHeader>
@@ -1622,7 +1636,7 @@ function SettingsPage({ chatbot }: { chatbot: any }) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-slate-200/80 bg-white/85 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
         <CardHeader>
           <CardTitle>AI Model</CardTitle>
         </CardHeader>
@@ -1643,7 +1657,7 @@ function SettingsPage({ chatbot }: { chatbot: any }) {
         </CardContent>
       </Card>
 
-      <Card className="border-destructive">
+      <Card className="border-destructive/50 bg-destructive/5">
         <CardHeader>
           <CardTitle className="text-destructive">Danger Zone</CardTitle>
         </CardHeader>
@@ -1672,18 +1686,23 @@ function SettingsPage({ chatbot }: { chatbot: any }) {
 function TrainingPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <Card>
+      <section className="rounded-2xl border border-slate-200/70 bg-gradient-to-br from-white to-emerald-50 p-5 shadow-sm dark:border-slate-800 dark:from-slate-950 dark:to-emerald-950/20">
+        <h2 className="text-xl font-semibold tracking-tight">Training Studio</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Feed your assistant with fresh docs, URLs, and product updates to improve response quality.</p>
+      </section>
+
+      <Card className="border-slate-200/80 bg-white/85 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
         <CardHeader>
           <CardTitle>Data Sources</CardTitle>
           <CardDescription>Add content to improve your chatbot</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Button variant="outline" className="h-24 flex-col gap-2">
+            <Button variant="outline" className="h-24 flex-col gap-2 rounded-xl">
               <Globe className="w-6 h-6" />
               <span>Add Website</span>
             </Button>
-            <Button variant="outline" className="h-24 flex-col gap-2">
+            <Button variant="outline" className="h-24 flex-col gap-2 rounded-xl">
               <Download className="w-6 h-6" />
               <span>Upload Files</span>
             </Button>
