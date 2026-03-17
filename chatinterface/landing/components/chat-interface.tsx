@@ -213,7 +213,7 @@ export function ChatInterface() {
         <div className="h-14 flex items-center px-6 border-b">
           <div className="flex items-center gap-2">
 
-            <span className="font-semibold text-sm">Enclose AI</span>
+            <span className="font-semibold text-sm">Turbochat</span>
           </div>
         </div>
 
