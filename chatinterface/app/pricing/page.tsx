@@ -5,7 +5,6 @@ import { FooterSection } from "@/landing/components/sections/footer-section"
 export default function PricingPage() {
   return (
     <main className="min-h-screen bg-zinc-950">
-      <Navbar />
       <PricingSection />
     </main>
   )

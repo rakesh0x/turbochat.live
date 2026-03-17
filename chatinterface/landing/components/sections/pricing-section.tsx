@@ -13,8 +13,8 @@ const plans = [
   {
     name: "Starter",
     description: "Perfect for side projects and small teams",
-    price: "$0",
-    period: "forever",
+    price: "$19",
+    period: "/month",
     features: ["Up to 3 team members", "5 projects", "Basic analytics", "Community support", "1GB storage"],
     cta: "Get Started",
     highlighted: false,
