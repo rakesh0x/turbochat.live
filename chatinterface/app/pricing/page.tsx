@@ -7,7 +7,6 @@ export default function PricingPage() {
     <main className="min-h-screen bg-zinc-950">
       <Navbar />
       <PricingSection />
-      <FooterSection />
     </main>
   )
 }
