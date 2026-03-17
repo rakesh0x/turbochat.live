@@ -13,7 +13,7 @@ const plans = [
   {
     name: "Starter",
     description: "Perfect for side projects and small teams",
-    price: "$19",
+    price: "$9",
     period: "/month",
     features: ["Up to 3 team members", "5 projects", "Basic analytics", "Community support", "1GB storage"],
     cta: "Get Started",
@@ -101,12 +101,14 @@ export function PricingSection() {
     }
     
     // For other plans (like Starter or Enterprise), handle accordingly
-    if (plan.name === "Starter") {
+    if (plan.name === "Starter" && plan.name === "") {
       window.location.href = "/dashboard"
     } else {
       signInWithGoogle(router)
     }
   }
+
+
 
   return (
     <section id="pricing" className="px-6 py-24">
