@@ -20,9 +20,10 @@ export function Navbar() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 p-3 sm:p-4">
-      <nav className="max-w-5xl mx-auto rounded-3xl sm:rounded-full bg-zinc-900/70 border border-zinc-800/50 backdrop-blur-md">
+      <nav className="max-w-6xl mx-auto rounded-3xl sm:rounded-full bg-slate-950/60 border border-slate-800/60 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.35)]">
         <div className="flex items-center justify-between h-12 px-4 sm:px-6">
-          <Link href="/" className="font-display text-lg font-semibold text-zinc-100">
+          <Link href="/" className="flex items-center gap-2 font-display text-lg font-semibold text-slate-100">
+            <span className="grid h-7 w-7 place-items-center rounded-md bg-gradient-to-br from-slate-100 to-cyan-200 text-[10px] font-bold text-slate-900">TC</span>
             Turbochat AI
           </Link>
 
@@ -32,7 +33,7 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="px-4 py-1.5 text-sm rounded-full transition-colors text-zinc-400 hover:text-zinc-100"
+                className="px-4 py-1.5 text-sm rounded-full transition-colors text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"
               >
                 {link.label}
               </Link>
@@ -40,14 +41,14 @@ export function Navbar() {
             {user ? (
               <Link
                 href="/dashboard"
-                className="ml-2 px-4 py-1.5 text-sm rounded-full bg-zinc-100 text-zinc-900 font-medium hover:bg-zinc-200 transition-colors"
+                className="ml-2 px-4 py-1.5 text-sm rounded-full bg-slate-100 text-slate-900 font-medium hover:bg-cyan-100 transition-colors"
               >
                 Dashboard
               </Link>
             ) : (
               <button
                 onClick={() => signInWithGoogle(router)}
-                className="ml-2 px-4 py-1.5 text-sm rounded-full bg-zinc-100 text-zinc-900 font-medium hover:bg-zinc-200 transition-colors"
+                className="ml-2 px-4 py-1.5 text-sm rounded-full bg-slate-100 text-slate-900 font-medium hover:bg-cyan-100 transition-colors"
               >
                 Sign in
               </button>
@@ -60,7 +61,7 @@ export function Navbar() {
             aria-label="Toggle navigation menu"
             aria-expanded={isMenuOpen}
             onClick={() => setIsMenuOpen((open) => !open)}
-            className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-full text-zinc-100 hover:bg-zinc-800/70 transition-colors"
+            className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-full text-slate-100 hover:bg-slate-800/70 transition-colors"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               {isMenuOpen ? (
@@ -74,14 +75,14 @@ export function Navbar() {
 
         {/* Mobile panel */}
         {isMenuOpen && (
-          <div className="md:hidden px-3 pb-3 border-t border-zinc-800/60">
+          <div className="md:hidden px-3 pb-3 border-t border-slate-800/70">
             <div className="flex flex-col pt-2 gap-1">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setIsMenuOpen(false)}
-                  className="px-3 py-2.5 text-sm rounded-xl text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800/60 transition-colors"
+                  className="px-3 py-2.5 text-sm rounded-xl text-slate-300 hover:text-slate-100 hover:bg-slate-800/60 transition-colors"
                 >
                   {link.label}
                 </Link>
@@ -91,7 +92,7 @@ export function Navbar() {
                 <Link
                   href="/dashboard"
                   onClick={() => setIsMenuOpen(false)}
-                  className="mt-1 px-3 py-2.5 text-sm rounded-xl bg-zinc-100 text-zinc-900 font-medium hover:bg-zinc-200 transition-colors text-center"
+                  className="mt-1 px-3 py-2.5 text-sm rounded-xl bg-slate-100 text-slate-900 font-medium hover:bg-cyan-100 transition-colors text-center"
                 >
                   Dashboard
                 </Link>
@@ -101,7 +102,7 @@ export function Navbar() {
                     setIsMenuOpen(false)
                     signInWithGoogle(router)
                   }}
-                  className="mt-1 px-3 py-2.5 text-sm rounded-xl bg-zinc-100 text-zinc-900 font-medium hover:bg-zinc-200 transition-colors text-left"
+                  className="mt-1 px-3 py-2.5 text-sm rounded-xl bg-slate-100 text-slate-900 font-medium hover:bg-cyan-100 transition-colors text-left"
                 >
                   Sign in
                 </button>

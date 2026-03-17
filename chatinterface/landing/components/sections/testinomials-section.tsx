@@ -68,7 +68,7 @@ const logos = ["TechCorp", "Innovate", "NextGen", "Quantum", "Velocity", "Apex"]
 
 export function TestimonialsSection() {
   return (
-    <section id="testimonials" className="px-6 py-24 bg-zinc-900/30">
+    <section id="testimonials" className="px-6 py-24 bg-slate-900/25">
       <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -77,12 +77,12 @@ export function TestimonialsSection() {
           viewport={{ once: true }}
           className="flex flex-col items-center justify-center max-w-xl mx-auto mb-12"
         >
-          <div className="border border-zinc-800 py-1.5 px-4 rounded-full text-sm text-zinc-400">Testimonials</div>
+          <div className="border border-slate-700/60 py-1.5 px-4 rounded-full text-sm text-slate-300">Testimonials</div>
 
-          <h2 className="font-display text-4xl md:text-5xl font-bold text-zinc-100 mt-6 text-center tracking-tight">
+          <h2 className="font-display text-4xl md:text-5xl font-bold text-slate-100 mt-6 text-center tracking-tight">
             What our users say
           </h2>
-          <p className="text-center mt-4 text-zinc-500 text-lg text-balance">
+          <p className="text-center mt-4 text-slate-400 text-lg text-balance">
             See what our customers have to say about us.
           </p>
         </motion.div>
@@ -93,8 +93,8 @@ export function TestimonialsSection() {
           <TestimonialsColumn testimonials={thirdColumn} className="hidden lg:block" duration={17} />
         </div>
 
-        <div className="mt-16 pt-16 border-t border-zinc-800/50">
-          <p className="text-center text-sm text-zinc-500 mb-8">Trusted by industry leaders</p>
+        <div className="mt-16 pt-16 border-t border-slate-800/60">
+          <p className="text-center text-sm text-slate-400 mb-8">Trusted by industry leaders</p>
           <div className="relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_20%,black_80%,transparent)]">
             <motion.div
               className="flex gap-12 md:gap-16"
@@ -113,7 +113,7 @@ export function TestimonialsSection() {
               {[...logos, ...logos].map((logo, index) => (
                 <span
                   key={`${logo}-${index}`}
-                  className="text-xl font-semibold text-zinc-700 whitespace-nowrap flex-shrink-0"
+                  className="text-xl font-semibold text-slate-600 whitespace-nowrap flex-shrink-0"
                 >
                   {logo}
                 </span>

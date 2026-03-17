@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Zap, Globe, Code2, Sparkles, ArrowRight, MessageSquare } from "lucide-react"
+import { Zap, Globe, Code2, ArrowRight, MessageSquare } from "lucide-react"
 import { Card, CardContent } from "../ui/card"
 
 const integrationLogos = [
@@ -27,16 +27,16 @@ export function FeaturesSection() {
           transition={{ duration: 0.5 }}
           className="text-center mb-12"
         >
-          <p className="text-sm font-medium text-zinc-500 uppercase tracking-wider mb-4">Features</p>
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-zinc-100 mb-4">
+          <p className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-4">Features</p>
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-slate-100 mb-4">
             Powerful AI for any website
           </h2>
-          <p className="text-zinc-500 max-w-xl mx-auto text-balance">
+          <p className="text-slate-400 max-w-xl mx-auto text-balance">
             Everything you need to turn your website into a 24/7 AI-powered support engine.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {/* Card 1 - Automated Scraping (wider - 3 cols) */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -45,24 +45,24 @@ export function FeaturesSection() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="md:col-span-3"
           >
-            <Card className="group h-full overflow-hidden border-zinc-800/50 bg-zinc-900/50 hover:border-zinc-700/50 transition-all duration-300 rounded-2xl">
+              <Card className="group h-full overflow-hidden rounded-2xl border border-slate-700/50 bg-gradient-to-b from-slate-900/70 to-slate-950/70 hover:border-cyan-400/35 hover:shadow-[0_14px_45px_rgba(0,0,0,0.4)] transition-all duration-300">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-3">
                   <motion.div
-                    className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center"
+                      className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center"
                     whileHover={{ rotate: [0, -10, 10, 0] }}
                     transition={{ duration: 0.5 }}
                   >
-                    <Globe className="w-5 h-5 text-zinc-400 group-hover:text-zinc-200 transition-colors" />
+                      <Globe className="w-5 h-5 text-slate-300 group-hover:text-cyan-200 transition-colors" />
                   </motion.div>
-                  <p className="font-heading font-semibold text-zinc-100">Automated Knowledge Extraction</p>
+                    <p className="font-heading font-semibold text-slate-100">Automated Knowledge Extraction</p>
                 </div>
-                <p className="text-zinc-500 text-sm mb-5">
+                  <p className="text-slate-400 text-sm mb-5">
                   Our crawler automatically navigates your site, extracts content, and builds a comprehensive knowledge base.
                 </p>
-                <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 overflow-hidden">
+                  <div className="rounded-xl border border-slate-700 bg-slate-950 p-4 overflow-hidden">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="text-xs text-zinc-500 font-mono">Crawling: example.com/blog/...</div>
+                      <div className="text-xs text-slate-500 font-mono">Crawling: example.com/blog/...</div>
                     <div className="flex gap-1.5">
                       <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     </div>
@@ -76,12 +76,12 @@ export function FeaturesSection() {
                     ].map((item, i) => (
                       <motion.div
                         key={item.url}
-                        className="flex items-center justify-between bg-zinc-900/50 rounded-lg p-2 text-[10px]"
+                        className="flex items-center justify-between bg-slate-900/50 rounded-lg p-2 text-[10px]"
                         initial={{ opacity: 0, x: -10 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.3 + i * 0.1 }}
                       >
-                        <span className="text-zinc-300 font-mono">{item.url}</span>
+                        <span className="text-slate-300 font-mono">{item.url}</span>
                         <span className={item.status === "Index complete" ? "text-emerald-500" : "text-zinc-500"}>
                           {item.status}
                         </span>
@@ -101,32 +101,32 @@ export function FeaturesSection() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="md:col-span-2"
           >
-            <Card className="group h-full overflow-hidden border-zinc-800/50 bg-zinc-900/50 hover:border-zinc-700/50 transition-all duration-300 rounded-2xl">
+              <Card className="group h-full overflow-hidden rounded-2xl border border-slate-700/50 bg-gradient-to-b from-slate-900/70 to-slate-950/70 hover:border-cyan-400/35 hover:shadow-[0_14px_45px_rgba(0,0,0,0.4)] transition-all duration-300">
               <CardContent className="p-6 flex flex-col h-full">
                 <div className="flex items-center gap-3 mb-3">
                   <motion.div
-                    className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center"
+                      className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center"
                     animate={{ scale: [1, 1.1, 1] }}
                     transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
                   >
-                    <Zap className="w-5 h-5 text-zinc-400 group-hover:text-zinc-200 transition-colors" />
+                      <Zap className="w-5 h-5 text-slate-300 group-hover:text-cyan-200 transition-colors" />
                   </motion.div>
-                  <p className="font-heading font-semibold text-zinc-100">Instant Training</p>
+                    <p className="font-heading font-semibold text-slate-100">Instant Training</p>
                 </div>
-                <p className="text-zinc-500 text-sm mb-5">From URL to functional AI in under 10 seconds.</p>
+                  <p className="text-slate-400 text-sm mb-5">From URL to functional AI in under 10 seconds.</p>
                 <div className="mt-auto">
                   <div className="flex items-baseline gap-2 mb-3">
                     <motion.span
-                      className="text-4xl font-display font-bold text-zinc-100"
+                      className="text-4xl font-display font-bold text-slate-100"
                       initial={{ opacity: 0 }}
                       whileInView={{ opacity: 1 }}
                       viewport={{ once: true }}
                     >
                       &lt;10s
                     </motion.span>
-                    <span className="text-zinc-500 text-sm">generation time</span>
+                    <span className="text-slate-400 text-sm">generation time</span>
                   </div>
-                  <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                  <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
                     <motion.div
                       className="h-full bg-gradient-to-r from-emerald-500/50 to-emerald-300 rounded-full"
                       initial={{ width: "0%" }}
@@ -134,6 +134,16 @@ export function FeaturesSection() {
                       viewport={{ once: true }}
                       transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
                     />
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <div className="rounded-lg border border-slate-700/70 bg-slate-900/80 px-3 py-2">
+                      <p className="text-[11px] text-slate-400">Avg crawl time</p>
+                      <p className="text-sm font-semibold text-slate-200">7.4s</p>
+                    </div>
+                    <div className="rounded-lg border border-slate-700/70 bg-slate-900/80 px-3 py-2">
+                      <p className="text-[11px] text-slate-400">Ready state</p>
+                      <p className="text-sm font-semibold text-emerald-300">Production</p>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -148,26 +158,29 @@ export function FeaturesSection() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="md:col-span-2"
           >
-            <Card className="group h-full overflow-hidden border-zinc-800/50 bg-zinc-900/50 hover:border-zinc-700/50 transition-all duration-300 rounded-2xl">
+              <Card className="group h-full overflow-hidden rounded-2xl border border-slate-700/50 bg-gradient-to-b from-slate-900/70 to-slate-950/70 hover:border-cyan-400/35 hover:shadow-[0_14px_45px_rgba(0,0,0,0.4)] transition-all duration-300">
               <CardContent className="p-6 flex flex-col h-full">
                 <div className="flex items-center gap-3 mb-3">
                   <motion.div
-                    className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center"
+                      className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center"
                     whileHover={{ y: -2 }}
                   >
-                    <Code2 className="w-5 h-5 text-zinc-400 group-hover:text-zinc-200 transition-colors" />
+                      <Code2 className="w-5 h-5 text-slate-300 group-hover:text-cyan-200 transition-colors" />
                   </motion.div>
-                  <p className="font-heading font-semibold text-zinc-100">Simple Embedding</p>
+                    <p className="font-heading font-semibold text-slate-100">Simple Embedding</p>
                 </div>
-                <p className="text-zinc-500 text-sm mb-5">One line of code to deploy on any platform.</p>
-                <div className="bg-zinc-950 rounded-xl p-3 border border-zinc-800 font-mono text-[10px] text-zinc-400 mt-auto">
+                  <p className="text-slate-400 text-sm mb-5">One line of code to deploy on any platform.</p>
+                  <div className="bg-slate-950 rounded-xl p-3 border border-slate-700 font-mono text-[10px] text-slate-400 mt-auto">
                   <div className="flex items-center gap-1.5 mb-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-zinc-800" />
-                    <div className="w-1.5 h-1.5 rounded-full bg-zinc-800" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-slate-800" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-slate-800" />
                   </div>
-                  <code className="block text-zinc-300 break-all">
-                    {`<script src="https://turbochat.live/widget.js" data-id="xyz-123"></script>`}
-                  </code>
+                    <code className="block text-slate-200 break-all">{`<script src="https://turbochat.live/widget.js"></script>`}</code>
+                    <code className="mt-2 block text-emerald-300 break-all">{`<script>ChatbotWidget.init({ chatbotId: "xyz-123" })</script>`}</code>
+                </div>
+                <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
+                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />
+                  Copy, paste, and deploy in under a minute
                 </div>
               </CardContent>
             </Card>
@@ -181,20 +194,20 @@ export function FeaturesSection() {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="md:col-span-3"
           >
-            <Card className="group h-full overflow-hidden border-zinc-800/50 bg-zinc-900/50 hover:border-zinc-700/50 transition-all duration-300 rounded-2xl">
+              <Card className="group h-full overflow-hidden rounded-2xl border border-slate-700/50 bg-gradient-to-b from-slate-900/70 to-slate-950/70 hover:border-cyan-400/35 hover:shadow-[0_14px_45px_rgba(0,0,0,0.4)] transition-all duration-300">
               <CardContent className="p-6 flex flex-col h-full">
                 <div className="flex items-center gap-3 mb-3">
                   <motion.div
-                    className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center"
+                      className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center"
                     whileHover={{ rotate: 180 }}
                     transition={{ duration: 0.4 }}
                   >
-                    <MessageSquare className="w-5 h-5 text-zinc-400 group-hover:text-zinc-200 transition-colors" />
+                      <MessageSquare className="w-5 h-5 text-slate-300 group-hover:text-cyan-200 transition-colors" />
                   </motion.div>
-                  <p className="font-heading font-semibold text-zinc-100">Intelligent Conversations</p>
+                    <p className="font-heading font-semibold text-slate-100">Intelligent Conversations</p>
                 </div>
-                <p className="text-zinc-500 text-sm mb-5">AI that remembers context and provides accurate answers from your data.</p>
-                <div className="grid grid-cols-4 gap-2 mt-auto">
+                  <p className="text-slate-400 text-sm mb-5">AI that remembers context and provides accurate answers from your data.</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-auto">
                   {integrationLogos.map((logo, i) => (
                     <motion.div
                       key={logo.name}
@@ -202,16 +215,16 @@ export function FeaturesSection() {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ duration: 0.3, delay: 0.3 + i * 0.05 }}
-                      whileHover={{ scale: 1.15, y: -2 }}
-                      className="aspect-square rounded-lg border border-zinc-800 bg-zinc-800/50 flex flex-col items-center justify-center cursor-pointer p-1"
+                      whileHover={{ scale: 1.03, y: -2 }}
+                      className="h-14 rounded-lg border border-slate-700 bg-slate-800/50 flex items-center justify-center cursor-pointer px-2"
                     >
-                      <div className="text-[8px] text-zinc-500 font-medium text-center">{logo.name}</div>
+                      <div className="text-[11px] text-slate-300 font-medium text-center">{logo.name}</div>
                     </motion.div>
                   ))}
                 </div>
                 <motion.button
                   whileHover={{ x: 6 }}
-                  className="mt-4 flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
+                  className="mt-4 flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors"
                 >
                   Works with all major platforms <ArrowRight className="w-4 h-4" />
                 </motion.button>
