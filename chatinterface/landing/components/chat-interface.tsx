@@ -276,7 +276,7 @@ export function ChatInterface() {
               <Bell className="w-4 h-4" />
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full" />
             </Button>
-            <Button variant="outline" size="sm" onClick={() => router.push('/#pricing')}>
+            <Button variant="outline" size="sm" onClick={() => router.push('/pricing')}>
               <span className="text-sm text-yellow-500 font-bold">{remainingCredits} Credits</span>
             </Button>
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-destructive">
