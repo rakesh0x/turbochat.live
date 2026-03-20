@@ -48,7 +48,7 @@ def get_data(site_to_crawl: str, limit: int = 10) -> str:
 
     except Exception as e:
         print(f"Crawl4AI error: {e}")
-        return f"Error during crawling: {str(e)}"
+        return ""
 
 if __name__ == "__main__":
     # Test block

@@ -150,6 +150,21 @@ def clean_text(text: str) -> str:
     text = re.sub(r"[^\x00-\x7F]+", "", text)
     return text
 
+def is_crawl_error_text(text: str) -> bool:
+    if not text:
+        return False
+    lowered = text.lower()
+    error_markers = [
+        "error during crawling",
+        "playwright",
+        "chromium",
+        "missing browser executable",
+        "failed to launch browser",
+        "traceback",
+        "crawlerrunconfig",
+    ]
+    return any(marker in lowered for marker in error_markers)
+
 def make_share_slug(name: str, chatbot_id: str) -> str:
     base = re.sub(r"[^a-z0-9]+", "-", (name or "chatbot").lower()).strip("-")
     if not base:
@@ -171,6 +186,9 @@ def train_chatbot_sync(chatbot_id: str, website: str, limit: int = 10):
     try:
         print(f"Starting training for {chatbot_id} at {website} with limit {limit}", flush=True)
         raw_text = get_data(website, limit=limit)
+
+        if not raw_text or not raw_text.strip() or is_crawl_error_text(raw_text):
+            raise ValueError("Crawler returned no valid content. Please verify crawl dependencies and target website.")
         
         splitter = RecursiveCharacterTextSplitter.from_language(
             language="markdown",
@@ -180,6 +198,10 @@ def train_chatbot_sync(chatbot_id: str, website: str, limit: int = 10):
         
         chunks = splitter.split_text(raw_text)
         chunks = [clean_text(chunk) for chunk in chunks]
+        chunks = [chunk for chunk in chunks if chunk and not is_crawl_error_text(chunk)]
+
+        if not chunks:
+            raise ValueError("No valid training chunks were produced from crawl output.")
         
         records = [
             {
@@ -189,6 +211,12 @@ def train_chatbot_sync(chatbot_id: str, website: str, limit: int = 10):
             for i, chunk in enumerate(chunks)
         ]
         
+        # Clear stale vectors before upserting fresh training chunks.
+        try:
+            index.delete(delete_all=True, namespace=chatbot_id)
+        except Exception as cleanup_error:
+            print(f"Namespace cleanup warning for {chatbot_id}: {cleanup_error}", flush=True)
+
         # Upsert to Pinecone
         BATCH_SIZE = 96
         for i in range(0, len(records), BATCH_SIZE):
@@ -307,10 +335,14 @@ Search Query:"""
             )
         )
         
-        context = "\n\n".join(
-            hit["fields"]["chunk_text"]
-            for hit in results.result.hits
-        )
+        filtered_chunks = []
+        for hit in results.result.hits:
+            chunk_text = hit["fields"]["chunk_text"]
+            if is_crawl_error_text(chunk_text):
+                continue
+            filtered_chunks.append(chunk_text)
+
+        context = "\n\n".join(filtered_chunks)
     except Exception as e:
         print(f"Pinecone search error: {e}")
         context = ""
