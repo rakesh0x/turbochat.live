@@ -6,6 +6,7 @@ const footerLinks = {
     { label: "Features", href: "#features" },
     { label: "Pricing", href: "#pricing" },
     { label: "Changelog", href: "#" },
+
     { label: "Documentation", href: "#" },
   ],
   company: [
@@ -50,7 +51,6 @@ export function FooterSection() {
             </ul>
           </div>
 
-          {/* Company Links */}
           <div>
             <h4 className="font-heading text-sm font-semibold text-slate-100 mb-4">Company</h4>
             <ul className="space-y-3">
@@ -80,7 +80,7 @@ export function FooterSection() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-slate-800/70 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="pt-8 border-t border-slate-800/70 flex flex-col md:flex-row items-center justify-between gap-4 mb-0">
           <p className="text-sm text-slate-500">© {new Date().getFullYear()} Turbochat AI. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <Link href="#" className="text-slate-400 hover:text-slate-200 transition-colors" aria-label="GitHub">
@@ -94,13 +94,12 @@ export function FooterSection() {
             </Link>
           </div>
         </div>
-
       </div>
 
-      <div className="relative mt-12 w-full border-t border-slate-800/70 bg-gradient-to-b from-transparent to-cyan-950/20">
+      <div className="relative mt-15 w-full border-t border-slate-800/70 bg-gradient-to-b from-transparent to-cyan-950/20">
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[radial-gradient(70%_120%_at_50%_100%,rgba(34,211,238,0.22),transparent_70%)]" />
-        <div className="mx-auto max-w-[1800px] px-2 sm:px-4">
-          <p className="select-none text-center font-display font-bold leading-[0.78] tracking-[-0.03em] text-[18vw] sm:text-[15vw] md:text-[13vw] text-transparent bg-clip-text bg-gradient-to-b from-slate-200/28 via-slate-300/14 to-slate-300/0 whitespace-nowrap">
+        <div className="mx-auto max-w-5xl px-6 sm:px-8 md:px-0">
+          <p className="select-none w-full overflow-hidden text-center font-display font-bold leading-[0.78] tracking-[-0.03em] text-[clamp(3.75rem,13vw,10rem)] text-transparent bg-clip-text bg-gradient-to-b from-slate-200/28 via-slate-300/14 to-slate-300/0 whitespace-nowrap mb-0">
             Turbochat AI
           </p>
         </div>

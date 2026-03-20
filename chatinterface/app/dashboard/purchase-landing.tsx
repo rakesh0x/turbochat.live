@@ -9,6 +9,8 @@ interface PurchaseLandingProps {
 }
 
 const PRO_PLAN_PRODUCT_ID = "pdt_0NaGTaLaCP8TsMwaiw1t7"
+const STARTER_PLAN_PRODUCT_ID = "pdt_0NauJou4mqDCcPVwp4kfS"
+const ENTERPRISE_PLAN_PRODUCT_ID = "pdt_0NauLa7pvwInvZjndZt6y"
 
 export function PurchaseLanding({ userEmail, userName, userId }: PurchaseLandingProps) {
   const [isLoading, setIsLoading] = useState(false)

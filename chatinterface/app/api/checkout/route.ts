@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+//takes the user to dodo checkout page taking all the 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
