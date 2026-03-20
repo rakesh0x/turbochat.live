@@ -652,6 +652,15 @@ function CreateChatbotPage({
       });
 
       if (!res.ok) {
+        const errorBody = await res.text();
+        let backendMessage = '';
+        try {
+          const parsed = JSON.parse(errorBody);
+          backendMessage = parsed?.detail || parsed?.message || parsed?.error || '';
+        } catch {
+          backendMessage = errorBody;
+        }
+
         if (res.status === 402) {
           toast.error('Insufficient credits. Please upgrade your plan.');
           setStep(1);
@@ -659,7 +668,7 @@ function CreateChatbotPage({
           onBlocked();
           return;
         }
-        throw new Error('Failed to create chatbot');
+        throw new Error(backendMessage || `Failed to create chatbot (HTTP ${res.status})`);
       }
       const newBot = await res.json();
       const botId = newBot.id;
@@ -705,7 +714,7 @@ function CreateChatbotPage({
 
     } catch (error) {
       console.error('Failed to start training:', error);
-      toast.error('Failed to create chatbot');
+      toast.error(error instanceof Error ? error.message : 'Failed to create chatbot');
       setStep(1);
       setIsProcessing(false);
     }

@@ -1,6 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { getServerSession } from "next-auth/next";
-import { GET as authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getToken } from "next-auth/jwt";
 import jwt from 'jsonwebtoken';
 
 const BACKEND_URL = process.env.BACKEND_URL || (process.env.NODE_ENV === 'production' ? 'https://fine-tuning-426l.onrender.com' : 'http://127.0.0.1:8000');
@@ -12,13 +11,15 @@ async function proxyRequest(request: NextRequest, slug: string[]) {
   const targetUrl = `${BACKEND_URL}${backendPath}${url.search}`;
 
   try {
-    const session: any = await getServerSession(authOptions as any);
+    const token = await getToken({ req: request, secret: NEXTAUTH_SECRET });
     const headers = new Headers();
     
-    // Inject custom JWT for backend if session exists
-    if (session?.user) {
+    // Inject custom JWT for backend if authenticated token exists.
+    const userId = (token?.sub as string | undefined) || ((token as any)?.id as string | undefined);
+    const userEmail = (token?.email as string | undefined) || ((token as any)?.user?.email as string | undefined);
+    if (userId && userEmail) {
         const backendToken = jwt.sign(
-            { sub: session.user.id, email: session.user.email },
+        { sub: userId, email: userEmail },
             NEXTAUTH_SECRET,
             { algorithm: 'HS256', expiresIn: '1h' }
         );
