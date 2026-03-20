@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { GET } from "@/app/api/auth/[...nextauth]/route";
+import { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 //takes the user to dodo checkout page taking all the 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const session: any = await getServerSession(GET as any);
-    if (!session?.user?.id || !session?.user?.email) {
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+    const userId = (token?.sub as string | undefined) || ((token as any)?.id as string | undefined);
+    const userEmail = (token?.email as string | undefined) || ((token as any)?.user?.email as string | undefined);
+
+    if (!userId || !userEmail) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
@@ -31,8 +34,8 @@ export async function POST(req: Request) {
         billing_address,
         metadata: {
           ...(metadata || {}),
-          user_id: session.user.id,
-          user_email: session.user.email,
+          user_id: userId,
+          user_email: userEmail,
         },
         return_url,
       }),
