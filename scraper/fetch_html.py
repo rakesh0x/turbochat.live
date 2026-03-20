@@ -49,6 +49,7 @@ def fallback_crawl(site_to_crawl: str, limit: int = 10) -> str:
     queue = deque([site_to_crawl])
     visited = set()
     collected = []
+    errors = []
 
     while queue and len(visited) < max_pages:
         current = queue.popleft()
@@ -58,7 +59,8 @@ def fallback_crawl(site_to_crawl: str, limit: int = 10) -> str:
 
         try:
             text, links = _extract_text_and_links(normalized)
-        except Exception:
+        except Exception as e:
+            errors.append(f"{normalized} -> {e}")
             visited.add(normalized)
             continue
 
@@ -75,7 +77,14 @@ def fallback_crawl(site_to_crawl: str, limit: int = 10) -> str:
             if clean_link not in visited and clean_link not in queue:
                 queue.append(clean_link)
 
-    return "\n\n---\n\n".join(collected)
+    if collected:
+        return "\n\n---\n\n".join(collected)
+
+    if errors:
+        preview = " | ".join(errors[:5])
+        raise RuntimeError(f"Fallback crawler could not extract content. Errors: {preview}")
+
+    raise RuntimeError("Fallback crawler found no content and no crawlable links.")
 
 
 async def main(site_to_crawl: str, limit: int = 10) -> str:
@@ -128,7 +137,7 @@ def get_data(site_to_crawl: str, limit: int = 10) -> str:
 
     except Exception as e:
         print(f"Crawl4AI error: {e}")
-        return ""
+        raise RuntimeError(f"Crawler pipeline failed for {site_to_crawl}: {e}") from e
 
 if __name__ == "__main__":
     # Test block
