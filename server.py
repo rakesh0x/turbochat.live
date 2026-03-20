@@ -133,6 +133,7 @@ class ChatbotSchema(ChatbotBase):
     color: Optional[str] = None
     shareSlug: Optional[str] = None
     isPublic: bool = False
+    trainingError: Optional[str] = None
 
 class ChatRequest(BaseModel):
     message: str
@@ -231,7 +232,7 @@ def train_chatbot_sync(chatbot_id: str, website: str, limit: int = 10):
         try:
             cur = conn.cursor()
             cur.execute(
-                "UPDATE chatbots SET status = %s, pages_scraped = %s, last_updated = %s WHERE id = %s",
+                "UPDATE chatbots SET status = %s, pages_scraped = %s, last_updated = %s, last_error = NULL WHERE id = %s",
                 ("active", len(chunks), datetime.now().isoformat(), chatbot_id)
             )
             conn.commit()
@@ -245,7 +246,10 @@ def train_chatbot_sync(chatbot_id: str, website: str, limit: int = 10):
         try:
             conn = get_db_connection()
             cur = conn.cursor()
-            cur.execute("UPDATE chatbots SET status = %s WHERE id = %s", ("error", chatbot_id))
+            cur.execute(
+                "UPDATE chatbots SET status = %s, last_error = %s WHERE id = %s",
+                ("error", str(e)[:2000], chatbot_id),
+            )
             conn.commit()
             cur.close()
             release_db_connection(conn)
@@ -399,6 +403,7 @@ async def list_chatbots(user: dict = Depends(get_current_user)):
             color=row["color"],
             shareSlug=row.get("share_slug"),
             isPublic=bool(row.get("is_public", False)),
+            trainingError=row.get("last_error"),
         ) for row in rows
     ]
 
@@ -442,6 +447,7 @@ async def create_chatbot(chatbot: ChatbotCreate, background_tasks: BackgroundTas
         createdAt=now,
         model=OPENAI_MODEL,
         isPublic=False,
+        trainingError=None,
     )
 
 @app.get("/api/chatbots/{chatbot_id}/share")

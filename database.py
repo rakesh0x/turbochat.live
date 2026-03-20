@@ -60,6 +60,7 @@ def init_db():
                 color VARCHAR(50),
                 share_slug VARCHAR(255),
                 is_public BOOLEAN NOT NULL DEFAULT FALSE,
+                last_error TEXT,
                 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
             )
         """)
@@ -75,6 +76,7 @@ def init_db():
         cur.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS color VARCHAR(50)")
         cur.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS share_slug VARCHAR(255)")
         cur.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT FALSE")
+        cur.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS last_error TEXT")
         cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_chatbots_share_slug_unique ON chatbots (share_slug)")
         cur.execute(
             "INSERT INTO users (id, email, credits, plan) VALUES (%s, %s, %s, %s) ON CONFLICT (id) DO NOTHING",

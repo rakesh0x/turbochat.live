@@ -702,9 +702,10 @@ function CreateChatbotPage({
             setTimeout(onComplete, 3000);
           } else if (currentBot.status === 'error') {
             clearInterval(pollInterval);
-            setLogs(prev => [...prev, { text: 'Error during crawling. Please check logs.', timestamp: new Date().toLocaleTimeString() }]);
+            const backendError = currentBot.trainingError || 'Error during crawling. Please check logs.';
+            setLogs(prev => [...prev, { text: backendError, timestamp: new Date().toLocaleTimeString() }]);
             setIsProcessing(false);
-            toast.error('Training failed.');
+            toast.error(`Training failed: ${backendError}`);
           } else {
             // Still training
             const dynamicProgress = Math.min(95, 30 + (attempts * 2));
