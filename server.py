@@ -57,6 +57,7 @@ if GEMINI_API_KEY:
 
 # Provider Logic
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai").lower()
+TEMP_DISABLE_CREDIT_BLOCKADE = os.getenv("TEMP_DISABLE_CREDIT_BLOCKADE", "true").lower() == "true"
 
 # Supabase setup
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -130,6 +131,8 @@ class ChatbotSchema(ChatbotBase):
     createdAt: str
     model: str
     color: Optional[str] = None
+    shareSlug: Optional[str] = None
+    isPublic: bool = False
 
 class ChatRequest(BaseModel):
     message: str
@@ -146,6 +149,22 @@ def clean_text(text: str) -> str:
     text = "".join(c for c in text if not unicodedata.combining(c))
     text = re.sub(r"[^\x00-\x7F]+", "", text)
     return text
+
+def make_share_slug(name: str, chatbot_id: str) -> str:
+    base = re.sub(r"[^a-z0-9]+", "-", (name or "chatbot").lower()).strip("-")
+    if not base:
+        base = "chatbot"
+    return f"{base}-{chatbot_id.split('-')[0]}"
+
+def reserve_unique_share_slug(cur, base_slug: str) -> str:
+    candidate = base_slug
+    counter = 1
+    while True:
+        cur.execute("SELECT 1 FROM chatbots WHERE share_slug = %s", (candidate,))
+        if not cur.fetchone():
+            return candidate
+        counter += 1
+        candidate = f"{base_slug}-{counter}"
 
 def train_chatbot_sync(chatbot_id: str, website: str, limit: int = 10):
     """Sync task for threadpool to scrape and upsert."""
@@ -345,13 +364,15 @@ async def list_chatbots(user: dict = Depends(get_current_user)):
             lastUpdated=str(row["last_updated"]),
             createdAt=str(row["created_at"]),
             model=row["model"],
-            color=row["color"]
+            color=row["color"],
+            shareSlug=row.get("share_slug"),
+            isPublic=bool(row.get("is_public", False)),
         ) for row in rows
     ]
 
 @app.post("/api/chatbots", response_model=ChatbotSchema)
 async def create_chatbot(chatbot: ChatbotCreate, background_tasks: BackgroundTasks, user: dict = Depends(get_current_user)):
-    if user["credits"] <= 0:
+    if not TEMP_DISABLE_CREDIT_BLOCKADE and user["credits"] <= 0:
         raise HTTPException(status_code=402, detail="Insufficient credits. Please upgrade your plan.")
 
     chatbot_id = str(uuid.uuid4())
@@ -360,11 +381,12 @@ async def create_chatbot(chatbot: ChatbotCreate, background_tasks: BackgroundTas
     conn = get_db_connection()
     try:
         cur = conn.cursor()
-        # Deduct 1 credit for creating a chatbot
-        cur.execute("UPDATE users SET credits = credits - 1 WHERE id = %s AND credits > 0", (user["id"],))
-        if cur.rowcount == 0:
-             conn.rollback()
-             raise HTTPException(status_code=402, detail="Insufficient credits.")
+        # Deduct a credit only when blockade is enabled.
+        if not TEMP_DISABLE_CREDIT_BLOCKADE:
+            cur.execute("UPDATE users SET credits = credits - 1 WHERE id = %s AND credits > 0", (user["id"],))
+            if cur.rowcount == 0:
+                 conn.rollback()
+                 raise HTTPException(status_code=402, detail="Insufficient credits.")
              
         cur.execute(
             "INSERT INTO chatbots (id, user_id, name, website, status, last_updated, created_at, model) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
@@ -386,8 +408,119 @@ async def create_chatbot(chatbot: ChatbotCreate, background_tasks: BackgroundTas
         monthlyMessages=0,
         lastUpdated=now,
         createdAt=now,
-        model=OPENAI_MODEL
+        model=OPENAI_MODEL,
+        isPublic=False,
     )
+
+@app.get("/api/chatbots/{chatbot_id}/share")
+async def get_chatbot_share(chatbot_id: str, user: dict = Depends(get_current_user)):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            "SELECT id, name, share_slug, is_public FROM chatbots WHERE id = %s AND user_id = %s",
+            (chatbot_id, user["id"]),
+        )
+        row = cur.fetchone()
+        cur.close()
+        if not row:
+            raise HTTPException(status_code=404, detail="Chatbot not found")
+        return {
+            "chatbotId": row["id"],
+            "name": row["name"],
+            "shareSlug": row["share_slug"],
+            "isPublic": bool(row["is_public"]),
+            "sharePath": f"/share/{row['share_slug']}" if row["share_slug"] else None,
+        }
+    finally:
+        release_db_connection(conn)
+
+@app.post("/api/chatbots/{chatbot_id}/share/publish")
+async def publish_chatbot_share(chatbot_id: str, user: dict = Depends(get_current_user)):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            "SELECT id, name, share_slug FROM chatbots WHERE id = %s AND user_id = %s",
+            (chatbot_id, user["id"]),
+        )
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Chatbot not found")
+
+        share_slug = row["share_slug"]
+        if not share_slug:
+            base_slug = make_share_slug(row["name"], row["id"])
+            share_slug = reserve_unique_share_slug(cur, base_slug)
+
+        cur.execute(
+            "UPDATE chatbots SET share_slug = %s, is_public = TRUE WHERE id = %s AND user_id = %s",
+            (share_slug, chatbot_id, user["id"]),
+        )
+        conn.commit()
+        cur.close()
+
+        return {
+            "status": "published",
+            "chatbotId": chatbot_id,
+            "shareSlug": share_slug,
+            "sharePath": f"/share/{share_slug}",
+            "isPublic": True,
+        }
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        release_db_connection(conn)
+
+@app.post("/api/chatbots/{chatbot_id}/share/unpublish")
+async def unpublish_chatbot_share(chatbot_id: str, user: dict = Depends(get_current_user)):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            "UPDATE chatbots SET is_public = FALSE WHERE id = %s AND user_id = %s RETURNING id, share_slug",
+            (chatbot_id, user["id"]),
+        )
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Chatbot not found")
+        conn.commit()
+        cur.close()
+        return {
+            "status": "unpublished",
+            "chatbotId": row["id"],
+            "shareSlug": row["share_slug"],
+            "isPublic": False,
+        }
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        release_db_connection(conn)
+
+@app.get("/api/public/chatbots/{share_slug}")
+async def get_public_chatbot(share_slug: str):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            "SELECT id, name, status, share_slug FROM chatbots WHERE share_slug = %s AND is_public = TRUE",
+            (share_slug,),
+        )
+        row = cur.fetchone()
+        cur.close()
+        if not row:
+            raise HTTPException(status_code=404, detail="Shared chatbot not found")
+
+        return {
+            "id": row["id"],
+            "name": row["name"],
+            "status": row["status"],
+            "shareSlug": row["share_slug"],
+        }
+    finally:
+        release_db_connection(conn)
 
 @app.delete("/api/chatbots/{chatbot_id}")
 async def delete_chatbot(chatbot_id: str, user: dict = Depends(get_current_user)):
@@ -526,6 +659,18 @@ async def get_analytics():
 async def chat(chatbot_id: str, request: ChatRequest):
     try:
         print(f"Chat request for bot {chatbot_id}")
+
+        conn = get_db_connection()
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("SELECT user_id FROM chatbots WHERE id = %s", (chatbot_id,))
+            owner_row = cur.fetchone()
+            cur.close()
+            if not owner_row:
+                raise HTTPException(status_code=404, detail="Chatbot not found")
+            owner_user_id = owner_row["user_id"]
+        finally:
+            release_db_connection(conn)
         
         # Fetch history for query re-writing
         history = []
@@ -550,12 +695,12 @@ async def chat(chatbot_id: str, request: ChatRequest):
             cur = conn.cursor()
             cur.execute("UPDATE chatbots SET monthly_messages = monthly_messages + 1 WHERE id = %s", (chatbot_id,))
             cur.execute(
-                "INSERT INTO messages (id, chatbot_id, role, content, timestamp, conversation_id) VALUES (%s, %s, %s, %s, %s, %s)",
-                (str(uuid.uuid4()), chatbot_id, "user", request.message, datetime.now().isoformat(), request.conversation_id)
+                "INSERT INTO messages (id, chatbot_id, user_id, role, content, timestamp, conversation_id) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                (str(uuid.uuid4()), chatbot_id, owner_user_id, "user", request.message, datetime.now().isoformat(), request.conversation_id)
             )
             cur.execute(
-                "INSERT INTO messages (id, chatbot_id, role, content, timestamp, conversation_id) VALUES (%s, %s, %s, %s, %s, %s)",
-                (str(uuid.uuid4()), chatbot_id, "assistant", response, datetime.now().isoformat(), request.conversation_id)
+                "INSERT INTO messages (id, chatbot_id, user_id, role, content, timestamp, conversation_id) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                (str(uuid.uuid4()), chatbot_id, owner_user_id, "assistant", response, datetime.now().isoformat(), request.conversation_id)
             )
             conn.commit()
             cur.close()

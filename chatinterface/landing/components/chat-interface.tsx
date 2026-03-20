@@ -144,6 +144,8 @@ const menuItems: MenuItem[] = [
   { icon: Settings, label: 'Settings', id: 'settings' },
 ];
 
+const TEMP_DISABLE_CREDIT_BLOCKADE = true;
+
 export function ChatInterface() {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [chatbots, setChatbots] = useState<any[]>([]);
@@ -155,7 +157,7 @@ export function ChatInterface() {
   const router = useRouter();
   const { data: session } = useSession();
   const remainingCredits = userProfile?.credits ?? 0;
-  const canCreateChatbot = remainingCredits > 0;
+  const canCreateChatbot = TEMP_DISABLE_CREDIT_BLOCKADE || remainingCredits > 0;
 
   const handleCreatePageAccess = () => {
     if (!canCreateChatbot) {
@@ -612,20 +614,22 @@ function CreateChatbotPage({
         return;
       }
 
-      if (!canCreateChatbot) {
+      if (!TEMP_DISABLE_CREDIT_BLOCKADE && !canCreateChatbot) {
         toast.error('You have 0 credits. Please upgrade to create a chatbot.');
         onBlocked();
         return;
       }
 
       // Double-check credits right before create to handle stale UI state.
-      const userRes = await fetch('/api/users/me');
-      if (userRes.ok) {
-        const userData = await userRes.json();
-        if ((userData?.credits ?? 0) <= 0) {
-          toast.error('You have 0 credits. Please upgrade to create a chatbot.');
-          onBlocked();
-          return;
+      if (!TEMP_DISABLE_CREDIT_BLOCKADE) {
+        const userRes = await fetch('/api/users/me');
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          if ((userData?.credits ?? 0) <= 0) {
+            toast.error('You have 0 credits. Please upgrade to create a chatbot.');
+            onBlocked();
+            return;
+          }
         }
       }
 
@@ -1229,14 +1233,34 @@ function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
 // Deploy Page
 function DeployPage({ chatbot }: { chatbot: any }) {
   const [copied, setCopied] = useState(false);
-
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareSlug, setShareSlug] = useState<string | null>(null);
+  const [isSharePublic, setIsSharePublic] = useState(false);
   const [host, setHost] = useState('');
 
   useEffect(() => {
     setHost(window.location.origin);
   }, []);
 
+  useEffect(() => {
+    const loadShareState = async () => {
+      if (!chatbot?.id) return;
+      try {
+        const response = await fetch(`/api/chatbots/${chatbot.id}/share`);
+        if (!response.ok) return;
+        const data = await response.json();
+        setShareSlug(data?.shareSlug || null);
+        setIsSharePublic(Boolean(data?.isPublic));
+      } catch {
+        // best-effort share status load
+      }
+    };
+
+    loadShareState();
+  }, [chatbot?.id]);
+
   const reliableHost = host.replace('localhost', '127.0.0.1');
+  const hostedShareUrl = shareSlug ? `${host}/share/${shareSlug}` : '';
 
   const scriptCode = chatbot ? `<script src="${reliableHost}/widget.js"></script>
 <script>
@@ -1255,6 +1279,43 @@ function DeployPage({ chatbot }: { chatbot: any }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handlePublishHosted = async () => {
+    if (!chatbot?.id) return;
+    setShareLoading(true);
+    try {
+      const response = await fetch(`/api/chatbots/${chatbot.id}/share/publish`, {
+        method: 'POST',
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.detail || data?.message || 'Failed to publish hosted page');
+      setShareSlug(data?.shareSlug || null);
+      setIsSharePublic(true);
+      toast.success('Hosted chatbot page published');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to publish hosted page');
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
+  const handleUnpublishHosted = async () => {
+    if (!chatbot?.id) return;
+    setShareLoading(true);
+    try {
+      const response = await fetch(`/api/chatbots/${chatbot.id}/share/unpublish`, {
+        method: 'POST',
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.detail || data?.message || 'Failed to unpublish hosted page');
+      setIsSharePublic(false);
+      toast.success('Hosted chatbot page unpublished');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to unpublish hosted page');
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
   if (!chatbot) {
     return (
       <Card className="max-w-2xl mx-auto">
@@ -1268,8 +1329,9 @@ function DeployPage({ chatbot }: { chatbot: any }) {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <Tabs defaultValue="embed" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 gap-2 rounded-2xl border border-white/80 bg-white/80 p-2 backdrop-blur dark:grid-cols-4 dark:border-slate-800/80 dark:bg-slate-900/70">
+        <TabsList className="grid w-full grid-cols-2 gap-2 rounded-2xl border border-white/80 bg-white/80 p-2 backdrop-blur md:grid-cols-5 dark:border-slate-800/80 dark:bg-slate-900/70">
           <TabsTrigger value="embed">Quick Embed</TabsTrigger>
+          <TabsTrigger value="hosted">Hosted Mini Site</TabsTrigger>
           <TabsTrigger value="github">GitHub Export</TabsTrigger>
           <TabsTrigger value="react">React UI</TabsTrigger>
           <TabsTrigger value="api">API Ref</TabsTrigger>
@@ -1293,6 +1355,61 @@ function DeployPage({ chatbot }: { chatbot: any }) {
                   onClick={() => handleCopy(scriptCode)}
                 >
                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="hosted" className="space-y-4">
+          <Card className="border-white/80 bg-white/90 shadow-xl shadow-slate-200/60 dark:border-slate-800/80 dark:bg-slate-950/70 dark:shadow-none">
+            <CardHeader>
+              <CardTitle>Hosted Mini Site</CardTitle>
+              <CardDescription>Publish a live share page for this chatbot with one click.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between rounded-xl border border-slate-200/80 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/60">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Visibility</p>
+                  <p className="text-xs text-muted-foreground">
+                    {isSharePublic ? 'Public link is active' : 'Public link is currently private'}
+                  </p>
+                </div>
+                <Badge variant={isSharePublic ? 'default' : 'secondary'}>
+                  {isSharePublic ? 'Published' : 'Unpublished'}
+                </Badge>
+              </div>
+
+              {hostedShareUrl ? (
+                <div className="relative">
+                  <pre className="overflow-x-auto rounded-xl border border-slate-200/80 bg-slate-950 p-4 text-sm text-slate-100 dark:border-slate-800">
+                    <code>{hostedShareUrl}</code>
+                  </pre>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="absolute right-2 top-2"
+                    onClick={() => handleCopy(hostedShareUrl)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : null}
+
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={handlePublishHosted} disabled={shareLoading} className="gap-2">
+                  {shareLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
+                  Publish Mini Site
+                </Button>
+                <Button variant="outline" onClick={handleUnpublishHosted} disabled={shareLoading || !isSharePublic}>
+                  Unpublish
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => hostedShareUrl && window.open(hostedShareUrl, '_blank', 'noopener,noreferrer')}
+                  disabled={!hostedShareUrl || !isSharePublic}
+                >
+                  Open Live Page
                 </Button>
               </div>
             </CardContent>

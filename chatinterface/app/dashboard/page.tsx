@@ -2,7 +2,6 @@ import { redirect } from "next/navigation"
 import { ChatInterface } from "@/landing/components/chat-interface"
 import { getServerSession } from "next-auth/next"
 import { GET } from "@/app/api/auth/[...nextauth]/route"
-import { PurchaseLanding } from "@/app/dashboard/purchase-landing"
 
 export default async function DashboardPage() {
     const session: any = await getServerSession(GET as any)
@@ -39,16 +38,6 @@ export default async function DashboardPage() {
     } catch (error) {
         console.error("Dashboard server validation error:", error)
         backendDown = true
-    }
-
-    if (showPurchaseLanding && !backendDown) {
-        return (
-            <PurchaseLanding
-                userEmail={session?.user?.email || ""}
-                userName={session?.user?.name || ""}
-                userId={session?.user?.id || session?.user?.email || ""}
-            />
-        )
     }
 
     return (
