@@ -10,6 +10,8 @@ import { redirect } from "next/navigation"
 import { getServerSession } from "next-auth/next"
 import { GET } from "@/app/api/auth/[...nextauth]/route" // Or wherever options are
 
+export const dynamic = "force-dynamic"
+
 export default async function Home() {
   const session = await getServerSession(GET as any)
 
