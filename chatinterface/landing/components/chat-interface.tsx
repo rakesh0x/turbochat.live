@@ -357,7 +357,13 @@ export function ChatInterface() {
             {currentPage === 'playground' && <PlaygroundPage chatbot={selectedChatbot || chatbots[0]} />}
             {currentPage === 'deploy' && <DeployPage chatbot={selectedChatbot || chatbots[0]} />}
             {currentPage === 'analytics' && <AnalyticsPage analytics={analytics} />}
-            {currentPage === 'billing' && <BillingPage />}
+            {currentPage === 'billing' && (
+              <BillingPage
+                userProfile={userProfile}
+                stats={stats}
+                chatbotCount={chatbots.length}
+              />
+            )}
             {currentPage === 'settings' && <SettingsPage chatbot={selectedChatbot || chatbots[0]} />}
             {currentPage === 'training' && <TrainingPage />}
           </div>
@@ -1678,53 +1684,112 @@ function AnalyticsPage({ analytics }: { analytics: Analytics | null }) {
 }
 
 // Billing Page
-function BillingPage() {
+function BillingPage({
+  userProfile,
+  stats,
+  chatbotCount,
+}: {
+  userProfile: any;
+  stats: any;
+  chatbotCount: number;
+}) {
+  const { data: session } = useSession();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
   const plans = [
     {
-      name: 'Free',
-      price: '$0',
-      features: ['1 chatbot', '100 messages/month', 'Basic analytics', 'Community support']
+      name: 'Starter',
+      price: '$9',
+      productId: 'pdt_0NauJou4mqDCcPVwp4kfS',
+      features: ['5 projects', '1 GB storage', 'Email support'],
+      highlighted: false,
     },
     {
       name: 'Pro',
-      price: '$49',
-      popular: true,
-      features: ['10 chatbots', '10,000 messages/month', 'Advanced analytics', 'Priority support', 'Custom branding']
+      price: '$29',
+      productId: 'pdt_0NaGTaLaCP8TsMwaiw1t7',
+      features: ['Unlimited projects', '100 GB storage', 'Priority support'],
+      highlighted: true,
     },
     {
       name: 'Enterprise',
-      price: '$299',
-      features: ['Unlimited chatbots', 'Unlimited messages', 'Advanced analytics', 'Dedicated support', 'SSO & SAML']
-    }
+      price: '$99',
+      productId: 'pdt_0NauLa7pvwInvZjndZt6y',
+      features: ['SSO + team controls', 'Dedicated onboarding', 'Priority technical support'],
+      highlighted: false,
+    },
   ];
+
+  const handleCheckout = async (productId: string, planName: string) => {
+    if (!session?.user?.email) {
+      toast.error('Please sign in before starting checkout.');
+      return;
+    }
+
+    setLoadingPlan(planName);
+    try {
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          product_cart: [{ product_id: productId, quantity: 1 }],
+          customer: {
+            email: session.user.email,
+            name: session.user.name || session.user.email,
+          },
+          metadata: {
+            source: 'dashboard-billing-page',
+          },
+          return_url: `${window.location.origin}/dashboard`,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data?.checkout_url) {
+        throw new Error(data?.message || 'Unable to start checkout');
+      }
+
+      window.location.href = data.checkout_url;
+    } catch (error: any) {
+      toast.error(error?.message || 'Checkout failed. Please try again.');
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
+
+  const totalMessages = stats?.totalMessages ?? 0;
+  const currentPlan = (userProfile?.plan || 'free').toUpperCase();
+  const chatbotUsagePercent = Math.min(100, (chatbotCount / 1) * 100);
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      <section className="rounded-3xl border border-slate-200/80 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-900 p-6 text-white shadow-xl shadow-slate-400/35 dark:border-slate-800 dark:from-slate-100 dark:via-slate-200 dark:to-slate-300 dark:text-slate-900 dark:shadow-none">
-        <h2 className="text-2xl font-semibold tracking-tight">Choose the right plan for growth</h2>
-        <p className="mt-2 text-sm text-white/80 dark:text-slate-700">Scale from early traction to enterprise operations without switching platforms.</p>
+      <section className="rounded-3xl border border-slate-200/80 bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-900 p-6 text-white shadow-xl shadow-slate-400/35 dark:border-slate-800 dark:from-slate-100 dark:via-slate-200 dark:to-slate-300 dark:text-slate-900 dark:shadow-none">
+        <h2 className="text-2xl font-semibold tracking-tight">Upgrade credits, keep building</h2>
+        <p className="mt-2 text-sm text-white/80 dark:text-slate-700">Hosted pages, chatbot creation, and training run better with paid credits.</p>
       </section>
 
       {/* Usage */}
       <Card className="border-white/80 bg-white/90 shadow-xl shadow-slate-200/60 dark:border-slate-800/80 dark:bg-slate-950/70 dark:shadow-none">
         <CardHeader>
           <CardTitle>Current Usage</CardTitle>
-          <CardDescription>Free Plan</CardDescription>
+          <CardDescription>{currentPlan} Plan</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>Messages</span>
-              <span className="font-medium">67 / 100</span>
+              <span className="font-medium">{totalMessages} total</span>
             </div>
-            <Progress value={67} />
+            <Progress value={Math.min(100, totalMessages > 0 ? 70 : 5)} />
           </div>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>Chatbots</span>
-              <span className="font-medium">1 / 1</span>
+              <span className="font-medium">{chatbotCount}</span>
             </div>
-            <Progress value={100} />
+            <Progress value={chatbotUsagePercent} />
           </div>
         </CardContent>
       </Card>
@@ -1732,8 +1797,13 @@ function BillingPage() {
       {/* Pricing */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {plans.map((plan) => (
-          <Card key={plan.name} className={plan.popular ? 'border-primary shadow-xl ring-1 ring-primary/30' : 'border-white/80 bg-white/90 shadow-lg shadow-slate-200/50 dark:border-slate-800/80 dark:bg-slate-950/70 dark:shadow-none'}>
-            {plan.popular && (
+          <Card
+            key={plan.name}
+            className={plan.highlighted
+              ? 'border-cyan-300/70 bg-cyan-50 text-slate-900 shadow-xl ring-1 ring-cyan-200/70 dark:text-slate-900'
+              : 'border-white/80 bg-white/90 shadow-lg shadow-slate-200/50 dark:border-slate-800/80 dark:bg-slate-950/70 dark:shadow-none'}
+          >
+            {plan.highlighted && (
               <div className="px-4 pt-4">
                 <Badge>Most Popular</Badge>
               </div>
@@ -1742,7 +1812,7 @@ function BillingPage() {
               <CardTitle>{plan.name}</CardTitle>
               <div className="mt-2">
                 <span className="text-3xl font-bold">{plan.price}</span>
-                <span className="text-muted-foreground">/month</span>
+                <span className={`${plan.highlighted ? 'text-slate-700' : 'text-muted-foreground'}`}>/month</span>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -1754,8 +1824,13 @@ function BillingPage() {
                   </li>
                 ))}
               </ul>
-              <Button className="w-full" variant={plan.popular ? 'default' : 'outline'}>
-                {plan.name === 'Free' ? 'Current Plan' : 'Upgrade'}
+              <Button
+                className="w-full"
+                variant={plan.highlighted ? 'default' : 'outline'}
+                onClick={() => handleCheckout(plan.productId, plan.name)}
+                disabled={loadingPlan !== null}
+              >
+                {loadingPlan === plan.name ? 'Starting checkout...' : `Choose ${plan.name}`}
               </Button>
             </CardContent>
           </Card>
