@@ -12,14 +12,20 @@ export async function POST(req: Request) {
     if (body.type === "payment.succeeded") {
       const metadata = body.data?.metadata || {};
       const userId = metadata.user_id;
+      const userEmail = metadata.user_email || body.data?.customer?.email || null;
       const planName = body.data?.product_name || "Pro";
+      const eventId = body.data?.id || body.id || null;
       
-      if (!userId) {
-        return NextResponse.json({ message: "No user_id in metadata" }, { status: 400 });
+      if (!userId && !userEmail) {
+        return NextResponse.json({ message: "No user identifier in webhook payload" }, { status: 400 });
       }
 
-      // Add credits based on plan. E.g., Pro = 50 credits
-      const creditsToAdd = planName.toLowerCase().includes("pro") ? 50 : 10;
+      // Map credits by plan.
+      let creditsToAdd = 10;
+      const planKey = planName.toLowerCase();
+      if (planKey.includes("starter")) creditsToAdd = 10;
+      if (planKey.includes("pro")) creditsToAdd = 50;
+      if (planKey.includes("enterprise")) creditsToAdd = 200;
 
       // Call internal python backend to update credits
       const BACKEND_URL = process.env.BACKEND_URL || (process.env.NODE_ENV === 'production' ? 'https://app.turbochat.live' : 'http://127.0.0.1:8000');
@@ -28,8 +34,10 @@ export async function POST(req: Request) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           user_id: userId,
+          user_email: userEmail,
           plan: planName.toLowerCase(),
-          credits: creditsToAdd
+          credits: creditsToAdd,
+          event_id: eventId,
         })
       });
 

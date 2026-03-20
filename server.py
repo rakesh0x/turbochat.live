@@ -431,20 +431,70 @@ async def get_stats(user: dict = Depends(get_current_user)):
     }
 
 class WebhookPayload(BaseModel):
-    user_id: str
+    user_id: Optional[str] = None
+    user_email: Optional[str] = None
     plan: str
     credits: int
+    event_id: Optional[str] = None
 
 @app.post("/api/internal/webhook/dodo")
 async def dodo_webhook_internal(payload: WebhookPayload):
     conn = get_db_connection()
     try:
         cur = conn.cursor()
-        cur.execute("UPDATE users SET plan = %s, credits = credits + %s WHERE id = %s", 
-                   (payload.plan, payload.credits, payload.user_id))
+
+        # Idempotency: skip duplicate webhook deliveries.
+        if payload.event_id:
+            cur.execute("SELECT event_id FROM dodo_webhook_events WHERE event_id = %s", (payload.event_id,))
+            existing = cur.fetchone()
+            if existing:
+                conn.commit()
+                cur.close()
+                return {"status": "ignored", "reason": "duplicate_event"}
+
+        if not payload.user_id and not payload.user_email:
+            raise HTTPException(status_code=400, detail="Missing user identifier")
+
+        user_row = None
+        if payload.user_id:
+            cur.execute("SELECT id, email FROM users WHERE id = %s", (payload.user_id,))
+            user_row = cur.fetchone()
+
+        if not user_row and payload.user_email:
+            cur.execute("SELECT id, email FROM users WHERE email = %s", (payload.user_email,))
+            user_row = cur.fetchone()
+
+        if user_row:
+            target_user_id = user_row[0]
+            cur.execute(
+                "UPDATE users SET plan = %s, credits = credits + %s WHERE id = %s",
+                (payload.plan, payload.credits, target_user_id),
+            )
+        else:
+            # Webhook can occasionally arrive before first authenticated API call.
+            generated_id = payload.user_id or str(uuid.uuid4())
+            generated_email = payload.user_email or f"{generated_id}@unknown.local"
+            cur.execute(
+                "INSERT INTO users (id, email, credits, plan) VALUES (%s, %s, %s, %s)",
+                (generated_id, generated_email, payload.credits, payload.plan),
+            )
+
+        if payload.event_id:
+            cur.execute(
+                "INSERT INTO dodo_webhook_events (event_id, processed_at) VALUES (%s, %s)",
+                (payload.event_id, datetime.now().isoformat()),
+            )
+
         conn.commit()
         cur.close()
         return {"status": "success"}
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        print(f"Internal webhook processing error: {e}")
+        raise HTTPException(status_code=500, detail="Webhook processing failed")
     finally:
         release_db_connection(conn)
 

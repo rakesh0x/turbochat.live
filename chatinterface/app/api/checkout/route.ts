@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { GET } from "@/app/api/auth/[...nextauth]/route";
 
 //takes the user to dodo checkout page taking all the 
 export async function POST(req: Request) {
   try {
+    const session: any = await getServerSession(GET as any);
+    if (!session?.user?.id || !session?.user?.email) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const { product_cart, customer, billing_address, metadata, return_url } = body;
 
@@ -22,7 +29,11 @@ export async function POST(req: Request) {
         product_cart,
         customer,
         billing_address,
-        metadata,
+        metadata: {
+          ...(metadata || {}),
+          user_id: session.user.id,
+          user_email: session.user.email,
+        },
         return_url,
       }),
     });

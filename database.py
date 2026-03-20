@@ -77,6 +77,14 @@ def init_db():
             )
         """)
 
+        # Dodo webhook events table (idempotency)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS dodo_webhook_events (
+                event_id VARCHAR(255) PRIMARY KEY,
+                processed_at TIMESTAMP NOT NULL
+            )
+        """)
+
         conn.commit()
         cur.close()
         print("Database tables initialized successfully.")

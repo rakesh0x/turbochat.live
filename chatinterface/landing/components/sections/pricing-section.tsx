@@ -64,13 +64,11 @@ export function PricingSection() {
   const handleCheckout = async (plan: (typeof plans)[0]) => {
     if (isLoading) return
 
-    // TEMPORARY BYPASS FOR TESTING
-    const mockUser = { id: "test-user-id", email: "test@example.com", name: "Test User" }
-    const currentUser: any = user || mockUser
+    const currentUser: any = user
 
     if (plan.name === "Pro" && plan.productId) {
-      if (!currentUser.email) {
-          toast.error("User email is missing");
+        if (!currentUser?.id || !currentUser?.email) {
+          toast.error("Please sign in before starting checkout");
           return;
       }
       try {

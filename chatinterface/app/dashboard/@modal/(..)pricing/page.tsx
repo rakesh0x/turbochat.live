@@ -7,6 +7,7 @@ import { ArrowRight, Check, Loader2, Sparkles, X } from "lucide-react";
 
 const STARTER_PLAN_PRODUCT_ID = "pdt_0NauJou4mqDCcPVwp4kfS";
 const PRO_PLAN_PRODUCT_ID = "pdt_0NaGTaLaCP8TsMwaiw1t7";
+const ENTERPRISE_PLAN_PRODUCT_ID = "pdt_0NauLa7pvwInvZjndZt6y";
 
 const plans = [
   {
@@ -25,6 +26,14 @@ const plans = [
     features: ["Unlimited projects", "100 GB storage", "Priority support"],
     highlighted: true,
   },
+  {
+    name: "Enterprise",
+    price: "$99",
+    subtitle: "For scale and advanced controls",
+    productId: ENTERPRISE_PLAN_PRODUCT_ID,
+    features: ["SSO + team controls", "Dedicated onboarding", "Priority technical support"],
+    highlighted: false,
+  },
 ];
 
 export default function DashboardPricingModalPage() {
@@ -32,6 +41,7 @@ export default function DashboardPricingModalPage() {
   const { data: session } = useSession();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const sessionUserId = (session?.user as any)?.id as string | undefined;
 
   const customerName = useMemo(() => {
     const name = session?.user?.name?.trim();
@@ -50,7 +60,7 @@ export default function DashboardPricingModalPage() {
   const handleCheckout = async (productId: string, planName: string) => {
     setError("");
 
-    if (!session?.user?.email) {
+    if (!session?.user?.email || !sessionUserId) {
       setError("Please sign in again before checkout.");
       return;
     }
@@ -71,6 +81,7 @@ export default function DashboardPricingModalPage() {
           },
           metadata: {
             source: "dashboard-pricing-modal",
+            user_id: sessionUserId,
           },
           return_url: `${window.location.origin}/dashboard`,
         }),
@@ -184,23 +195,6 @@ export default function DashboardPricingModalPage() {
                   </button>
                 </article>
               ))}
-
-              <article className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 text-zinc-100">
-                <h3 className="text-lg font-semibold">Enterprise</h3>
-                <p className="mt-1 text-xs text-zinc-400">Security, SLA, and custom rollouts</p>
-                <p className="mt-3 text-3xl font-bold leading-none">Custom</p>
-                <ul className="mt-4 space-y-2 text-sm">
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4 text-cyan-300" />SSO + team controls</li>
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4 text-cyan-300" />Dedicated onboarding</li>
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4 text-cyan-300" />Priority technical support</li>
-                </ul>
-                <a
-                  href="mailto:support@turbochat.live?subject=Turbochat%20Enterprise%20Plan"
-                  className="mt-5 inline-flex w-full items-center justify-center rounded-lg border border-zinc-700 px-3 py-2.5 text-sm font-medium text-zinc-100 transition hover:border-zinc-500"
-                >
-                  Contact sales
-                </a>
-              </article>
             </div>
 
             {error ? <p className="mt-4 text-sm text-red-400">{error}</p> : null}
