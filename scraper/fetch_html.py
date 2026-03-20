@@ -137,7 +137,18 @@ def get_data(site_to_crawl: str, limit: int = 10) -> str:
 
     except Exception as e:
         print(f"Crawl4AI error: {e}")
-        raise RuntimeError(f"Crawler pipeline failed for {site_to_crawl}: {e}") from e
+
+        # If browser crawl fails (e.g., missing Playwright runtime), use the lightweight fallback.
+        try:
+            fallback_result = fallback_crawl(site_to_crawl, limit=limit)
+            if fallback_result and fallback_result.strip():
+                print("Fallback crawler succeeded after Crawl4AI failure.")
+                return fallback_result
+            raise RuntimeError("Fallback crawler returned empty content")
+        except Exception as fallback_error:
+            raise RuntimeError(
+                f"Crawler pipeline failed for {site_to_crawl}: {e}; fallback failed: {fallback_error}"
+            ) from fallback_error
 
 if __name__ == "__main__":
     # Test block
