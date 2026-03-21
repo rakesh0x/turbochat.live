@@ -39,8 +39,8 @@ const plans = [
   {
     name: "Enterprise",
     description: "For large organizations with custom needs",
-    price: "Custom",
-    period: "",
+    price: "$99",
+    period: "/month",
     features: [
       "Everything in Pro",
       "Dedicated account manager",
