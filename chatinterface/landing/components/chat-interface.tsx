@@ -305,23 +305,21 @@ export function ChatInterface() {
         </header>
 
         <div className="md:hidden border-b border-white/70 bg-white/75 px-3 py-2 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/65">
-          <ScrollArea className="w-full whitespace-nowrap">
-            <div className="flex gap-2 pr-3">
-              {menuItems.map((item) => (
-                <Button
-                  key={`mobile-${item.id}`}
-                  size="sm"
-                  variant={currentPage === item.id ? 'default' : 'outline'}
-                  className={`rounded-full ${currentPage === item.id ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'bg-white/80 dark:bg-slate-900/70'}`}
-                  onClick={() => item.id === 'create' ? handleCreatePageAccess() : setCurrentPage(item.id)}
-                  disabled={item.id === 'create' && !canCreateChatbot}
-                >
-                  <item.icon className="mr-1.5 h-3.5 w-3.5" />
-                  {item.label}
-                </Button>
-              ))}
-            </div>
-          </ScrollArea>
+          <div className="flex flex-wrap gap-2">
+            {menuItems.map((item) => (
+              <Button
+                key={`mobile-${item.id}`}
+                size="sm"
+                variant={currentPage === item.id ? 'default' : 'outline'}
+                className={`h-8 rounded-full px-3 text-xs ${currentPage === item.id ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'bg-white/80 dark:bg-slate-900/70'}`}
+                onClick={() => item.id === 'create' ? handleCreatePageAccess() : setCurrentPage(item.id)}
+                disabled={item.id === 'create' && !canCreateChatbot}
+              >
+                <item.icon className="mr-1.5 h-3.5 w-3.5" />
+                {item.label}
+              </Button>
+            ))}
+          </div>
         </div>
 
         {/* Page Content */}
