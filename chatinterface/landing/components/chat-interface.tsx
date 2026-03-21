@@ -31,7 +31,9 @@ import {
   ArrowUpRight,
   MoreHorizontal,
   ChevronDown,
-  LogOut
+  LogOut,
+  Menu,
+  X
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { signOut, useSession } from "next-auth/react";
@@ -148,6 +150,7 @@ const TEMP_DISABLE_CREDIT_BLOCKADE = true;
 
 export function ChatInterface() {
   const [currentPage, setCurrentPage] = useState('dashboard');
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [chatbots, setChatbots] = useState<any[]>([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -177,6 +180,10 @@ export function ChatInterface() {
       fetchData();
     }
   }, [session]);
+
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [currentPage]);
 
   const fetchData = async () => {
     try {
@@ -211,6 +218,74 @@ export function ChatInterface() {
       <div className="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-amber-300/35 blur-3xl dark:bg-amber-500/10" />
       <div className="pointer-events-none absolute -right-16 bottom-10 h-80 w-80 rounded-full bg-cyan-300/30 blur-3xl dark:bg-cyan-500/10" />
       <Toaster />
+
+      <AnimatePresence>
+        {mobileSidebarOpen && (
+          <>
+            <motion.button
+              key="mobile-sidebar-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-30 bg-slate-950/45 backdrop-blur-sm md:hidden"
+              onClick={() => setMobileSidebarOpen(false)}
+              aria-label="Close mobile sidebar"
+            />
+
+            <motion.aside
+              key="mobile-sidebar"
+              initial={{ x: -320 }}
+              animate={{ x: 0 }}
+              exit={{ x: -320 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+              className="fixed inset-y-0 left-0 z-40 flex w-[min(86vw,20rem)] flex-col border-r border-white/50 bg-white/92 shadow-2xl backdrop-blur-2xl dark:border-slate-800/70 dark:bg-slate-950/92 md:hidden"
+            >
+              <div className="flex h-16 items-center justify-between border-b border-white/70 px-4 dark:border-slate-800/80">
+                <div className="flex items-center gap-2.5">
+                  <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-slate-950 to-slate-700 text-[11px] font-semibold text-white dark:from-slate-100 dark:to-slate-300 dark:text-slate-900">
+                    TC
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold tracking-tight">Turbochat AI</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Workspace</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setMobileSidebarOpen(false)}
+                  aria-label="Close menu"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <ScrollArea className="flex-1 px-3 py-4">
+                <nav className="space-y-1.5">
+                  {menuItems.map((item) => (
+                    <Button
+                      key={`drawer-${item.id}`}
+                      variant={currentPage === item.id ? 'secondary' : 'ghost'}
+                      className={`h-10 w-full justify-start rounded-xl px-3 text-sm ${
+                        currentPage === item.id
+                          ? 'bg-slate-900 text-white shadow-md shadow-slate-400/30 dark:bg-slate-100 dark:text-slate-900'
+                          : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-slate-100'
+                      }`}
+                      onClick={() => item.id === 'create' ? handleCreatePageAccess() : setCurrentPage(item.id)}
+                      disabled={item.id === 'create' && !canCreateChatbot}
+                    >
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {item.label}
+                    </Button>
+                  ))}
+                </nav>
+              </ScrollArea>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Sidebar */}
       <aside className="relative z-10 hidden w-72 shrink-0 border-r border-white/50 bg-white/65 backdrop-blur-2xl dark:border-slate-800/70 dark:bg-slate-950/60 md:flex md:flex-col">
@@ -282,11 +357,23 @@ export function ChatInterface() {
       <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
         {/* Header */}
         <header className="h-16 border-b border-white/70 dark:border-slate-800/80 flex items-center justify-between px-4 md:px-6 bg-white/65 backdrop-blur-2xl dark:bg-slate-950/55">
-          <div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 md:hidden"
+              onClick={() => setMobileSidebarOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu className="h-4.5 w-4.5" />
+            </Button>
+
+            <div>
             <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Turbochat Workspace</p>
             <h1 className="text-lg font-semibold tracking-tight">
               {menuItems.find(item => item.id === currentPage)?.label || 'Dashboard'}
             </h1>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -303,24 +390,6 @@ export function ChatInterface() {
             </Button>
           </div>
         </header>
-
-        <div className="md:hidden border-b border-white/70 bg-white/75 px-3 py-2 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/65">
-          <div className="flex flex-wrap gap-2">
-            {menuItems.map((item) => (
-              <Button
-                key={`mobile-${item.id}`}
-                size="sm"
-                variant={currentPage === item.id ? 'default' : 'outline'}
-                className={`h-8 rounded-full px-3 text-xs ${currentPage === item.id ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'bg-white/80 dark:bg-slate-900/70'}`}
-                onClick={() => item.id === 'create' ? handleCreatePageAccess() : setCurrentPage(item.id)}
-                disabled={item.id === 'create' && !canCreateChatbot}
-              >
-                <item.icon className="mr-1.5 h-3.5 w-3.5" />
-                {item.label}
-              </Button>
-            ))}
-          </div>
-        </div>
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto">
