@@ -30,15 +30,13 @@ export default function Header({ createNewChat, sidebarCollapsed, setSidebarOpen
 
     return (
         <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-border/40 bg-background/80 px-4 py-3 backdrop-blur-xl">
-            {sidebarCollapsed && (
-                <button
-                    onClick={() => setSidebarOpen(true)}
-                    className="md:hidden inline-flex items-center justify-center rounded-xl p-2.5 text-muted-foreground hover:text-foreground hover:bg-accent/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-premium"
-                    aria-label="Open sidebar"
-                >
-                    <Menu className="h-5 w-5" />
-                </button>
-            )}
+            <button
+                onClick={() => setSidebarOpen(true)}
+                className="md:hidden inline-flex items-center justify-center rounded-xl p-2.5 text-muted-foreground hover:text-foreground hover:bg-accent/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-premium"
+                aria-label="Open sidebar"
+            >
+                <Menu className="h-5 w-5" />
+            </button>
 
             <div className="hidden md:flex relative">
                 <button

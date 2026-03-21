@@ -23,8 +23,7 @@ export function Navbar() {
       <nav className="max-w-6xl mx-auto rounded-3xl sm:rounded-full bg-slate-950/60 border border-slate-800/60 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.35)]">
         <div className="flex items-center justify-between h-12 px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2 font-display text-lg font-semibold text-slate-100">
-            <span className="grid h-7 w-7 place-items-center rounded-md bg-gradient-to-br from-slate-100 to-cyan-200 text-[10px] font-bold text-slate-900">TC</span>
-            Turbochat AI
+            Turbochat
           </Link>
 
           {/* Desktop links */}

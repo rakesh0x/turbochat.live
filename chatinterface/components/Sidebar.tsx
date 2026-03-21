@@ -23,6 +23,7 @@ import SearchModal from "./SearchModal"
 import SettingsPopover from "./SettingsPopover"
 import { cls } from "./utils"
 import { useState } from "react"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 interface Conversation {
     id: string;
@@ -103,6 +104,7 @@ export default function Sidebar({
     sidebarCollapsed = false,
     setSidebarCollapsed = () => { },
 }: SidebarProps) {
+    const isMobile = useIsMobile()
     const [showCreateFolderModal, setShowCreateFolderModal] = useState(false)
     const [showCreateTemplateModal, setShowCreateTemplateModal] = useState(false)
     const [editingTemplate, setEditingTemplate] = useState<Template | null>(null)
@@ -180,6 +182,8 @@ export default function Sidebar({
     const handleUseTemplate = (template: Template) => {
         onUseTemplate(template)
     }
+
+    const shouldRenderSidebar = !isMobile || open
 
     if (sidebarCollapsed) {
         return (
@@ -268,12 +272,12 @@ export default function Sidebar({
             </AnimatePresence>
 
             <AnimatePresence>
-                {(open || typeof window !== "undefined") && (
+                {shouldRenderSidebar && (
                     <motion.aside
                         key="sidebar"
-                        initial={{ x: -340 }}
-                        animate={{ x: open ? 0 : 0 }}
-                        exit={{ x: -340 }}
+                        initial={isMobile ? { x: -340 } : { x: 0 }}
+                        animate={{ x: 0 }}
+                        exit={isMobile ? { x: -340 } : { x: 0 }}
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
                         className={cls(
                             "z-50 flex h-full w-80 shrink-0 flex-col border-r border-border/50 bg-gradient-to-b from-sidebar to-sidebar/95 backdrop-blur-xl shadow-premium dark:shadow-none",
