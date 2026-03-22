@@ -57,7 +57,7 @@ if GEMINI_API_KEY:
 
 # Provider Logic
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai").lower()
-TEMP_DISABLE_CREDIT_BLOCKADE = os.getenv("TEMP_DISABLE_CREDIT_BLOCKADE", "true").lower() == "true"
+TEMP_DISABLE_CREDIT_BLOCKADE = os.getenv("TEMP_DISABLE_CREDIT_BLOCKADE", "false").lower() == "true"
 
 # Supabase setup
 SUPABASE_URL = os.getenv("SUPABASE_URL")
