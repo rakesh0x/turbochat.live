@@ -11,7 +11,7 @@ export function CtaSection() {
           Join thousands of teams already building better products with our platform. Start your free trial today.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link href="#pricing">
+          <Link href="/api/auth/signin">
             <LiquidCtaButton>Start Free Trial</LiquidCtaButton>
           </Link>
           <Link

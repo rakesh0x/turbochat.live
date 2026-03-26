@@ -55,8 +55,8 @@ export function HeroSection() {
                 className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-slate-100 placeholder:text-slate-500"
               />
             </div>
-            <Link href="#pricing" className="w-full sm:w-auto">
-              <LiquidCtaButton className="w-full sm:w-auto h-12 px-8">Create Chatbot</LiquidCtaButton>
+            <Link href="/api/auth/signin" className="w-full sm:w-auto">
+              <LiquidCtaButton className="w-full sm:w-auto h-12 px-8">Start Free Trial</LiquidCtaButton>
             </Link>
           </div>
           <p className="text-xs text-slate-500">No credit card required. Go from crawl to live widget in minutes.</p>
