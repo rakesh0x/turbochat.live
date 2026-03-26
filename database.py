@@ -40,15 +40,28 @@ def init_db():
                 id VARCHAR(255) PRIMARY KEY,
                 email VARCHAR(255) NOT NULL,
                 credits INT NOT NULL DEFAULT 0,
-                plan VARCHAR(50) NOT NULL DEFAULT 'free'
+                plan VARCHAR(50) NOT NULL DEFAULT 'free',
+                free_trial_remaining INT NOT NULL DEFAULT 5,
+                free_trial_reset_at TIMESTAMP NOT NULL DEFAULT (NOW() + INTERVAL '7 days')
             )
         """)
+
+        # Backfill/migrate legacy users table structures.
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS free_trial_remaining INT")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS free_trial_reset_at TIMESTAMP")
+        cur.execute("UPDATE users SET free_trial_remaining = 5 WHERE free_trial_remaining IS NULL")
+        cur.execute("UPDATE users SET free_trial_reset_at = NOW() + INTERVAL '7 days' WHERE free_trial_reset_at IS NULL")
+        cur.execute("ALTER TABLE users ALTER COLUMN free_trial_remaining SET DEFAULT 5")
+        cur.execute("ALTER TABLE users ALTER COLUMN free_trial_reset_at SET DEFAULT (NOW() + INTERVAL '7 days')")
+        cur.execute("ALTER TABLE users ALTER COLUMN free_trial_remaining SET NOT NULL")
+        cur.execute("ALTER TABLE users ALTER COLUMN free_trial_reset_at SET NOT NULL")
 
         # Chatbots table
         cur.execute("""
             CREATE TABLE IF NOT EXISTS chatbots (
                 id VARCHAR(255) PRIMARY KEY,
                 user_id VARCHAR(255) NOT NULL,
+                free_trial INT NOT NULL DEFAULT 5,
                 name VARCHAR(255) NOT NULL,
                 website VARCHAR(500) NOT NULL,
                 status VARCHAR(50) NOT NULL DEFAULT 'training',
@@ -68,6 +81,7 @@ def init_db():
         # Backfill/migrate legacy chatbots table structures.
         cur.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS user_id VARCHAR(255)")
         cur.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS status VARCHAR(50) NOT NULL DEFAULT 'training'")
+        cur.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS free_trial INT NOT NULL DEFAULT 5")
         cur.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS pages_scraped INT NOT NULL DEFAULT 0")
         cur.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS monthly_messages INT NOT NULL DEFAULT 0")
         cur.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS last_updated TIMESTAMP")

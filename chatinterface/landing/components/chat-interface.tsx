@@ -160,11 +160,19 @@ export function ChatInterface() {
   const router = useRouter();
   const { data: session } = useSession();
   const remainingCredits = userProfile?.credits ?? 0;
-  const canCreateChatbot = TEMP_DISABLE_CREDIT_BLOCKADE || remainingCredits > 0;
+  const remainingFreeTrials = userProfile?.freeTrialRemaining ?? 0;
+  const hasUsageQuota = remainingCredits > 0 || remainingFreeTrials > 0;
+  const canCreateChatbot = TEMP_DISABLE_CREDIT_BLOCKADE || hasUsageQuota;
+
+  const getCreateBlockMessage = () => {
+    if (TEMP_DISABLE_CREDIT_BLOCKADE) return '';
+    if (remainingCredits > 0 || remainingFreeTrials > 0) return '';
+    return 'You have no credits or free trials left. Please upgrade to create a chatbot.';
+  };
 
   const handleCreatePageAccess = () => {
     if (!canCreateChatbot) {
-      toast.error('You have 0 credits. Please upgrade to create a chatbot.');
+      toast.error(getCreateBlockMessage());
       setCurrentPage('billing');
       return;
     }
@@ -337,7 +345,7 @@ export function ChatInterface() {
                 </Avatar>
                 <div className="flex-1 text-left min-w-0">
                   <div className="text-sm font-medium truncate">Rakesh Jha</div>
-                  <div className="text-xs text-muted-foreground truncate">{userProfile?.plan || 'Free'} Plan • {remainingCredits} Credits</div>
+                  <div className="text-xs text-muted-foreground truncate">{userProfile?.plan || 'Free'} Plan • {remainingCredits} Credits • {remainingFreeTrials} Free Trials</div>
                 </div>
                 <ChevronDown className="w-4 h-4 ml-2" />
               </Button>
@@ -382,7 +390,7 @@ export function ChatInterface() {
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full" />
             </Button>
             <Button variant="outline" size="sm" className="rounded-xl border-slate-300/80 bg-white/80 dark:border-slate-700 dark:bg-slate-900" onClick={() => router.push('/pricing')}>
-              <span className="text-sm text-amber-600 dark:text-amber-400 font-bold">{remainingCredits} Credits</span>
+              <span className="text-sm text-amber-600 dark:text-amber-400 font-bold">{remainingCredits} Credits • {remainingFreeTrials} Trials</span>
             </Button>
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-destructive">
               <LogOut className="w-4 h-4 mr-2" />
@@ -408,6 +416,7 @@ export function ChatInterface() {
                 onComplete={() => { fetchData(); setCurrentPage('chatbots'); }}
                 canCreateChatbot={canCreateChatbot}
                 remainingCredits={remainingCredits}
+                remainingFreeTrials={remainingFreeTrials}
                 onBlocked={() => setCurrentPage('billing')}
               />
             )}
@@ -664,11 +673,13 @@ function CreateChatbotPage({
   onComplete,
   canCreateChatbot,
   remainingCredits,
+  remainingFreeTrials,
   onBlocked,
 }: {
   onComplete: () => void;
   canCreateChatbot: boolean;
   remainingCredits: number;
+  remainingFreeTrials: number;
   onBlocked: () => void;
 }) {
   const [step, setStep] = useState(1);
@@ -688,18 +699,20 @@ function CreateChatbotPage({
       }
 
       if (!TEMP_DISABLE_CREDIT_BLOCKADE && !canCreateChatbot) {
-        toast.error('You have 0 credits. Please upgrade to create a chatbot.');
+        toast.error('You have no credits or free trials left. Please upgrade to create a chatbot.');
         onBlocked();
         return;
       }
 
-      // Double-check credits right before create to handle stale UI state.
+      // Double-check usage quota right before create to handle stale UI state.
       if (!TEMP_DISABLE_CREDIT_BLOCKADE) {
         const userRes = await fetch('/api/users/me');
         if (userRes.ok) {
           const userData = await userRes.json();
-          if ((userData?.credits ?? 0) <= 0) {
-            toast.error('You have 0 credits. Please upgrade to create a chatbot.');
+          const hasCredits = (userData?.credits ?? 0) > 0;
+          const hasTrials = (userData?.freeTrialRemaining ?? 0) > 0;
+          if (!hasCredits && !hasTrials) {
+            toast.error('You have no credits or free trials left. Please upgrade to create a chatbot.');
             onBlocked();
             return;
           }
@@ -735,7 +748,7 @@ function CreateChatbotPage({
         }
 
         if (res.status === 402) {
-          toast.error('Insufficient credits. Please upgrade your plan.');
+          toast.error('Insufficient credits or free trials. Please upgrade your plan.');
           setStep(1);
           setIsProcessing(false);
           onBlocked();
@@ -864,7 +877,7 @@ function CreateChatbotPage({
             {!canCreateChatbot && (
               <div className="p-4 rounded-xl border border-destructive/30 bg-destructive/10">
                 <p className="text-sm text-destructive">
-                  You have {remainingCredits} credits. Upgrade your plan to create a chatbot.
+                  You have {remainingCredits} credits and {remainingFreeTrials} free trials. Upgrade your plan to create more chatbots.
                 </p>
               </div>
             )}

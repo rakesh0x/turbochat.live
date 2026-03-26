@@ -30,8 +30,8 @@ export default async function DashboardPage() {
             backendDown = true
         } else {
             const userData = await res.json()
-            // No paid plan and no credits left: show purchase landing.
-            if (userData.plan === 'free' && userData.credits <= 0) {
+            // No paid plan and no usage quota left (credits + free trials).
+            if (userData.plan === 'free' && userData.credits <= 0 && (userData.freeTrialRemaining ?? 0) <= 0) {
                 showPurchaseLanding = true
             }
         }

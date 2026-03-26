@@ -6,11 +6,10 @@ import base64
 import unicodedata
 import re
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-
 from pinecone import Pinecone
 from psycopg2.extras import RealDictCursor
 from database import get_db_connection, release_db_connection, init_db, close_pool
@@ -125,6 +124,7 @@ class ChatbotCreate(ChatbotBase):
 class ChatbotSchema(ChatbotBase):
     id: str
     status: str
+    free_trial: int
     pagesScraped: int
     monthlyMessages: int
     lastUpdated: str
@@ -150,7 +150,7 @@ def clean_text(text: str) -> str:
     text = "".join(c for c in text if not unicodedata.combining(c))
     text = re.sub(r"[^\x00-\x7F]+", "", text)
     return text
-
+    
 def is_crawl_error_text(text: str) -> bool:
     if not text:
         return False
@@ -367,7 +367,7 @@ Context:
 Question: {query}
 Answer:"""
     else:
-        prompt = f"""You are Enclose AI Assistant. 
+        prompt = f"""You are TurboChat Assistant. 
 The user asked: {query}
 Since you have no training data for this topic, politely say you don't know the answer yet."""
 
@@ -393,6 +393,7 @@ async def list_chatbots(user: dict = Depends(get_current_user)):
         ChatbotSchema(
             id=row["id"],
             name=row["name"],
+            free_trial=int(user.get("free_trial_remaining", 0)),
             website=row["website"],
             status=row["status"],
             pagesScraped=row["pages_scraped"],
@@ -409,21 +410,49 @@ async def list_chatbots(user: dict = Depends(get_current_user)):
 
 @app.post("/api/chatbots", response_model=ChatbotSchema)
 async def create_chatbot(chatbot: ChatbotCreate, background_tasks: BackgroundTasks, user: dict = Depends(get_current_user)):
-    if not TEMP_DISABLE_CREDIT_BLOCKADE and user["credits"] <= 0:
-        raise HTTPException(status_code=402, detail="Insufficient credits. Please upgrade your plan.")
-
     chatbot_id = str(uuid.uuid4())
-    now = datetime.now().isoformat()
+    now_dt = datetime.now()
+    now = now_dt.isoformat()
+    remaining_free_trials = int(user.get("free_trial_remaining", 0))
     
     conn = get_db_connection()
     try:
-        cur = conn.cursor()
-        # Deduct a credit only when blockade is enabled.
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
         if not TEMP_DISABLE_CREDIT_BLOCKADE:
-            cur.execute("UPDATE users SET credits = credits - 1 WHERE id = %s AND credits > 0", (user["id"],))
-            if cur.rowcount == 0:
-                 conn.rollback()
-                 raise HTTPException(status_code=402, detail="Insufficient credits.")
+            # Lock usage row so credits/free-trial cannot be double-consumed by concurrent requests.
+            cur.execute(
+                "SELECT credits, free_trial_remaining, free_trial_reset_at FROM users WHERE id = %s FOR UPDATE",
+                (user["id"],),
+            )
+            usage_row = cur.fetchone()
+            if not usage_row:
+                raise HTTPException(status_code=404, detail="User not found")
+
+            credits = int(usage_row.get("credits") or 0)
+            trial_remaining = int(usage_row.get("free_trial_remaining") or 0)
+            reset_at = usage_row.get("free_trial_reset_at")
+
+            if not reset_at or reset_at <= now_dt:
+                trial_remaining = 5
+                reset_at = now_dt + timedelta(days=7)
+                cur.execute(
+                    "UPDATE users SET free_trial_remaining = %s, free_trial_reset_at = %s WHERE id = %s",
+                    (trial_remaining, reset_at, user["id"]),
+                )
+
+            if credits > 0:
+                cur.execute("UPDATE users SET credits = credits - 1 WHERE id = %s", (user["id"],))
+            elif trial_remaining > 0:
+                trial_remaining -= 1
+                cur.execute(
+                    "UPDATE users SET free_trial_remaining = %s WHERE id = %s",
+                    (trial_remaining, user["id"]),
+                )
+            else:
+                raise HTTPException(status_code=402, detail="Insufficient credits. Please upgrade your plan.")
+
+            remaining_free_trials = trial_remaining
              
         cur.execute(
             "INSERT INTO chatbots (id, user_id, name, website, status, last_updated, created_at, model) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
@@ -431,6 +460,9 @@ async def create_chatbot(chatbot: ChatbotCreate, background_tasks: BackgroundTas
         )
         conn.commit()
         cur.close()
+    except HTTPException:
+        conn.rollback()
+        raise
     finally:
         release_db_connection(conn)
     
@@ -439,6 +471,7 @@ async def create_chatbot(chatbot: ChatbotCreate, background_tasks: BackgroundTas
     return ChatbotSchema(
         id=chatbot_id,
         name=chatbot.name,
+        free_trial=remaining_free_trials,
         website=chatbot.website,
         status="training",
         pagesScraped=0,
@@ -675,7 +708,9 @@ async def get_user_me(user: dict = Depends(get_current_user)):
         "id": user["id"],
         "email": user["email"],
         "credits": user["credits"],
-        "plan": user["plan"]
+        "plan": user["plan"],
+        "freeTrialRemaining": int(user.get("free_trial_remaining", 0)),
+        "freeTrialResetAt": str(user.get("free_trial_reset_at")),
     }
 
 @app.get("/api/analytics")
