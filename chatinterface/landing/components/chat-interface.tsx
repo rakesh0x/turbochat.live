@@ -389,8 +389,23 @@ export function ChatInterface() {
               <Bell className="w-4 h-4" />
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full" />
             </Button>
-            <Button variant="outline" size="sm" className="rounded-xl border-slate-300/80 bg-white/80 dark:border-slate-700 dark:bg-slate-900" onClick={() => router.push('/pricing')}>
-              <span className="text-sm text-amber-600 dark:text-amber-400 font-bold">{remainingCredits} Credits • {remainingFreeTrials} Trials</span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full border-amber-300/60 bg-gradient-to-r from-amber-100/90 to-yellow-50 px-4 shadow-[0_8px_24px_rgba(245,158,11,0.25)] transition hover:from-amber-100 hover:to-amber-50 dark:border-amber-500/40 dark:from-amber-950/50 dark:to-amber-900/30"
+              onClick={() => router.push('/pricing')}
+            >
+              <CreditCard className="mr-1.5 h-3.5 w-3.5 text-amber-700 dark:text-amber-300" />
+              <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">{remainingCredits} Credits</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full border-cyan-300/60 bg-gradient-to-r from-cyan-100/85 to-sky-50 px-4 shadow-[0_8px_24px_rgba(6,182,212,0.22)] transition hover:from-cyan-100 hover:to-sky-100 dark:border-cyan-500/40 dark:from-cyan-950/50 dark:to-sky-900/30"
+              onClick={() => router.push('/pricing')}
+            >
+              <Zap className="mr-1.5 h-3.5 w-3.5 text-cyan-700 dark:text-cyan-300" />
+              <span className="text-sm font-semibold text-cyan-700 dark:text-cyan-300">{remainingFreeTrials} Trials</span>
             </Button>
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-destructive">
               <LogOut className="w-4 h-4 mr-2" />
