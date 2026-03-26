@@ -251,11 +251,8 @@ export function ChatInterface() {
             >
               <div className="flex h-16 items-center justify-between border-b border-white/70 px-4 dark:border-slate-800/80">
                 <div className="flex items-center gap-2.5">
-                  <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-slate-950 to-slate-700 text-[11px] font-semibold text-white dark:from-slate-100 dark:to-slate-300 dark:text-slate-900">
-                    TC
-                  </div>
                   <div>
-                    <p className="text-sm font-semibold tracking-tight">Turbochat AI</p>
+                    <p className="bg-gradient-to-r from-slate-900 via-slate-700 to-cyan-700 bg-clip-text text-sm font-black tracking-[0.02em] text-transparent dark:from-slate-100 dark:via-slate-200 dark:to-cyan-300">Turbochat AI</p>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">Workspace</p>
                   </div>
                 </div>
@@ -299,12 +296,9 @@ export function ChatInterface() {
       <aside className="relative z-10 hidden w-72 shrink-0 border-r border-white/50 bg-white/65 backdrop-blur-2xl dark:border-slate-800/70 dark:bg-slate-950/60 md:flex md:flex-col">
         {/* Logo */}
         <div className="h-20 flex items-center px-6 border-b border-white/60 dark:border-slate-800/80">
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-slate-950 to-slate-700 text-xs font-semibold text-white shadow-lg shadow-slate-500/25 dark:from-slate-100 dark:to-slate-300 dark:text-slate-900">
-              TC
-            </div>
+          <div className="flex items-center gap-2">
             <div>
-              <span className="block font-semibold text-sm tracking-tight">Turbochat AI</span>
+              <span className="block bg-gradient-to-r from-slate-900 via-slate-700 to-cyan-700 bg-clip-text text-xl font-black leading-none tracking-[0.01em] text-transparent dark:from-slate-100 dark:via-slate-200 dark:to-cyan-300">Turbochat AI</span>
               <span className="block text-xs text-slate-500 dark:text-slate-400">Workspace Console</span>
             </div>
           </div>
