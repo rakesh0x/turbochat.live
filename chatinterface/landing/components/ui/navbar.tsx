@@ -22,8 +22,13 @@ export function Navbar() {
     <header className="fixed top-0 left-0 right-0 z-40 p-3 sm:p-4">
       <nav className="max-w-6xl mx-auto rounded-3xl sm:rounded-full bg-slate-950/60 border border-slate-800/60 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.35)]">
         <div className="flex items-center justify-between h-12 px-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-2 font-display text-lg font-semibold text-slate-100">
-            Turbochat
+          <Link href="/" className="flex items-center">
+            <div>
+              <span className="block bg-gradient-to-r from-slate-100 via-slate-200 to-cyan-300 bg-clip-text text-sm font-black leading-none tracking-[0.02em] text-transparent sm:text-base">
+                Turbochat AI
+              </span>
+              <span className="block text-[10px] leading-none text-slate-400 sm:text-[11px]">Workspace Console</span>
+            </div>
           </Link>
 
           {/* Desktop links */}

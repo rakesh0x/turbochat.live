@@ -1,9 +1,9 @@
 "use client"
 
-import Link from "next/link"
 import { LiquidCtaButton } from "../buttons/liquid-cta-button"
 import { Sparkles, ExternalLink } from "lucide-react"
 import { Input } from "../ui/input"
+import { signInWithGoogle } from "../../lib/auth"
 
 export function HeroSection() {
   return (
@@ -55,9 +55,7 @@ export function HeroSection() {
                 className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-slate-100 placeholder:text-slate-500"
               />
             </div>
-            <Link href="/api/auth/signin" className="w-full sm:w-auto">
-              <LiquidCtaButton className="w-full sm:w-auto h-12 px-8">Start Free Trial</LiquidCtaButton>
-            </Link>
+            <LiquidCtaButton onClick={() => signInWithGoogle()} className="w-full sm:w-auto h-12 px-8">Start Free Trial</LiquidCtaButton>
           </div>
           <p className="text-xs text-slate-500">No credit card required. Go from crawl to live widget in minutes.</p>
         </div>

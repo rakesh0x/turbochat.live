@@ -8,7 +8,7 @@ import { CtaSection } from "@/landing/components/sections/cta-section"
 import { FooterSection } from "@/landing/components/sections/footer-section"
 import { redirect } from "next/navigation"
 import { getServerSession } from "next-auth/next"
-import { GET } from "@/app/api/auth/[...nextauth]/route" // Or wherever options are
+import { GET } from "@/app/api/auth/[...nextauth]/route"
 
 export const dynamic = "force-dynamic"
 
