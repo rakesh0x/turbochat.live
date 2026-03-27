@@ -2,6 +2,15 @@ import { redirect } from "next/navigation"
 import { ChatInterface } from "@/landing/components/chat-interface"
 import { getServerSession } from "next-auth/next"
 import { GET } from "@/app/api/auth/[...nextauth]/route"
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+    title: "Dashboard",
+    robots: {
+        index: false,
+        follow: false,
+    },
+}
 
 export default async function DashboardPage() {
     const session: any = await getServerSession(GET as any)

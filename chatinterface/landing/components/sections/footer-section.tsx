@@ -3,6 +3,7 @@ import { Github, Twitter, Linkedin } from "lucide-react"
 
 const footerLinks = {
   product: [
+    { label: "Turbochat AI", href: "/turbochat" },
     { label: "Features", href: "#features" },
     { label: "Pricing", href: "#pricing" },
     { label: "Changelog", href: "#" },
@@ -11,6 +12,7 @@ const footerLinks = {
   ],
   company: [
     { label: "About", href: "#" },
+    { label: "Why Turbochat", href: "/turbochat" },
     { label: "Blog", href: "#" },
     { label: "Careers", href: "#" },
     { label: "Contact", href: "#" },

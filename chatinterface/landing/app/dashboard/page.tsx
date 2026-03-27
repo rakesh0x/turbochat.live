@@ -1,16 +1,15 @@
-import { createClient } from "../../lib/supabase/client"
-import { redirect } from "next/navigation"
 import { ChatInterface } from "../../components/chat-interface"
+import type { Metadata } from "next"
 
-export default async function DashboardPage() {
-    const supabase = await createClient()
+export const metadata: Metadata = {
+    title: "Dashboard",
+    robots: {
+        index: false,
+        follow: false,
+    },
+}
 
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-        return redirect("/")
-    }
-
+export default function DashboardPage() {
     return (
         <div className="min-h-screen bg-background">
             <ChatInterface />

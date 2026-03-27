@@ -7,6 +7,7 @@ import { signInWithGoogle } from "../../lib/auth"
 import { useSession } from "next-auth/react"
 
 const navLinks = [
+  { href: "/turbochat", label: "Turbochat" },
   { href: "#features", label: "Features" },
   { href: "#testimonials", label: "Testimonials" },
   { href: "#pricing", label: "Pricing" },
@@ -27,7 +28,6 @@ export function Navbar() {
               <span className="block bg-gradient-to-r from-slate-100 via-slate-200 to-cyan-300 bg-clip-text text-sm font-black leading-none tracking-[0.02em] text-transparent sm:text-base">
                 Turbochat AI
               </span>
-              <span className="block text-[10px] leading-none text-slate-400 sm:text-[11px]">Workspace Console</span>
             </div>
           </Link>
 
