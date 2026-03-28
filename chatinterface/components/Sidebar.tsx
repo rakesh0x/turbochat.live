@@ -10,7 +10,6 @@ import {
     FolderIcon,
     FileText,
     Settings,
-    Asterisk,
 } from "lucide-react"
 import SidebarSection from "./SidebarSection"
 import ConversationRow from "./ConversationRow"
@@ -284,12 +283,35 @@ export default function Sidebar({
                             "fixed inset-y-0 left-0 md:static md:translate-x-0",
                         )}
                     >
-                        <div className="flex items-center gap-3 border-b border-border/50 px-4 py-4">
-                            <div className="flex items-center gap-3">
-                                <div className="grid h-9 w-9 place-items-center rounded-xl gradient-primary text-white shadow-md glow-subtle">
-                                    <Asterisk className="h-4 w-4" />
-                                </div>
-                                <div className="text-sm font-semibold tracking-tight text-gradient">AI Assistant</div>
+                        <div className="flex items-center border-b border-border/50 px-4 py-4">
+                            <div className="relative h-[40px] w-[120px]">
+                                <span
+                                    className="absolute"
+                                    style={{
+                                        left: '5px',
+                                        top: '5px',
+                                        fontFamily: "'Jersey 10'",
+                                        fontStyle: 'normal',
+                                        fontWeight: 400,
+                                        fontSize: '24px',
+                                        lineHeight: '24px',
+                                        whiteSpace: 'nowrap',
+                                        color: '#FFFFFF',
+                                    }}
+                                >
+                                    <span>Turbo</span>
+                                    <span
+                                        style={{
+                                            display: 'inline-block',
+                                            background: 'linear-gradient(90deg, #F6E7A1 0%, #D8BC5E 100%)',
+                                            WebkitBackgroundClip: 'text',
+                                            WebkitTextFillColor: 'transparent',
+                                            backgroundClip: 'text',
+                                        }}
+                                    >
+                                        chat
+                                    </span>
+                                </span>
                             </div>
                             <div className="ml-auto flex items-center gap-1">
                                 <button

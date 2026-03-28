@@ -24,9 +24,33 @@ export function Navbar() {
       <nav className="max-w-6xl mx-auto rounded-3xl sm:rounded-full bg-slate-950/60 border border-slate-800/60 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.35)]">
         <div className="flex items-center justify-between h-12 px-4 sm:px-6">
           <Link href="/" className="flex items-center">
-            <div>
-              <span className="block bg-gradient-to-r from-slate-100 via-slate-200 to-cyan-300 bg-clip-text text-sm font-black leading-none tracking-[0.02em] text-transparent sm:text-base">
-                Turbochat AI
+            <div className="relative h-[40px] w-[120px]">
+              <span
+                className="absolute"
+                style={{
+                  left: '5px',
+                  top: '5px',
+                  fontFamily: "'Jersey 10'",
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  fontSize: '30px',
+                  lineHeight: '24px',
+                  whiteSpace: 'nowrap',
+                  color: '#FFFFFF'
+                }}
+              >
+                <span>Turbo</span>
+                <span
+                  style={{
+                    display: 'inline-block',
+                    background: 'linear-gradient(90deg, #F6E7A1 0%, #D8BC5E 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}
+                >
+                  chat
+                </span>
               </span>
             </div>
           </Link>

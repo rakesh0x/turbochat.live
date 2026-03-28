@@ -251,9 +251,35 @@ export function ChatInterface() {
             >
               <div className="flex h-16 items-center justify-between border-b border-white/70 px-4 dark:border-slate-800/80">
                 <div className="flex items-center gap-2.5">
-                  <div>
-                    <p className="bg-gradient-to-r from-slate-900 via-slate-700 to-cyan-700 bg-clip-text text-sm font-black tracking-[0.02em] text-transparent dark:from-slate-100 dark:via-slate-200 dark:to-cyan-300">Turbochat AI</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Workspace</p>
+                  <div className="relative h-[46px] w-[120px]">
+                    <p
+                      className="absolute"
+                      style={{
+                        left: '5px',
+                        top: '5px',
+                        fontFamily: "'Jersey 10'",
+                        fontStyle: 'normal',
+                        fontWeight: 400,
+                        fontSize: '24px',
+                        lineHeight: '24px',
+                        whiteSpace: 'nowrap',
+                        color: '#FFFFFF'
+                      }}
+                    >
+                      <span>Turbo</span>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          background: 'linear-gradient(90deg, #F6E7A1 0%, #D8BC5E 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text'
+                        }}
+                      >
+                        chat
+                      </span>
+                    </p>
+                    <p className="pt-[30px] text-[11px] text-slate-500 dark:text-slate-400">Workspace</p>
                   </div>
                 </div>
                 <Button
@@ -297,9 +323,35 @@ export function ChatInterface() {
         {/* Logo */}
         <div className="h-20 flex items-center px-6 border-b border-white/60 dark:border-slate-800/80">
           <div className="flex items-center gap-2">
-            <div>
-              <span className="block bg-gradient-to-r from-slate-900 via-slate-700 to-cyan-700 bg-clip-text text-xl font-black leading-none tracking-[0.01em] text-transparent dark:from-slate-100 dark:via-slate-200 dark:to-cyan-300">Turbochat AI</span>
-              <span className="block text-xs text-slate-500 dark:text-slate-400">Workspace Console</span>
+            <div className="relative h-[46px] w-[120px]">
+              <span
+                className="absolute"
+                style={{
+                  left: '5px',
+                  top: '5px',
+                  fontFamily: "'Jersey 10'",
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  fontSize: '24px',
+                  lineHeight: '24px',
+                  whiteSpace: 'nowrap',
+                  color: '#FFFFFF'
+                }}
+              >
+                <span>Turbo</span>
+                <span
+                  style={{
+                    display: 'inline-block',
+                    background: 'linear-gradient(90deg, #F6E7A1 0%, #D8BC5E 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}
+                >
+                  chat
+                </span>
+              </span>
+              <span className="block pt-[30px] text-xs text-slate-500 dark:text-slate-400">Workspace Console</span>
             </div>
           </div>
         </div>
