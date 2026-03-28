@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { Analytics } from "@vercel/analytics/next"
+import Image from "next/image";
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -12,6 +13,9 @@ export const metadata: Metadata = {
   title: {
     default: "Turbochat AI | AI Chatbot for Your Website",
     template: "%s | Turbochat AI",
+  },
+  icons: {
+    icon: '/Turbochatlogo.png'
   },
   description: "Create, train, and deploy an AI chatbot for your website in minutes. Turbochat AI answers using your docs, pages, and product content.",
   applicationName: "Turbochat AI",
