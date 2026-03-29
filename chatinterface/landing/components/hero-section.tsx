@@ -29,12 +29,12 @@ export function HeroSection() {
           </Button>
         </div>
 
-        <div className="mt-12">
+        <div className="mx-auto mt-12 w-full max-w-4xl">
           <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xl">
             <Image
               src="/334shots_so.png"
               alt="Turbochat dashboard preview"
-              width={1600}
+              width={1650}
               height={1000}
               className="h-auto w-full"
               priority
