@@ -254,7 +254,7 @@ export function ChatInterface() {
                   <div className="relative h-[46px] w-[120px]">
                     <p className="absolute left-[5px] top-[5px] whitespace-nowrap text-[24px] leading-6 [font-family:'Jersey_10'] text-slate-900 dark:text-slate-100">
                       <span className="text-slate-900 dark:text-slate-100">Turbo</span>
-                      <span className="inline-block bg-gradient-to-r from-amber-200 via-amber-300 to-amber-500 bg-clip-text text-transparent">
+                      <span className="inline-block text-slate-900 dark:text-slate-100">
                         chat
                       </span>
                     </p>
@@ -305,7 +305,7 @@ export function ChatInterface() {
             <div className="relative h-[46px] w-[120px]">
               <span className="absolute left-[5px] top-[5px] whitespace-nowrap text-[24px] leading-6 [font-family:'Jersey_10'] text-slate-900 dark:text-slate-100">
                 <span className="text-slate-900 dark:text-slate-100">Turbo</span>
-                <span className="inline-block bg-gradient-to-r from-amber-200 via-amber-300 to-amber-500 bg-clip-text text-transparent">
+                <span className="inline-block text-slate-900 dark:text-slate-100">
                   chat
                 </span>
               </span>
