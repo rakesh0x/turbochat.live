@@ -50,7 +50,7 @@ export default async function DashboardPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-[#090c12] text-slate-100">
             <ChatInterface />
         </div>
     )

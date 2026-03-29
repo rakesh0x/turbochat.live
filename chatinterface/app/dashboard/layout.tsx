@@ -24,9 +24,9 @@ export default function DashboardLayout({
   }, [router]);
 
   return (
-    <>
+    <div className="dark min-h-screen bg-[#090c12] text-slate-100">
       {children}
       {modal}
-    </>
+    </div>
   );
 }

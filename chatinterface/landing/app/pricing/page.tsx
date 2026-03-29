@@ -1,7 +1,6 @@
-import { Header } from "@/landing/components/header"
-import { CtaSection } from "@/landing/components/cta-section"
-import { Footer } from "@/landing/components/footer"
-import Link from "next/link"
+import { Header } from "@/components/header"
+import { CtaSection } from "@/components/cta-section"
+import { Footer } from "@/components/footer"
 
 const plans = [
   {
@@ -78,21 +77,9 @@ function PricingSectionInline() {
                 ))}
               </ul>
 
-              {plan.name === "Enterprise" ? (
-                <a
-                  href="mailto:sales@turbochat.live"
-                  className="rounded-full bg-foreground text-background hover:bg-foreground/90 px-6 py-2.5 text-sm text-center"
-                >
-                  {plan.cta}
-                </a>
-              ) : (
-                <Link
-                  href="/api/auth/signin/google?callbackUrl=%2Fdashboard"
-                  className="rounded-full bg-foreground text-background hover:bg-foreground/90 px-6 py-2.5 text-sm text-center"
-                >
-                  {plan.cta}
-                </Link>
-              )}
+              <button className="rounded-full bg-foreground text-background hover:bg-foreground/90 px-6 py-2.5 text-sm">
+                {plan.cta}
+              </button>
             </div>
           ))}
         </div>
