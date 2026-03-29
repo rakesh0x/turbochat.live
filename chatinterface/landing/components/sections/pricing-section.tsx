@@ -70,7 +70,7 @@ export function PricingSection() {
     }
 
     if (!currentUser?.id || !currentUser?.email) {
-      toast.error("Please sign in before starting checkout")
+      signInWithGoogle(router)
       return
     }
 
