@@ -41,7 +41,7 @@ def init_db():
                 email VARCHAR(255) NOT NULL,
                 credits INT NOT NULL DEFAULT 0,
                 plan VARCHAR(50) NOT NULL DEFAULT 'free',
-                free_trial_remaining INT NOT NULL DEFAULT 5,
+                free_trial_remaining INT NOT NULL DEFAULT 2,
                 free_trial_reset_at TIMESTAMP NOT NULL DEFAULT (NOW() + INTERVAL '7 days')
             )
         """)
@@ -49,9 +49,10 @@ def init_db():
         # Backfill/migrate legacy users table structures.
         cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS free_trial_remaining INT")
         cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS free_trial_reset_at TIMESTAMP")
-        cur.execute("UPDATE users SET free_trial_remaining = 5 WHERE free_trial_remaining IS NULL")
+        cur.execute("UPDATE users SET free_trial_remaining = 2 WHERE free_trial_remaining IS NULL")
+        cur.execute("UPDATE users SET free_trial_remaining = 2 WHERE plan = 'free' AND free_trial_remaining > 2")
         cur.execute("UPDATE users SET free_trial_reset_at = NOW() + INTERVAL '7 days' WHERE free_trial_reset_at IS NULL")
-        cur.execute("ALTER TABLE users ALTER COLUMN free_trial_remaining SET DEFAULT 5")
+        cur.execute("ALTER TABLE users ALTER COLUMN free_trial_remaining SET DEFAULT 2")
         cur.execute("ALTER TABLE users ALTER COLUMN free_trial_reset_at SET DEFAULT (NOW() + INTERVAL '7 days')")
         cur.execute("ALTER TABLE users ALTER COLUMN free_trial_remaining SET NOT NULL")
         cur.execute("ALTER TABLE users ALTER COLUMN free_trial_reset_at SET NOT NULL")

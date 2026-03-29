@@ -14,13 +14,27 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { product_cart, customer, billing_address, metadata, return_url } = body;
+    const {
+      product_cart,
+      customer,
+      billing_address,
+      metadata,
+      return_url,
+      trial_period_days,
+      subscription_data,
+    } = body;
 
     const apiKey = process.env.DODO_PAYMENTS_API_KEY;
     if (!apiKey) {
       console.error("Dodo Payments API key not configured in .env.local");
       return NextResponse.json({ message: "Dodo Payments API key not configured" }, { status: 500 });
     }
+
+    const resolvedSubscriptionData =
+      subscription_data ??
+      (typeof trial_period_days === "number" && trial_period_days > 0
+        ? { trial_period_days }
+        : undefined);
 
     const response = await fetch("https://live.dodopayments.com/checkouts", {
       method: "POST",
@@ -38,6 +52,7 @@ export async function POST(req: NextRequest) {
           user_email: userEmail,
         },
         return_url,
+        ...(resolvedSubscriptionData ? { subscription_data: resolvedSubscriptionData } : {}),
       }),
     });
 

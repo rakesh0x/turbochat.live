@@ -10,96 +10,93 @@ import { useSession } from "next-auth/react"
 const plans = [
   {
     name: "Starter",
-    description: "Perfect for side projects and small teams",
+    description: "Launch with a 7-day free trial, then $9/month",
     price: "$9",
     period: "/month",
-    features: ["Up to 3 team members", "5 projects", "Basic analytics", "Community support", "1GB storage"],
-    cta: "Get Started",
+    features: ["7-day free trial", "2 chatbots included", "15 support chats included", "Email support"],
+    cta: "Start Free Trial",
     highlighted: false,
-    productId: null,
+    productId: "pdt_0NauJou4mqDCcPVwp4kfS",
   },
   {
     name: "Pro",
-    description: "For growing teams that need more power",
+    description: "For teams that need higher limits and priority support",
     price: "$29",
     period: "/month",
     features: [
-      "Unlimited team members",
-      "Unlimited projects",
-      "Advanced analytics",
+      "Higher chatbot and chat capacity",
+      "Faster support response",
       "Priority support",
-      "100GB storage",
-      "Custom integrations",
+      "Usage-based scaling ready",
+      "Advanced analytics",
       "API access",
     ],
-    cta: "Start Free Trial",
+    cta: "Choose Pro",
     highlighted: true,
     productId: "pdt_0NaGTaLaCP8TsMwaiw1t7",
   },
   {
     name: "Enterprise",
-    description: "For large organizations with custom needs",
+    description: "For organizations that need scale, controls, and onboarding",
     price: "$99",
     period: "/month",
     features: [
       "Everything in Pro",
-      "Dedicated account manager",
-      "Custom SLA",
-      "On-premise deployment",
-      "Unlimited storage",
-      "Advanced security",
-      "Training & onboarding",
+      "SSO + team controls",
+      "Dedicated onboarding",
+      "Priority technical support",
+      "Custom security review",
+      "SLA options",
     ],
-    cta: "Contact Sales",
+    cta: "Choose Enterprise",
     highlighted: false,
-    productId: null,
+    productId: "pdt_0NauLa7pvwInvZjndZt6y",
   },
 ]
 export function PricingSection() {
   const router = useRouter()
   const { data: session, status } = useSession()
-  const user = session?.user;
-  const isLoading = status === "loading";
+  const user = session?.user
+  const isLoading = status === "loading"
 
   const handleCheckout = async (plan: (typeof plans)[0]) => {
     if (isLoading) return
 
     const currentUser: any = user
 
-    if (plan.name === "Pro" && plan.productId) {
-        if (!currentUser?.id || !currentUser?.email) {
-          toast.error("Please sign in before starting checkout");
-          return;
-      }
-      try {
-        const payload = {
-          product_cart: [
-            {
-              product_id: plan.productId,
-              quantity: 1,
-            },
-          ],
-          customer: {
-            email: currentUser.email,
-            name: currentUser.name || currentUser.email,
-          },
-          metadata: {
-            user_id: currentUser.id,
-          },
-          return_url: window.location.origin,
-        }
-        const checkoutUrl = await createCheckoutSession(payload)
-        window.location.href = checkoutUrl
-      } catch (error) {
-        toast.error("Failed to initiate checkout. Please try again.")
-      }
+    if (!plan.productId) {
+      signInWithGoogle(router)
       return
     }
-    
-    if (plan.name === "Enterprise") {
-      window.location.href = "mailto:sales@turbochat.ai"
-    } else {
-      signInWithGoogle(router)
+
+    if (!currentUser?.id || !currentUser?.email) {
+      toast.error("Please sign in before starting checkout")
+      return
+    }
+
+    try {
+      const payload = {
+        product_cart: [
+          {
+            product_id: plan.productId,
+            quantity: 1,
+          },
+        ],
+        customer: {
+          email: currentUser.email,
+          name: currentUser.name || currentUser.email,
+        },
+        metadata: {
+          user_id: currentUser.id,
+          source: "landing-pricing",
+        },
+        return_url: `${window.location.origin}/dashboard`,
+        ...(plan.name === "Starter" ? { trial_period_days: 7 } : {}),
+      }
+      const checkoutUrl = await createCheckoutSession(payload)
+      window.location.href = checkoutUrl
+    } catch (error) {
+      toast.error("Failed to initiate checkout. Please try again.")
     }
   }
 

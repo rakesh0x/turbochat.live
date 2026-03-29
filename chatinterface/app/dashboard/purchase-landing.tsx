@@ -8,9 +8,7 @@ interface PurchaseLandingProps {
   userId: string
 }
 
-const PRO_PLAN_PRODUCT_ID = "pdt_0NaGTaLaCP8TsMwaiw1t7"
 const STARTER_PLAN_PRODUCT_ID = "pdt_0NauJou4mqDCcPVwp4kfS"
-const ENTERPRISE_PLAN_PRODUCT_ID = "pdt_0NauLa7pvwInvZjndZt6y"
 
 export function PurchaseLanding({ userEmail, userName, userId }: PurchaseLandingProps) {
   const [isLoading, setIsLoading] = useState(false)
@@ -35,7 +33,7 @@ export function PurchaseLanding({ userEmail, userName, userId }: PurchaseLanding
         body: JSON.stringify({
           product_cart: [
             {
-              product_id: PRO_PLAN_PRODUCT_ID,
+              product_id: STARTER_PLAN_PRODUCT_ID,
               quantity: 1,
             },
           ],
@@ -47,6 +45,7 @@ export function PurchaseLanding({ userEmail, userName, userId }: PurchaseLanding
             user_id: userId,
           },
           return_url: `${window.location.origin}/dashboard`,
+          trial_period_days: 7,
         }),
       })
 
@@ -71,11 +70,10 @@ export function PurchaseLanding({ userEmail, userName, userId }: PurchaseLanding
         <section className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 p-8 md:p-12">
           <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">Turbochat AI Dashboard</p>
           <h1 className="mt-4 text-3xl md:text-5xl font-semibold leading-tight">
-            Activate your plan to create your first chatbot
+            Start your 7-day free trial
           </h1>
           <p className="mt-4 max-w-2xl text-zinc-300">
-            You are signed in, but your current account has no active paid plan credits.
-            Complete checkout to unlock chatbot creation, training, and deployment.
+            Start with Starter at no cost today. After 7 days, billing continues at $9/month unless cancelled in your billing portal.
           </p>
 
           <div className="mt-8 grid gap-3 text-sm text-zinc-300 md:grid-cols-3">
@@ -91,7 +89,7 @@ export function PurchaseLanding({ userEmail, userName, userId }: PurchaseLanding
               disabled={isLoading}
               className="inline-flex items-center justify-center rounded-full bg-zinc-100 px-6 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isLoading ? "Starting checkout..." : "Purchase Pro Plan"}
+              {isLoading ? "Starting checkout..." : "Start Free Trial"}
             </button>
 
             <a

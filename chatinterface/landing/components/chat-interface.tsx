@@ -1789,23 +1789,26 @@ function BillingPage({
   const plans = [
     {
       name: 'Starter',
+      description: 'Launch with a 7-day free trial, then $9/month',
       price: '$9',
       productId: 'pdt_0NauJou4mqDCcPVwp4kfS',
-      features: ['5 projects', '1 GB storage', 'Email support'],
+      features: ['7-day free trial', '2 chatbots included', '15 support chats included', 'Email support'],
       highlighted: false,
     },
     {
       name: 'Pro',
+      description: 'For teams that need higher limits and priority support',
       price: '$29',
       productId: 'pdt_0NaGTaLaCP8TsMwaiw1t7',
-      features: ['Unlimited projects', '100 GB storage', 'Priority support'],
+      features: ['Higher chatbot and chat capacity', 'Faster support response', 'Priority support', 'API access'],
       highlighted: true,
     },
     {
       name: 'Enterprise',
+      description: 'For organizations that need scale, controls, and onboarding',
       price: '$99',
       productId: 'pdt_0NauLa7pvwInvZjndZt6y',
-      features: ['SSO + team controls', 'Dedicated onboarding', 'Priority technical support'],
+      features: ['Everything in Pro', 'SSO + team controls', 'Dedicated onboarding', 'SLA options'],
       highlighted: false,
     },
   ];
@@ -1833,6 +1836,7 @@ function BillingPage({
             source: 'dashboard-billing-page',
           },
           return_url: `${window.location.origin}/dashboard`,
+          ...(planName === 'Starter' ? { trial_period_days: 7 } : {}),
         }),
       });
 
@@ -1900,6 +1904,7 @@ function BillingPage({
             )}
             <CardHeader>
               <CardTitle>{plan.name}</CardTitle>
+              <CardDescription>{plan.description}</CardDescription>
               <div className="mt-2">
                 <span className="text-3xl font-bold">{plan.price}</span>
                 <span className={`${plan.highlighted ? 'text-slate-700' : 'text-muted-foreground'}`}>/month</span>

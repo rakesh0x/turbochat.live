@@ -58,6 +58,10 @@ if GEMINI_API_KEY:
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai").lower()
 TEMP_DISABLE_CREDIT_BLOCKADE = os.getenv("TEMP_DISABLE_CREDIT_BLOCKADE", "false").lower() == "true"
 
+FREE_TRIAL_DAYS = 7
+FREE_TRIAL_CHATBOT_LIMIT = 2
+FREE_TRIAL_SUPPORT_CHAT_LIMIT = 15
+
 # Supabase setup
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
@@ -111,6 +115,13 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise HTTPException(status_code=500, detail="Database error during authentication")
     finally:
         release_db_connection(conn)
+
+
+def is_active_free_trial(user_row: dict, now_dt: Optional[datetime] = None) -> bool:
+    now_dt = now_dt or datetime.now()
+    plan = str(user_row.get("plan") or "free").lower()
+    trial_ends_at = user_row.get("free_trial_reset_at")
+    return plan == "free" and bool(trial_ends_at and trial_ends_at > now_dt)
 
 
 # Models
@@ -389,11 +400,14 @@ async def list_chatbots(user: dict = Depends(get_current_user)):
     finally:
         release_db_connection(conn)
     
+    active_trial = is_active_free_trial(user)
+    remaining_free_trials = max(0, FREE_TRIAL_CHATBOT_LIMIT - len(rows)) if active_trial else 0
+
     return [
         ChatbotSchema(
             id=row["id"],
             name=row["name"],
-            free_trial=int(user.get("free_trial_remaining", 0)),
+            free_trial=remaining_free_trials,
             website=row["website"],
             status=row["status"],
             pagesScraped=row["pages_scraped"],
@@ -422,7 +436,7 @@ async def create_chatbot(chatbot: ChatbotCreate, background_tasks: BackgroundTas
         if not TEMP_DISABLE_CREDIT_BLOCKADE:
             # Lock usage row so credits/free-trial cannot be double-consumed by concurrent requests.
             cur.execute(
-                "SELECT credits, free_trial_remaining, free_trial_reset_at FROM users WHERE id = %s FOR UPDATE",
+                "SELECT credits, plan, free_trial_remaining, free_trial_reset_at FROM users WHERE id = %s FOR UPDATE",
                 (user["id"],),
             )
             usage_row = cur.fetchone()
@@ -430,29 +444,37 @@ async def create_chatbot(chatbot: ChatbotCreate, background_tasks: BackgroundTas
                 raise HTTPException(status_code=404, detail="User not found")
 
             credits = int(usage_row.get("credits") or 0)
-            trial_remaining = int(usage_row.get("free_trial_remaining") or 0)
+            plan = str(usage_row.get("plan") or "free").lower()
             reset_at = usage_row.get("free_trial_reset_at")
 
-            if not reset_at or reset_at <= now_dt:
-                trial_remaining = 5
-                reset_at = now_dt + timedelta(days=7)
-                cur.execute(
-                    "UPDATE users SET free_trial_remaining = %s, free_trial_reset_at = %s WHERE id = %s",
-                    (trial_remaining, reset_at, user["id"]),
-                )
+            if plan == "free":
+                if not reset_at or reset_at <= now_dt:
+                    cur.execute(
+                        "UPDATE users SET free_trial_remaining = %s WHERE id = %s",
+                        (0, user["id"]),
+                    )
+                    raise HTTPException(
+                        status_code=402,
+                        detail="Your 7-day free trial has ended. Subscribe to continue.",
+                    )
 
-            if credits > 0:
-                cur.execute("UPDATE users SET credits = credits - 1 WHERE id = %s", (user["id"],))
-            elif trial_remaining > 0:
-                trial_remaining -= 1
+                cur.execute("SELECT COUNT(*) AS total FROM chatbots WHERE user_id = %s", (user["id"],))
+                chatbot_total = int(cur.fetchone()["total"])
+                if chatbot_total >= FREE_TRIAL_CHATBOT_LIMIT:
+                    raise HTTPException(
+                        status_code=402,
+                        detail=f"Free trial allows up to {FREE_TRIAL_CHATBOT_LIMIT} chatbots.",
+                    )
+
+                remaining_free_trials = max(0, FREE_TRIAL_CHATBOT_LIMIT - (chatbot_total + 1))
                 cur.execute(
                     "UPDATE users SET free_trial_remaining = %s WHERE id = %s",
-                    (trial_remaining, user["id"]),
+                    (remaining_free_trials, user["id"]),
                 )
+            elif credits > 0:
+                cur.execute("UPDATE users SET credits = credits - 1 WHERE id = %s", (user["id"],))
             else:
                 raise HTTPException(status_code=402, detail="Insufficient credits. Please upgrade your plan.")
-
-            remaining_free_trials = trial_remaining
              
         cur.execute(
             "INSERT INTO chatbots (id, user_id, name, website, status, last_updated, created_at, model) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
@@ -704,13 +726,32 @@ async def dodo_webhook_internal(payload: WebhookPayload):
 
 @app.get("/api/users/me")
 async def get_user_me(user: dict = Depends(get_current_user)):
+    now_dt = datetime.now()
+    active_trial = is_active_free_trial(user, now_dt)
+
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM chatbots WHERE user_id = %s", (user["id"],))
+        total_chatbots = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM messages WHERE user_id = %s AND role = 'user'", (user["id"],))
+        used_support_chats = cur.fetchone()[0]
+        cur.close()
+    finally:
+        release_db_connection(conn)
+
+    chatbot_remaining = max(0, FREE_TRIAL_CHATBOT_LIMIT - total_chatbots) if active_trial else 0
+    support_chat_remaining = max(0, FREE_TRIAL_SUPPORT_CHAT_LIMIT - used_support_chats) if active_trial else 0
+
     return {
         "id": user["id"],
         "email": user["email"],
         "credits": user["credits"],
         "plan": user["plan"],
-        "freeTrialRemaining": int(user.get("free_trial_remaining", 0)),
+        "freeTrialRemaining": chatbot_remaining,
         "freeTrialResetAt": str(user.get("free_trial_reset_at")),
+        "freeTrialActive": active_trial,
+        "freeTrialSupportChatsRemaining": support_chat_remaining,
     }
 
 @app.get("/api/analytics")
@@ -733,6 +774,8 @@ async def chat(chatbot_id: str, request: ChatRequest):
     try:
         print(f"Chat request for bot {chatbot_id}")
 
+        now_dt = datetime.now()
+
         conn = get_db_connection()
         try:
             cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -742,6 +785,29 @@ async def chat(chatbot_id: str, request: ChatRequest):
             if not owner_row:
                 raise HTTPException(status_code=404, detail="Chatbot not found")
             owner_user_id = owner_row["user_id"]
+        finally:
+            release_db_connection(conn)
+
+        conn = get_db_connection()
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("SELECT plan, free_trial_reset_at FROM users WHERE id = %s", (owner_user_id,))
+            owner_usage = cur.fetchone()
+            if not owner_usage:
+                raise HTTPException(status_code=404, detail="Owner account not found")
+
+            if is_active_free_trial(owner_usage, now_dt):
+                cur.execute(
+                    "SELECT COUNT(*) AS total FROM messages WHERE user_id = %s AND role = 'user'",
+                    (owner_user_id,),
+                )
+                used_support_chats = int(cur.fetchone()["total"])
+                if used_support_chats >= FREE_TRIAL_SUPPORT_CHAT_LIMIT:
+                    raise HTTPException(
+                        status_code=402,
+                        detail=f"Free trial allows up to {FREE_TRIAL_SUPPORT_CHAT_LIMIT} support chats.",
+                    )
+            cur.close()
         finally:
             release_db_connection(conn)
         
@@ -784,6 +850,8 @@ async def chat(chatbot_id: str, request: ChatRequest):
             response=response,
             conversation_id=request.conversation_id
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

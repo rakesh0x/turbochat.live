@@ -15,7 +15,7 @@ const plans = [
     price: "$9",
     subtitle: "For early projects",
     productId: STARTER_PLAN_PRODUCT_ID,
-    features: ["5 projects", "1 GB storage", "Email support"],
+    features: ["7-day free trial", "$9/month after trial", "Email support"],
     highlighted: false,
   },
   {
@@ -84,6 +84,7 @@ export default function DashboardPricingModalPage() {
             user_id: sessionUserId,
           },
           return_url: `${window.location.origin}/dashboard`,
+          ...(planName === "Starter" ? { trial_period_days: 7 } : {}),
         }),
       });
 

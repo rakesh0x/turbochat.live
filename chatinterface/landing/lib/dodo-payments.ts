@@ -17,6 +17,7 @@ export interface CreateCheckoutPayload {
   };
   metadata?: Record<string, string>;
   return_url?: string;
+  trial_period_days?: number;
 }
 
 /**
