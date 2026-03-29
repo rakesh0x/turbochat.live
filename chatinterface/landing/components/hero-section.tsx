@@ -1,7 +1,7 @@
 "use client"
 
+import Image from "next/image"
 import { Button } from "./ui/button"
-import { DashboardMockup } from "./dashboard-mockup"
 import { signInWithGoogle } from "../lib/auth"
 
 export function HeroSection() {
@@ -30,7 +30,16 @@ export function HeroSection() {
         </div>
 
         <div className="mt-12">
-          <DashboardMockup />
+          <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xl">
+            <Image
+              src="/334shots_so.png"
+              alt="Turbochat dashboard preview"
+              width={1600}
+              height={1000}
+              className="h-auto w-full"
+              priority
+            />
+          </div>
         </div>
       </div>
     </section>
