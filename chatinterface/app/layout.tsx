@@ -32,6 +32,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  other: {
+    "sigentra-verify": "5f9f3db4-21fd-4143-8db1-3ba5bf5f9e3c"
+  },
   openGraph: {
     type: "website",
     url: "/",
