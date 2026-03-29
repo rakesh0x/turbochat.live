@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   title: "TurboChat AI - Turn your website into a support copilot",
   description: "TurboChat trains on your website and docs to deliver fast, accurate customer support answers 24/7.",
   generator: "v0.app",
+  other: {
+    "sigentra-verify": "5f9f3db4-21fd-4143-8db1-3ba5bf5f9e3c"
+  }
 }
 
 export default function RootLayout({

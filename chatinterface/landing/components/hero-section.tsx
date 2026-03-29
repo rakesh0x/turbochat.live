@@ -6,10 +6,7 @@ import { signInWithGoogle } from "../lib/auth"
 
 export function HeroSection() {
   return (
-    <section className="relative w-full overflow-hidden">
-      {/* Gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-cyan-950/20 via-slate-950/10 to-transparent pointer-events-none" />
-
+    <section className="relative w-full overflow-hidden bg-white">
       <div className="relative max-w-7xl mx-auto px-6 pt-16 pb-8">
         <div className="text-center max-w-3xl mx-auto">
           <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl leading-tight text-balance">
@@ -30,7 +27,7 @@ export function HeroSection() {
         </div>
 
         <div className="mx-auto mt-12 w-full max-w-4xl">
-          <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xl">
+          <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
             <Image
               src="/334shots_so.png"
               alt="Turbochat dashboard preview"
