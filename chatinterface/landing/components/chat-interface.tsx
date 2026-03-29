@@ -252,30 +252,9 @@ export function ChatInterface() {
               <div className="flex h-16 items-center justify-between border-b border-white/70 px-4 dark:border-slate-800/80">
                 <div className="flex items-center gap-2.5">
                   <div className="relative h-[46px] w-[120px]">
-                    <p
-                      className="absolute"
-                      style={{
-                        left: '5px',
-                        top: '5px',
-                        fontFamily: "'Jersey 10'",
-                        fontStyle: 'normal',
-                        fontWeight: 400,
-                        fontSize: '24px',
-                        lineHeight: '24px',
-                        whiteSpace: 'nowrap',
-                        color: '#FFFFFF'
-                      }}
-                    >
-                      <span>Turbo</span>
-                      <span
-                        style={{
-                          display: 'inline-block',
-                          background: 'linear-gradient(90deg, #F6E7A1 0%, #D8BC5E 100%)',
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          backgroundClip: 'text'
-                        }}
-                      >
+                    <p className="absolute left-[5px] top-[5px] whitespace-nowrap text-[24px] leading-6 [font-family:'Jersey_10'] text-slate-900 dark:text-slate-100">
+                      <span className="text-slate-900 dark:text-slate-100">Turbo</span>
+                      <span className="inline-block bg-gradient-to-r from-amber-200 via-amber-300 to-amber-500 bg-clip-text text-transparent">
                         chat
                       </span>
                     </p>
@@ -324,30 +303,9 @@ export function ChatInterface() {
         <div className="h-20 flex items-center px-6 border-b border-white/60 dark:border-slate-800/80">
           <div className="flex items-center gap-2">
             <div className="relative h-[46px] w-[120px]">
-              <span
-                className="absolute"
-                style={{
-                  left: '5px',
-                  top: '5px',
-                  fontFamily: "'Jersey 10'",
-                  fontStyle: 'normal',
-                  fontWeight: 400,
-                  fontSize: '24px',
-                  lineHeight: '24px',
-                  whiteSpace: 'nowrap',
-                  color: '#FFFFFF'
-                }}
-              >
-                <span>Turbo</span>
-                <span
-                  style={{
-                    display: 'inline-block',
-                    background: 'linear-gradient(90deg, #F6E7A1 0%, #D8BC5E 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text'
-                  }}
-                >
+              <span className="absolute left-[5px] top-[5px] whitespace-nowrap text-[24px] leading-6 [font-family:'Jersey_10'] text-slate-900 dark:text-slate-100">
+                <span className="text-slate-900 dark:text-slate-100">Turbo</span>
+                <span className="inline-block bg-gradient-to-r from-amber-200 via-amber-300 to-amber-500 bg-clip-text text-transparent">
                   chat
                 </span>
               </span>
