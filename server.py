@@ -14,6 +14,7 @@ from pinecone import Pinecone
 from psycopg2.extras import RealDictCursor
 from database import get_db_connection, release_db_connection, init_db, close_pool
 from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -519,108 +520,169 @@ JSON array:"""
     finally:
         release_db_connection(conn)
 
+# ---------------------------------------------------------------------------
+# Pronoun / coreference heuristic — only rewrite the query if it seems to
+# reference a prior message. Avoids a full LLM round-trip on fresh questions.
+# ---------------------------------------------------------------------------
+_PRONOUN_HINTS = [
+    " he ", " she ", " it ", " they ", " them ", " his ", " her ", " its ",
+    " their ", " this ", " that ", " these ", " those ", " the same ",
+    "tell me more", "what about", "and ", "also ", "how about",
+]
+
+def _needs_rewrite(query: str) -> bool:
+    q = " " + query.lower() + " "
+    return any(hint in q for hint in _PRONOUN_HINTS)
+
+
 async def ask_question(chatbot_id: str, query: str, history: List[dict] = []) -> str:
     """Query Pinecone (semantic) and/or PostgreSQL (structured) then call LLM."""
     loop = asyncio.get_event_loop()
 
-    # 1. Rewrite query into a standalone form using conversation history.
+    # 1. Query rewrite — only when there is history AND the query has pronouns.
+    # Skipping this saves a full Gemini round-trip (~2-3s) on most requests.
     standalone_query = query
-    if history:
+    if history and _needs_rewrite(query):
         history_text = "\n".join([f"{m['role']}: {m['content']}" for m in history[-3:]])
-        rewrite_prompt = f"""Instructions: Convert the user's latest question into a standalone search query. Replace pronouns like "he", "she", "it", "they", "this", "that" with the actual names or topics from the history.
-Output only the search query.
-
-Conversation History:
-{history_text}
-
-Latest Question: {query}
-Search Query:"""
+        rewrite_prompt = (
+            "Convert the user's question into a self-contained search query. "
+            "Replace pronouns with the actual names/topics from history. "
+            "Output only the rewritten query, nothing else.\n\n"
+            f"History:\n{history_text}\n\nQuestion: {query}\nRewritten:"
+        )
         try:
             standalone_query = await loop.run_in_executor(executor, get_llm_response, rewrite_prompt)
-            standalone_query = standalone_query.strip().split("\n")[0].replace("Search Query:", "").strip()
-            print(f"Re-written query: '{standalone_query}' (Original: '{query}')")
+            standalone_query = standalone_query.strip().split("\n")[0].strip()
         except Exception:
             standalone_query = query
 
-    # 2. --- Structured / SQL path ---
-    # If the query looks like a price filter, listing, or comparison request,
-    # run a SQL query against structured_items FIRST, then augment with Pinecone.
-    structured_context = ""
-    is_struct = _is_structured_query(standalone_query)
-    if is_struct:
+    # 2. Run Pinecone + SQL in PARALLEL — both are independent.
+    async def _pinecone_search():
+        try:
+            results = await loop.run_in_executor(
+                executor,
+                lambda: index.search(
+                    namespace=chatbot_id,
+                    query={"top_k": 7, "inputs": {"text": standalone_query}},
+                ),
+            )
+            return "\n\n".join(
+                hit["fields"]["chunk_text"]
+                for hit in results.result.hits
+                if not is_crawl_error_text(hit["fields"]["chunk_text"])
+            )
+        except Exception as e:
+            print(f"Pinecone search error: {e}")
+            return ""
+
+    async def _sql_search():
+        if not _is_structured_query(standalone_query):
+            return ""
         try:
             constraints = _parse_price_constraints(standalone_query)
             result = await loop.run_in_executor(
                 executor, _query_structured_items, chatbot_id, constraints
             )
-            if result:
-                structured_context = result
-                print(f"[Router] Structured query matched {len(result.splitlines())} items")
-            else:
-                print(f"[Router] Structured query returned no items — falling back to semantic only")
-        except Exception as struct_err:
-            print(f"[Router] Structured query error: {struct_err}")
+            return result or ""
+        except Exception as e:
+            print(f"[Router] SQL search error: {e}")
+            return ""
 
-    # 3. --- Semantic / Pinecone path ---
-    # Always run semantic search to get supplementary context (policies, descriptions, etc.)
-    semantic_context = ""
-    try:
-        results = await loop.run_in_executor(
-            executor,
-            lambda: index.search(
-                namespace=chatbot_id,
-                query={"top_k": 7, "inputs": {"text": standalone_query}},
-            ),
-        )
-        filtered_chunks = [
-            hit["fields"]["chunk_text"]
-            for hit in results.result.hits
-            if not is_crawl_error_text(hit["fields"]["chunk_text"])
-        ]
-        semantic_context = "\n\n".join(filtered_chunks)
-    except Exception as e:
-        print(f"Pinecone search error: {e}")
+    semantic_context, structured_context = await asyncio.gather(
+        _pinecone_search(), _sql_search()
+    )
 
-    # 4. --- Build prompt based on what data we have ---
-    if structured_context:
-        # We have clean structured product data — lead with it, use semantic as supplement.
-        supplement = f"\n\nAdditional website context:\n{semantic_context}" if semantic_context.strip() else ""
-        prompt = f"""You are a helpful assistant for this business. A customer asked a question and you have access to the product catalog.
-
-Customer question: {query}
-
-Matching products from our catalog:
-{structured_context}{supplement}
-
-Instructions:
-- Present the matching products in a clear, friendly list.
-- Include names and prices prominently.
-- If the customer asked for filtering (e.g. under $500), make sure every item you list meets that condition.
-- If no products match the exact filter but you have related items, say so honestly.
-- Keep the response concise and helpful.
-
-Response:"""
-    elif semantic_context.strip():
-        # No structured data matched — pure semantic RAG response.
-        prompt = f"""You are a helpful assistant trained on this business's website content.
-Rules:
-1. Answer only from the provided context.
-2. If you cannot find the answer in the context, say so politely.
-3. Be concise and factual.
-
-Context:
-{semantic_context}
-
-Question: {query}
-Answer:"""
-    else:
-        prompt = f"""You are a helpful assistant for this business.
-The customer asked: {query}
-Unfortunately you don't have enough training data to answer this question yet. Let them know politely and suggest they contact the business directly."""
-
+    # 3. Build prompt based on what data we have.
+    prompt = _build_prompt(query, semantic_context, structured_context)
     prompt = clean_text(prompt)
     response = await loop.run_in_executor(executor, get_llm_response, prompt)
     return response.strip()
+
+
+def _build_prompt(query: str, semantic_context: str, structured_context: str) -> str:
+    """Construct the LLM prompt from retrieved context."""
+    if structured_context:
+        supplement = (
+            f"\n\nAdditional website context:\n{semantic_context}"
+            if semantic_context.strip() else ""
+        )
+        return (
+            "You are a helpful assistant for this business with access to the product catalog.\n\n"
+            f"Customer question: {query}\n\n"
+            f"Matching products from our catalog:\n{structured_context}{supplement}\n\n"
+            "Instructions:\n"
+            "- USE MARKDOWN formatting for your response.\n"
+            "- Put every bullet point or item on a separate NEW LINE.\n"
+            "- Use bolding (**item**) for product names or key terms.\n"
+            "- Only include products that satisfy the customer's filter.\n"
+            "- If no products match exactly, say so honestly.\n"
+            "- Be concise and friendly.\n\nResponse:"
+        )
+    if semantic_context.strip():
+        return (
+            "You are a helpful assistant trained on this business's website content.\n"
+            "Answer only from the provided context. Be concise and factual.\n\n"
+            "Formatting Rules:\n"
+            "1. USE MARKDOWN (**bolding**, *italics*, etc.).\n"
+            "2. If you are listing points, put each point on its own NEW LINE starting with a bullet point (*).\n\n"
+            f"Context:\n{semantic_context}\n\nQuestion: {query}\nAnswer:"
+        )
+    return (
+        f"You are a helpful assistant for this business. The customer asked: {query}\n"
+        "You don't have enough information to answer this question yet. "
+        "Apologize briefly and suggest they contact the business directly."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Streaming LLM helpers — yield text tokens as they arrive so the frontend
+# can start rendering immediately instead of waiting for the full response.
+# ---------------------------------------------------------------------------
+
+def _stream_gemini(prompt: str):
+    """Yield text chunks from Gemini with stream=True."""
+    if not GEMINI_API_KEY:
+        yield "Gemini API key not configured."
+        return
+    try:
+        model_instance = genai.GenerativeModel(GEMINI_MODEL)
+        response = model_instance.generate_content(prompt, stream=True)
+        for chunk in response:
+            text = getattr(chunk, "text", None)
+            if text:
+                yield text
+    except Exception as e:
+        print(f"Gemini stream error: {e}")
+        yield "Sorry, I couldn't generate a response."
+
+
+def _stream_openai(prompt: str):
+    """Yield text chunks from OpenAI streaming API."""
+    if not client:
+        yield "OpenAI API key not configured."
+        return
+    try:
+        stream = client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1024,
+            temperature=0.7,
+            stream=True,
+        )
+        for chunk in stream:
+            delta = chunk.choices[0].delta.content
+            if delta:
+                yield delta
+    except Exception as e:
+        print(f"OpenAI stream error: {e}")
+        yield "Sorry, I couldn't generate a response."
+
+
+def _stream_llm(prompt: str):
+    """Choose streaming provider."""
+    if LLM_PROVIDER == "gemini":
+        return _stream_gemini(prompt)
+    return _stream_openai(prompt)
 
 # Endpoints
 @app.get("/api/chatbots", response_model=List[ChatbotSchema])
@@ -1088,6 +1150,202 @@ async def chat(chatbot_id: str, request: ChatRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/chatbots/{chatbot_id}/chat/stream")
+async def chat_stream(chatbot_id: str, request: ChatRequest):
+    """
+    Streaming version of chat via Server-Sent Events.
+    The frontend consumes tokens as they arrive, making the first word visible
+    in ~1s instead of waiting 8-10s for the full response.
+
+    SSE format:
+      data: {"token": "Hello"}
+      data: {"token": " world"}
+      data: {"done": true, "conversation_id": "..."}
+      data: {"error": "..."}
+    """
+    now_dt = datetime.now()
+
+    # --- Pre-flight DB checks (parallelize owner + usage lookup) ---
+    async def _get_owner():
+        conn = get_db_connection()
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("SELECT user_id FROM chatbots WHERE id = %s", (chatbot_id,))
+            row = cur.fetchone()
+            cur.close()
+            return row
+        finally:
+            release_db_connection(conn)
+
+    owner_row = await _get_owner()
+    if not owner_row:
+        async def _not_found():
+            yield f'data: {{"error": "Chatbot not found"}}\n\n'
+        return StreamingResponse(_not_found(), media_type="text/event-stream")
+
+    owner_user_id = owner_row["user_id"]
+
+    # Free-trial support-chat gate
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT plan, free_trial_reset_at FROM users WHERE id = %s", (owner_user_id,))
+        owner_usage = cur.fetchone()
+        if owner_usage and is_active_free_trial(owner_usage, now_dt):
+            cur.execute(
+                "SELECT COUNT(*) AS total FROM messages WHERE user_id = %s AND role = 'user'",
+                (owner_user_id,),
+            )
+            used = int(cur.fetchone()["total"])
+            if used >= FREE_TRIAL_SUPPORT_CHAT_LIMIT:
+                cur.close()
+                async def _limit():
+                    yield f'data: {{"error": "Free trial chat limit reached."}}\n\n'
+                return StreamingResponse(_limit(), media_type="text/event-stream")
+        cur.close()
+    finally:
+        release_db_connection(conn)
+
+    # Fetch conversation history
+    history: List[dict] = []
+    if request.conversation_id:
+        conn = get_db_connection()
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute(
+                "SELECT role, content FROM messages "
+                "WHERE chatbot_id=%s AND conversation_id=%s ORDER BY timestamp DESC LIMIT 5",
+                (chatbot_id, request.conversation_id),
+            )
+            rows = cur.fetchall()
+            cur.close()
+            history = [{"role": r["role"], "content": r["content"]} for r in reversed(rows)]
+        finally:
+            release_db_connection(conn)
+
+    # Build context (same parallel Pinecone+SQL as ask_question)
+    loop = asyncio.get_event_loop()
+    standalone_query = request.message
+    if history and _needs_rewrite(request.message):
+        history_text = "\n".join([f"{m['role']}: {m['content']}" for m in history[-3:]])
+        rw_prompt = (
+            "Rewrite as a standalone search query (replace pronouns). "
+            "Output only the rewritten query.\n\n"
+            f"History:\n{history_text}\nQuestion: {request.message}\nRewritten:"
+        )
+        try:
+            standalone_query = await loop.run_in_executor(executor, get_llm_response, rw_prompt)
+            standalone_query = standalone_query.strip().split("\n")[0].strip()
+        except Exception:
+            standalone_query = request.message
+
+    async def _pinecone():
+        try:
+            results = await loop.run_in_executor(
+                executor,
+                lambda: index.search(
+                    namespace=chatbot_id,
+                    query={"top_k": 7, "inputs": {"text": standalone_query}},
+                ),
+            )
+            return "\n\n".join(
+                h["fields"]["chunk_text"]
+                for h in results.result.hits
+                if not is_crawl_error_text(h["fields"]["chunk_text"])
+            )
+        except Exception:
+            return ""
+
+    async def _sql():
+        if not _is_structured_query(standalone_query):
+            return ""
+        try:
+            c = _parse_price_constraints(standalone_query)
+            r = await loop.run_in_executor(executor, _query_structured_items, chatbot_id, c)
+            return r or ""
+        except Exception:
+            return ""
+
+    semantic_ctx, structured_ctx = await asyncio.gather(_pinecone(), _sql())
+    prompt = clean_text(_build_prompt(request.message, semantic_ctx, structured_ctx))
+
+    conversation_id = request.conversation_id
+
+    async def event_generator():
+        full_tokens: List[str] = []
+        try:
+            # Stream tokens from LLM in executor so we don't block the event loop
+            token_queue: asyncio.Queue = asyncio.Queue()
+
+            def _produce():
+                try:
+                    for token in _stream_llm(prompt):
+                        token_queue.put_nowait(token)
+                except Exception as err:
+                    token_queue.put_nowait(Exception(str(err)))
+                finally:
+                    token_queue.put_nowait(None)  # sentinel
+
+            loop.run_in_executor(executor, _produce)
+
+            while True:
+                item = await token_queue.get()
+                if item is None:
+                    break
+                if isinstance(item, Exception):
+                    yield f'data: {{"error": "{str(item)}"}}\'\n\n'
+                    return
+                full_tokens.append(item)
+                payload = json.dumps({"token": item})
+                yield f"data: {payload}\n\n"
+
+        except Exception as gen_err:
+            yield f'data: {{"error": "{gen_err}"}}\n\n'
+            return
+
+        # Persist messages to DB after stream completes
+        full_response = "".join(full_tokens)
+        try:
+            conn2 = get_db_connection()
+            try:
+                cur2 = conn2.cursor()
+                cur2.execute(
+                    "UPDATE chatbots SET monthly_messages = monthly_messages + 1 WHERE id = %s",
+                    (chatbot_id,),
+                )
+                cur2.execute(
+                    "INSERT INTO messages (id, chatbot_id, user_id, role, content, timestamp, conversation_id) "
+                    "VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                    (str(uuid.uuid4()), chatbot_id, owner_user_id, "user",
+                     request.message, datetime.now().isoformat(), conversation_id),
+                )
+                cur2.execute(
+                    "INSERT INTO messages (id, chatbot_id, user_id, role, content, timestamp, conversation_id) "
+                    "VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                    (str(uuid.uuid4()), chatbot_id, owner_user_id, "assistant",
+                     full_response, datetime.now().isoformat(), conversation_id),
+                )
+                conn2.commit()
+                cur2.close()
+            finally:
+                release_db_connection(conn2)
+        except Exception as db_err:
+            print(f"[Stream] DB persist error: {db_err}")
+
+        done_payload = json.dumps({"done": True, "conversation_id": conversation_id})
+        yield f"data: {done_payload}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",  # Disable nginx buffering
+            "Connection": "keep-alive",
+        },
+    )
 
 @app.get("/api/chatbots/{chatbot_id}/conversation")
 async def get_conversation(chatbot_id: str, sessionId: str = "default"):
