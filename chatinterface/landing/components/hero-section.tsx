@@ -27,15 +27,17 @@ export function HeroSection() {
         </div>
 
         <div className="mx-auto mt-12 w-full max-w-4xl">
-          <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
-            <Image
-              src="/334shots_so.png"
-              alt="Turbochat dashboard preview"
-              width={1650}
-              height={1000}
-              className="h-auto w-full"
-              priority
-            />
+          <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl">
+            <video
+              className="w-full h-auto object-cover"
+              autoPlay
+              muted
+              loop
+              playsInline
+            >
+              <source src="/turbochatdemo.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
           </div>
         </div>
       </div>
