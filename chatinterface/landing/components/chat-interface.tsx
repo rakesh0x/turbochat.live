@@ -1328,14 +1328,14 @@ function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
       </Card>
 
       {/* Chat Interface */}
-      <Card className="lg:col-span-3 flex h-[640px] flex-col border-white/80 bg-white/90 shadow-xl shadow-slate-200/60 dark:border-slate-800/80 dark:bg-slate-950/70 dark:shadow-none">
-        <CardHeader className="border-b border-slate-200/70 dark:border-slate-800">
+      <Card className="lg:col-span-3 flex h-[640px] flex-col border-white/80 bg-white/90 shadow-xl shadow-slate-200/60 dark:border-slate-800/80 dark:bg-slate-950/70 dark:shadow-none min-w-0 overflow-hidden">
+        <CardHeader className="border-b border-slate-200/70 dark:border-slate-800 flex-none">
           <CardTitle>Chat Playground</CardTitle>
           <CardDescription>Test your chatbot with real conversations</CardDescription>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col p-0">
           {/* Messages */}
-          <ScrollArea className="flex-1 p-4">
+          <ScrollArea className="flex-1 p-4 min-w-0">
             {messages.length === 0 ? (
               <div className="flex items-center justify-center h-full text-center">
                 <div className="space-y-2">
@@ -1346,17 +1346,17 @@ function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 w-full min-w-0">
                 {messages.map((msg) => (
                   <div
                     key={msg.id}
-                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`max-w-[80%] w-fit rounded-2xl px-4 py-2.5 text-sm shadow-sm break-words overflow-hidden min-w-0 ${msg.role === 'user'
+                    <div className={`max-w-[75%] overflow-x-hidden rounded-2xl px-4 py-2.5 text-sm shadow-sm break-words overflow-hidden min-w-0 ${msg.role === 'user'
                       ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
                       : 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100'
                       }`}>
-                      <div className={`prose prose-sm max-w-full prose-p:leading-relaxed prose-pre:my-2 prose-ul:my-2 prose-li:my-0.5 whitespace-pre-wrap overflow-x-auto ${msg.role === 'user'
+                      <div className={`prose prose-sm overflow-x-hidden max-w-full prose-p:leading-relaxed prose-pre:my-2 prose-ul:my-2 prose-li:my-0.5 whitespace-pre-wrap overflow-x-auto break-words ${msg.role === 'user'
                         ? 'prose-invert dark:prose-neutral'
                         : 'dark:prose-invert prose-p:text-slate-900 dark:prose-p:text-slate-100'
                         }`}>
@@ -1371,7 +1371,7 @@ function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
                   </div>
                 ))}
                 {isTyping && (
-                  <div className="flex justify-start">
+                  <div className="flex justify-start w-full">
                     <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl px-4 py-2">
                       <div className="flex gap-1">
                         <div className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '0ms' }} />
