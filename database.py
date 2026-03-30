@@ -146,6 +146,31 @@ def init_db():
             )
         """)
 
+        # Structured items table — stores LLM-extracted product/service data per chatbot.
+        # Enables SQL-based filtering (price ranges, categories, sorting) that vector
+        # search cannot do reliably.
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS structured_items (
+                id SERIAL PRIMARY KEY,
+                chatbot_id VARCHAR(255) NOT NULL,
+                name TEXT,
+                price NUMERIC,
+                currency VARCHAR(10) DEFAULT 'USD',
+                category TEXT,
+                description TEXT,
+                url TEXT,
+                raw_data JSONB,
+                created_at TIMESTAMP DEFAULT NOW(),
+                FOREIGN KEY (chatbot_id) REFERENCES chatbots (id) ON DELETE CASCADE
+            )
+        """)
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_structured_items_chatbot ON structured_items (chatbot_id)"
+        )
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_structured_items_price ON structured_items (chatbot_id, price)"
+        )
+
         conn.commit()
         cur.close()
         print("Database tables initialized successfully.")

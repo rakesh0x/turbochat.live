@@ -2,10 +2,10 @@
 import os
 import requests
 import json
-import base64
-import unicodedata
 import re
 import uuid
+import base64
+import unicodedata
 from datetime import datetime, timedelta
 from typing import List, Optional
 import asyncio
@@ -251,6 +251,19 @@ def train_chatbot_sync(chatbot_id: str, website: str, limit: int = 10):
         finally:
             release_db_connection(conn)
         print(f"Chatbot {chatbot_id} trained successfully with {len(chunks)} chunks.", flush=True)
+
+        # --- Structured extraction pass ---
+        # Run an LLM pass over the raw scraped text to pull out products/prices
+        # into the structured_items table for SQL-based query filtering.
+        try:
+            n_items = _extract_structured_items_from_text(chatbot_id, raw_text)
+            if n_items:
+                print(f"[Extraction] {n_items} structured items extracted for {chatbot_id}", flush=True)
+            else:
+                print(f"[Extraction] No structured items found for {chatbot_id} (not a product site?)", flush=True)
+        except Exception as ext_err:
+            # Non-fatal — chatbot still works via semantic search even without extraction.
+            print(f"[Extraction] Extraction failed for {chatbot_id}: {ext_err}", flush=True)
         
     except Exception as e:
         print(f"Error training chatbot {chatbot_id}: {e}")
@@ -306,23 +319,216 @@ def get_llm_response(prompt: str) -> str:
         return get_gemini_response(prompt)
     return get_openai_response(prompt)
 
+
+# ---------------------------------------------------------------------------
+# Structured data extraction — runs once per training to pull product/price
+# data out of raw scraped text into the structured_items PostgreSQL table.
+# This powers SQL-based filtering (price ranges, categories) at query time.
+# ---------------------------------------------------------------------------
+
+_PRICE_KEYWORDS = [
+    "less than", "under", "below", "cheaper than", "affordable", "budget",
+    "more than", "above", "over", "expensive", "premium",
+    "between", "price range", "price",
+    "show me", "list", "give me", "find me",
+    "cheapest", "most expensive", "lowest price", "highest price",
+    "what products", "what items", "what services",
+    "sort by price", "order by price",
+]
+
+def _is_structured_query(query: str) -> bool:
+    """Return True if the query likely needs structured / numeric filtering."""
+    q = query.lower()
+    return any(kw in q for kw in _PRICE_KEYWORDS)
+
+
+def _parse_price_constraints(query: str):
+    """Extract (min_price, max_price, sort) from free-form query. Returns dict."""
+    q = query.lower()
+    min_price = max_price = None
+    sort_asc = True  # default: cheapest first
+
+    between = re.search(
+        r"between\s*\$?\s*([\d,]+(?:\.\d+)?)\s*(?:and|to|-)\s*\$?\s*([\d,]+(?:\.\d+)?)", q
+    )
+    under = re.search(
+        r"(?:under|below|less than|cheaper than|at most|max)\s*\$?\s*([\d,]+(?:\.\d+)?)", q
+    )
+    over = re.search(
+        r"(?:above|over|more than|greater than|at least|min)\s*\$?\s*([\d,]+(?:\.\d+)?)", q
+    )
+
+    if between:
+        min_price = float(between.group(1).replace(",", ""))
+        max_price = float(between.group(2).replace(",", ""))
+    else:
+        if under:
+            max_price = float(under.group(1).replace(",", ""))
+        if over:
+            min_price = float(over.group(1).replace(",", ""))
+
+    if "expensive" in q or "highest" in q or "most expensive" in q:
+        sort_asc = False
+
+    return {"min_price": min_price, "max_price": max_price, "sort_asc": sort_asc}
+
+
+def _query_structured_items(chatbot_id: str, constraints: dict) -> str | None:
+    """Run a SQL price query and return formatted product list, or None if empty."""
+    min_p = constraints["min_price"]
+    max_p = constraints["max_price"]
+    sort_dir = "ASC" if constraints["sort_asc"] else "DESC"
+
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        if min_p is not None and max_p is not None:
+            cur.execute(
+                f"SELECT name, price, currency, category, description FROM structured_items "
+                f"WHERE chatbot_id=%s AND price BETWEEN %s AND %s ORDER BY price {sort_dir} LIMIT 25",
+                (chatbot_id, min_p, max_p),
+            )
+        elif max_p is not None:
+            cur.execute(
+                f"SELECT name, price, currency, category, description FROM structured_items "
+                f"WHERE chatbot_id=%s AND price IS NOT NULL AND price <= %s ORDER BY price {sort_dir} LIMIT 25",
+                (chatbot_id, max_p),
+            )
+        elif min_p is not None:
+            cur.execute(
+                f"SELECT name, price, currency, category, description FROM structured_items "
+                f"WHERE chatbot_id=%s AND price IS NOT NULL AND price >= %s ORDER BY price {sort_dir} LIMIT 25",
+                (chatbot_id, min_p),
+            )
+        else:
+            # General listing — return all with known prices, sorted
+            cur.execute(
+                f"SELECT name, price, currency, category, description FROM structured_items "
+                f"WHERE chatbot_id=%s AND price IS NOT NULL ORDER BY price {sort_dir} LIMIT 25",
+                (chatbot_id,),
+            )
+
+        rows = cur.fetchall()
+        cur.close()
+    finally:
+        release_db_connection(conn)
+
+    if not rows:
+        return None
+
+    lines = []
+    for r in rows:
+        currency = r.get("currency") or "USD"
+        price_str = f"{currency} {r['price']:.2f}" if r["price"] else "Price not listed"
+        line = f"• {r['name']} — {price_str}"
+        if r.get("category"):
+            line += f" [{r['category']}]"
+        if r.get("description"):
+            line += f": {str(r['description'])[:120]}"
+        lines.append(line)
+
+    return "\n".join(lines)
+
+
+def _extract_structured_items_from_text(chatbot_id: str, raw_text: str) -> int:
+    """
+    Call the LLM to extract structured product/service data from scraped text,
+    then upsert into the structured_items table.
+    Returns the number of items extracted.
+    """
+    # Feed up to 12000 chars — enough for a typical product catalog section.
+    excerpt = clean_text(raw_text[:12000])
+    if not excerpt.strip():
+        return 0
+
+    extraction_prompt = f"""You are a data extraction assistant. Extract ALL products, services, or items with their prices from the website content below.
+
+Return ONLY a valid JSON array (no explanation, no markdown fences). Each element must have exactly these keys:
+- "name": string — product / service name (required)
+- "price": number or null — numeric price only (no currency symbol, no commas)
+- "currency": string — 3-letter currency code, default "USD"
+- "category": string or null — product category / type
+- "description": string or null — 1-2 sentence description
+- "url": string or null — product page URL if visible in content
+
+If there are no products or prices, return an empty array [].
+
+Website content:
+{excerpt}
+
+JSON array:"""
+
+    try:
+        raw_response = get_llm_response(extraction_prompt)
+        # Strip any accidental markdown fences
+        raw_response = re.sub(r"```(?:json)?\s*", "", raw_response).strip().rstrip("`")
+        # Find the JSON array
+        match = re.search(r"\[.*\]", raw_response, re.DOTALL)
+        if not match:
+            print(f"[Extraction] No JSON array found for chatbot {chatbot_id}")
+            return 0
+        items = json.loads(match.group())
+        if not isinstance(items, list):
+            return 0
+    except Exception as e:
+        print(f"[Extraction] LLM/parse error for {chatbot_id}: {e}")
+        return 0
+
+    if not items:
+        return 0
+
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        # Clear stale data for this chatbot before inserting fresh extraction.
+        cur.execute("DELETE FROM structured_items WHERE chatbot_id = %s", (chatbot_id,))
+        inserted = 0
+        for item in items:
+            if not isinstance(item, dict) or not item.get("name"):
+                continue
+            raw_price = item.get("price")
+            try:
+                price = float(str(raw_price).replace(",", "")) if raw_price is not None else None
+            except (ValueError, TypeError):
+                price = None
+            cur.execute(
+                "INSERT INTO structured_items "
+                "(chatbot_id, name, price, currency, category, description, url, raw_data) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+                (
+                    chatbot_id,
+                    str(item.get("name", ""))[:500],
+                    price,
+                    str(item.get("currency", "USD"))[:10],
+                    str(item.get("category", "") or "")[:200] or None,
+                    str(item.get("description", "") or "")[:1000] or None,
+                    str(item.get("url", "") or "")[:500] or None,
+                    json.dumps(item),
+                ),
+            )
+            inserted += 1
+        conn.commit()
+        cur.close()
+        print(f"[Extraction] Stored {inserted} structured items for chatbot {chatbot_id}")
+        return inserted
+    except Exception as e:
+        conn.rollback()
+        print(f"[Extraction] DB write error for {chatbot_id}: {e}")
+        return 0
+    finally:
+        release_db_connection(conn)
+
 async def ask_question(chatbot_id: str, query: str, history: List[dict] = []) -> str:
-    """Query Pinecone for context and send to Ollama for response."""
+    """Query Pinecone (semantic) and/or PostgreSQL (structured) then call LLM."""
     loop = asyncio.get_event_loop()
-    
+
+    # 1. Rewrite query into a standalone form using conversation history.
     standalone_query = query
     if history:
         history_text = "\n".join([f"{m['role']}: {m['content']}" for m in history[-3:]])
-        print(f"History for re-writing:\n{history_text}")
-        rewrite_prompt = f"""Instructions: Convert the user's latest question into a standalone search query. Replace nouns like "he", "she", "it", "they", "this", "that" with the actual names or topics mentioned in the history.
+        rewrite_prompt = f"""Instructions: Convert the user's latest question into a standalone search query. Replace pronouns like "he", "she", "it", "they", "this", "that" with the actual names or topics from the history.
 Output only the search query.
-
-Example:
-History:
-user: Who is Rakesh?
-assistant: Rakesh is a developer.
-Question: What are his projects?
-Search Query: what are Rakesh's projects?
 
 Conversation History:
 {history_text}
@@ -333,58 +539,86 @@ Search Query:"""
             standalone_query = await loop.run_in_executor(executor, get_llm_response, rewrite_prompt)
             standalone_query = standalone_query.strip().split("\n")[0].replace("Search Query:", "").strip()
             print(f"Re-written query: '{standalone_query}' (Original: '{query}')")
-        except:
+        except Exception:
             standalone_query = query
-            print(f"Re-write failed, using original: {query}")
 
-    # 2. Pinecone search with increased top_k
+    # 2. --- Structured / SQL path ---
+    # If the query looks like a price filter, listing, or comparison request,
+    # run a SQL query against structured_items FIRST, then augment with Pinecone.
+    structured_context = ""
+    is_struct = _is_structured_query(standalone_query)
+    if is_struct:
+        try:
+            constraints = _parse_price_constraints(standalone_query)
+            result = await loop.run_in_executor(
+                executor, _query_structured_items, chatbot_id, constraints
+            )
+            if result:
+                structured_context = result
+                print(f"[Router] Structured query matched {len(result.splitlines())} items")
+            else:
+                print(f"[Router] Structured query returned no items — falling back to semantic only")
+        except Exception as struct_err:
+            print(f"[Router] Structured query error: {struct_err}")
+
+    # 3. --- Semantic / Pinecone path ---
+    # Always run semantic search to get supplementary context (policies, descriptions, etc.)
+    semantic_context = ""
     try:
         results = await loop.run_in_executor(
-            executor, 
+            executor,
             lambda: index.search(
                 namespace=chatbot_id,
-                query={
-                    "top_k": 7,
-                    "inputs": {"text": standalone_query},
-                },
-            )
+                query={"top_k": 7, "inputs": {"text": standalone_query}},
+            ),
         )
-        
-        filtered_chunks = []
-        for hit in results.result.hits:
-            chunk_text = hit["fields"]["chunk_text"]
-            if is_crawl_error_text(chunk_text):
-                continue
-            filtered_chunks.append(chunk_text)
-
-        context = "\n\n".join(filtered_chunks)
+        filtered_chunks = [
+            hit["fields"]["chunk_text"]
+            for hit in results.result.hits
+            if not is_crawl_error_text(hit["fields"]["chunk_text"])
+        ]
+        semantic_context = "\n\n".join(filtered_chunks)
     except Exception as e:
         print(f"Pinecone search error: {e}")
-        context = ""
 
-    # 3. Strict Prompting
-    if context.strip():
-        prompt = f"""You are Turbochat AI, A SaaS, which just takes the website url and trains the AI assistant on the website content.
+    # 4. --- Build prompt based on what data we have ---
+    if structured_context:
+        # We have clean structured product data — lead with it, use semantic as supplement.
+        supplement = f"\n\nAdditional website context:\n{semantic_context}" if semantic_context.strip() else ""
+        prompt = f"""You are a helpful assistant for this business. A customer asked a question and you have access to the product catalog.
+
+Customer question: {query}
+
+Matching products from our catalog:
+{structured_context}{supplement}
+
+Instructions:
+- Present the matching products in a clear, friendly list.
+- Include names and prices prominently.
+- If the customer asked for filtering (e.g. under $500), make sure every item you list meets that condition.
+- If no products match the exact filter but you have related items, say so honestly.
+- Keep the response concise and helpful.
+
+Response:"""
+    elif semantic_context.strip():
+        # No structured data matched — pure semantic RAG response.
+        prompt = f"""You are a helpful assistant trained on this business's website content.
 Rules:
-1. try every possible way to get answer as fast as possible"
-2. try every possible way to answer the question
-3. if you don't have the answer, try to get the context of the data 
-2. Do NOT use outside knowledge.
-3. Keep it brief and factual.
+1. Answer only from the provided context.
+2. If you cannot find the answer in the context, say so politely.
+3. Be concise and factual.
 
 Context:
-{context}
+{semantic_context}
 
 Question: {query}
 Answer:"""
     else:
-        prompt = f"""You are TurboChat Assistant. 
-The user asked: {query}
-Since you have no training data for this topic, politely say you don't know the answer yet."""
+        prompt = f"""You are a helpful assistant for this business.
+The customer asked: {query}
+Unfortunately you don't have enough training data to answer this question yet. Let them know politely and suggest they contact the business directly."""
 
     prompt = clean_text(prompt)
-    
-    # Call LLM in thread
     response = await loop.run_in_executor(executor, get_llm_response, prompt)
     return response.strip()
 
