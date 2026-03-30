@@ -52,7 +52,7 @@ client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 # Gemini setup
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODELS = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash-exp"]
+GEMINI_MODELS = ["gemini-2.0-flash", "gemini-flash-latest", "gemini-1.5-flash-8b"]
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
