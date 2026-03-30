@@ -1352,13 +1352,13 @@ function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
                     key={msg.id}
                     className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${msg.role === 'user'
+                    <div className={`max-w-[85%] w-fit rounded-2xl px-4 py-2.5 text-sm shadow-sm break-words overflow-hidden ${msg.role === 'user'
                       ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
                       : 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100'
                       }`}>
-                      <div className={`prose prose-sm max-w-none prose-p:leading-relaxed prose-li:my-1 whitespace-pre-wrap ${msg.role === 'user'
+                      <div className={`prose prose-sm max-w-none prose-p:leading-relaxed prose-pre:my-2 prose-ul:my-2 prose-li:my-0.5 whitespace-pre-wrap ${msg.role === 'user'
                         ? 'prose-invert dark:prose-neutral'
-                        : 'dark:prose-invert'
+                        : 'dark:prose-invert prose-p:text-slate-900 dark:prose-p:text-slate-100'
                         }`}>
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {msg.content}
