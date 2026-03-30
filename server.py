@@ -20,6 +20,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 from scraper.fetch_html import get_data
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from google.api_core import exceptions as google_exceptions
 
 load_dotenv()
 
@@ -51,7 +52,7 @@ client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 # Gemini setup
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+GEMINI_MODELS = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash-exp"]
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
@@ -302,17 +303,28 @@ def get_openai_response(prompt: str, model: str = OPENAI_MODEL) -> str:
         print(f"OpenAI error: {e}")
         return "Sorry, I couldn't generate a response."
 
-def get_gemini_response(prompt: str, model: str = GEMINI_MODEL) -> str:
-    """Sync helper for Gemini call."""
+def get_gemini_response(prompt: str) -> str:
+    """Sync helper for Gemini call with fallback loop for rate limits."""
     if not GEMINI_API_KEY:
         return "Gemini API key not configured."
-    try:
-        model_instance = genai.GenerativeModel(model)
-        response = model_instance.generate_content(prompt)
-        return response.text
-    except Exception as e:
-        print(f"Gemini error: {e}")
-        return "Sorry, I couldn't generate a response."
+    
+    last_error = ""
+    for model_name in GEMINI_MODELS:
+        try:
+            print(f"[Gemini] Trying {model_name}...")
+            model_instance = genai.GenerativeModel(model_name)
+            response = model_instance.generate_content(prompt)
+            return response.text
+        except google_exceptions.ResourceExhausted:
+            print(f"[Gemini] {model_name} rate limit reached. Trying fallback...")
+            last_error = "Rate limit reached for all models."
+            continue
+        except Exception as e:
+            print(f"[Gemini] Error with {model_name}: {e}")
+            last_error = str(e)
+            return f"Sorry, I couldn't generate a response (Error: {last_error})."
+            
+    return f"Sorry, all models are currently exhausted. Please try again in 1 minute."
 
 def get_llm_response(prompt: str) -> str:
     """Helper to choose LLM provider."""
@@ -640,20 +652,31 @@ def _build_prompt(query: str, semantic_context: str, structured_context: str) ->
 # ---------------------------------------------------------------------------
 
 def _stream_gemini(prompt: str):
-    """Yield text chunks from Gemini with stream=True."""
+    """Yield text chunks from Gemini with automatic fallback on ResourceExhausted."""
     if not GEMINI_API_KEY:
         yield "Gemini API key not configured."
         return
-    try:
-        model_instance = genai.GenerativeModel(GEMINI_MODEL)
-        response = model_instance.generate_content(prompt, stream=True)
-        for chunk in response:
-            text = getattr(chunk, "text", None)
-            if text:
-                yield text
-    except Exception as e:
-        print(f"Gemini stream error: {e}")
-        yield "Sorry, I couldn't generate a response."
+
+    for model_name in GEMINI_MODELS:
+        try:
+            print(f"[Gemini-Stream] Trying {model_name}...")
+            model_instance = genai.GenerativeModel(model_name)
+            response = model_instance.generate_content(prompt, stream=True)
+            for chunk in response:
+                text = getattr(chunk, "text", None)
+                if text:
+                    yield text
+            # If we successfully finish the loop, we are done
+            return
+        except google_exceptions.ResourceExhausted:
+            print(f"[Gemini-Stream] {model_name} rate limit reached. Switching fallback...")
+            continue
+        except Exception as e:
+            print(f"[Gemini-Stream] Error with {model_name}: {e}")
+            yield f"Error: {str(e)}"
+            return
+            
+    yield "All Gemini models are currently busy. Please try again shortly."
 
 
 def _stream_openai(prompt: str):
@@ -1282,11 +1305,11 @@ async def chat_stream(chatbot_id: str, request: ChatRequest):
             def _produce():
                 try:
                     for token in _stream_llm(prompt):
-                        token_queue.put_nowait(token)
+                        loop.call_soon_threadsafe(token_queue.put_nowait, token)
                 except Exception as err:
-                    token_queue.put_nowait(Exception(str(err)))
+                    loop.call_soon_threadsafe(token_queue.put_nowait, Exception(str(err)))
                 finally:
-                    token_queue.put_nowait(None)  # sentinel
+                    loop.call_soon_threadsafe(token_queue.put_nowait, None)  # sentinel
 
             loop.run_in_executor(executor, _produce)
 
