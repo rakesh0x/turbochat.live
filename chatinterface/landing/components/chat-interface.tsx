@@ -1354,9 +1354,12 @@ function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
                   >
                     <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${msg.role === 'user'
                       ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
-                      : 'bg-black-100 text-white-900 dark:bg-black-800 dark:text-white-100'
+                      : 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100'
                       }`}>
-                      <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-li:my-1 whitespace-pre-wrap">
+                      <div className={`prose prose-sm max-w-none prose-p:leading-relaxed prose-li:my-1 whitespace-pre-wrap ${msg.role === 'user'
+                        ? 'prose-invert dark:prose-neutral'
+                        : 'dark:prose-invert'
+                        }`}>
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {msg.content}
                         </ReactMarkdown>
