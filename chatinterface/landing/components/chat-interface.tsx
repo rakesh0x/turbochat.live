@@ -280,11 +280,10 @@ export function ChatInterface() {
                     <Button
                       key={`drawer-${item.id}`}
                       variant={currentPage === item.id ? 'secondary' : 'ghost'}
-                      className={`h-10 w-full justify-start rounded-xl px-3 text-sm ${
-                        currentPage === item.id
-                          ? 'bg-slate-900 text-white shadow-md shadow-slate-400/30 dark:bg-slate-100 dark:text-slate-900'
-                          : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-slate-100'
-                      }`}
+                      className={`h-10 w-full justify-start rounded-xl px-3 text-sm ${currentPage === item.id
+                        ? 'bg-slate-900 text-white shadow-md shadow-slate-400/30 dark:bg-slate-100 dark:text-slate-900'
+                        : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-slate-100'
+                        }`}
                       onClick={() => item.id === 'create' ? handleCreatePageAccess() : setCurrentPage(item.id)}
                       disabled={item.id === 'create' && !canCreateChatbot}
                     >
@@ -321,22 +320,21 @@ export function ChatInterface() {
           <div className="rounded-2xl border border-white/70 bg-white/70 p-3 shadow-sm shadow-slate-200/50 dark:border-slate-800/80 dark:bg-slate-900/60 dark:shadow-none">
             <p className="px-2 pb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Navigation</p>
             <nav className="space-y-1.5">
-            {menuItems.map((item) => (
-              <Button
-                key={item.id}
-                variant={currentPage === item.id ? 'secondary' : 'ghost'}
-                className={`w-full justify-start text-sm h-10 rounded-xl px-3 ${
-                  currentPage === item.id
+              {menuItems.map((item) => (
+                <Button
+                  key={item.id}
+                  variant={currentPage === item.id ? 'secondary' : 'ghost'}
+                  className={`w-full justify-start text-sm h-10 rounded-xl px-3 ${currentPage === item.id
                     ? 'bg-slate-900 text-white shadow-md shadow-slate-400/30 dark:bg-slate-100 dark:text-slate-900'
                     : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-slate-100'
-                }`}
-                onClick={() => item.id === 'create' ? handleCreatePageAccess() : setCurrentPage(item.id)}
-                disabled={item.id === 'create' && !canCreateChatbot}
-              >
-                <item.icon className="w-4 h-4 mr-2" />
-                {item.label}
-              </Button>
-            ))}
+                    }`}
+                  onClick={() => item.id === 'create' ? handleCreatePageAccess() : setCurrentPage(item.id)}
+                  disabled={item.id === 'create' && !canCreateChatbot}
+                >
+                  <item.icon className="w-4 h-4 mr-2" />
+                  {item.label}
+                </Button>
+              ))}
             </nav>
           </div>
         </ScrollArea>
@@ -383,10 +381,10 @@ export function ChatInterface() {
             </Button>
 
             <div>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Turbochat Workspace</p>
-            <h1 className="text-lg font-semibold tracking-tight">
-              {menuItems.find(item => item.id === currentPage)?.label || 'Dashboard'}
-            </h1>
+              <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Turbochat Workspace</p>
+              <h1 className="text-lg font-semibold tracking-tight">
+                {menuItems.find(item => item.id === currentPage)?.label || 'Dashboard'}
+              </h1>
             </div>
           </div>
 
@@ -764,13 +762,13 @@ function CreateChatbotPage({
       // 1. Create the chatbot (starts background training)
       const res = await fetch('/api/chatbots', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ 
-          name: chatbotName, 
+        body: JSON.stringify({
+          name: chatbotName,
           website: url,
-          limit: crawlLimit 
+          limit: crawlLimit
         })
       });
 
@@ -1036,7 +1034,7 @@ function MyChatbotsPage({
 
   const handleDelete = async () => {
     try {
-      await fetch(`/api/chatbots/${chatbotToDelete}`, { 
+      await fetch(`/api/chatbots/${chatbotToDelete}`, {
         method: 'DELETE'
       });
       toast.success('Chatbot deleted');
@@ -1354,11 +1352,10 @@ function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
                     key={msg.id}
                     className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
-                      msg.role === 'user'
-                        ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
-                        : 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100'
-                    }`}>
+                    <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${msg.role === 'user'
+                      ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                      : 'bg-black-100 text-white-900 dark:bg-black-800 dark:text-white-100'
+                      }`}>
                       <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-li:my-1 whitespace-pre-wrap">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {msg.content}
