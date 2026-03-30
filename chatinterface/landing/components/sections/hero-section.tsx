@@ -73,7 +73,7 @@ export function HeroSection() {
               loop
               playsInline
             >
-              <source src="/turbochat-hero-demo.mp4" type="video/mp4" />
+              <source src="/turbochatdemo.mp4" type="video/mp4" />
               Your browser does not support the video tag.
             </video>
 
