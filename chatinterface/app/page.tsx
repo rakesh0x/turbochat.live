@@ -1,5 +1,5 @@
 import { Header } from "@/landing/components/header"
-import { HeroSection } from "@/landing/components/sections/hero-section"
+import { HeroSection } from "@/landing/components/hero-section"
 import { HowItWorks } from "@/landing/components/how-it-works"
 import { FaqSection } from "@/landing/components/faq-section"
 import { CtaSection } from "@/landing/components/cta-section"
@@ -102,20 +102,6 @@ function PricingSectionInline() {
               )}
             </div>
           ))}
-        </div>
-        <div className="mx-auto mt-12 w-full max-w-4xl">
-          <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl">
-            <video
-              className="w-full h-auto object-cover"
-              autoPlay
-              muted
-              loop
-              playsInline
-            >
-              <source src="/turbochatdemo.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-          </div>
         </div>
       </div>
     </section>
