@@ -58,9 +58,8 @@ function PricingSectionInline() {
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`rounded-2xl border p-6 flex flex-col ${
-                plan.highlighted ? "bg-muted/60 shadow-md border-foreground/20" : "bg-card"
-              }`}
+              className={`rounded-2xl border p-6 flex flex-col ${plan.highlighted ? "bg-muted/60 shadow-md border-foreground/20" : "bg-card"
+                }`}
             >
               <div className="mb-6">
                 {plan.highlighted ? (
@@ -118,6 +117,7 @@ function PricingSectionInline() {
             </video>
           </div>
         </div>
+      </div>
     </section>
   )
 }
