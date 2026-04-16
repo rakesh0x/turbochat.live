@@ -1,7 +1,5 @@
-import { redirect } from "next/navigation"
 import { ChatInterface } from "@/landing/components/chat-interface"
-import { getServerSession } from "next-auth/next"
-import { GET } from "@/app/api/auth/[...nextauth]/route"
+import { headers } from "next/headers"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
@@ -13,40 +11,31 @@ export const metadata: Metadata = {
 }
 
 export default async function DashboardPage() {
-    const session: any = await getServerSession(GET as any)
-
-    let showPurchaseLanding = false
-
-    if (!session) {
-        return redirect("/")
-    }
-
-    // Check user plan via backend
-    const BACKEND_URL = process.env.BACKEND_URL || (process.env.NODE_ENV === 'production' ? 'https://app.turbochat.live' : 'http://127.0.0.1:8000');
-    
-    let backendDown = false
-
     try {
-        const res = await fetch(`${BACKEND_URL}/api/users/me`, {
+        const requestHeaders = await headers()
+        const host = requestHeaders.get("host")
+        const protocol = requestHeaders.get("x-forwarded-proto") ?? "http"
+        const cookie = requestHeaders.get("cookie") ?? ""
+
+        if (!host) {
+            throw new Error("Missing host header")
+        }
+
+        const res = await fetch(`${protocol}://${host}/api/users/me`, {
+            method: "GET",
+            cache: "no-store",
             headers: {
-                'Authorization': `Bearer ${session.accessToken}`
+                cookie,
             },
-            cache: 'no-store'
-        });
+        })
         
         if (!res.ok) {
-            console.error("Failed to fetch user data, showing app by default.")
-            backendDown = true
-        } else {
-            const userData = await res.json()
-            // No paid plan and no usage quota left (credits + free trials).
-            if (userData.plan === 'free' && userData.credits <= 0 && (userData.freeTrialRemaining ?? 0) <= 0) {
-                showPurchaseLanding = true
-            }
+            console.error("Failed to fetch user data, showing app by default.:")
+            const errorText = await res.text()
+            console.error("Proxy response:", res.status, errorText)
         }
     } catch (error) {
         console.error("Dashboard server validation error:", error)
-        backendDown = true
     }
 
     return (

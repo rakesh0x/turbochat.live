@@ -6,12 +6,12 @@ import jwt from 'jsonwebtoken';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs'; // Edge runtime does not support streaming SSE well
 
-const BACKEND_URL = process.env.BACKEND_URL || (process.env.NODE_ENV === 'production' ? 'https://fine-tuning-426l.onrender.com' : 'http://127.0.0.1:8000');
+const BACKEND_URL = process.env.BACKEND_URL || (process.env.NODE_ENV === 'production' ? 'https://app.turbochat.live' : 'http://127.0.0.1:8000');
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || 'your-secret-key';
 
 
 async function proxyRequest(request: NextRequest, slug: string[]) {
-  const url = new URL(request.url);
+  const url = new URL(request.url);``
   const backendPath = `/api/${slug.join('/')}`;
   const targetUrl = `${BACKEND_URL}${backendPath}${url.search}`;
 

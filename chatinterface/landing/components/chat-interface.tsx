@@ -199,6 +199,32 @@ export function ChatInterface() {
     try {
       if (!session) return;
 
+      const parseResponse = async (res: Response, endpoint: string) => {
+        const contentType = res.headers.get('content-type') || '';
+        const rawBody = await res.text();
+
+        if (!res.ok) {
+          let message = rawBody || `Request failed (${res.status})`;
+          if (contentType.includes('application/json')) {
+            try {
+              const parsed = JSON.parse(rawBody);
+              message = parsed?.detail || parsed?.message || parsed?.error || message;
+            } catch {
+              // Fall back to plain body text when malformed JSON is returned.
+            }
+          }
+          throw new Error(`${endpoint}: ${message}`);
+        }
+
+        if (!rawBody) return null;
+
+        if (contentType.includes('application/json')) {
+          return JSON.parse(rawBody);
+        }
+
+        throw new Error(`${endpoint}: Expected JSON but received ${contentType || 'unknown content type'}`);
+      };
+
       const [chatbotsRes, statsRes, analyticsRes, userRes] = await Promise.all([
         fetch('/api/chatbots'),
         fetch('/api/stats'),
@@ -206,10 +232,12 @@ export function ChatInterface() {
         fetch('/api/users/me')
       ]);
 
-      const chatbotsData = await chatbotsRes.json();
-      const statsData = await statsRes.json();
-      const analyticsData = await analyticsRes.json();
-      const userData = await userRes.json();
+      const [chatbotsData, statsData, analyticsData, userData] = await Promise.all([
+        parseResponse(chatbotsRes, '/api/chatbots'),
+        parseResponse(statsRes, '/api/stats'),
+        parseResponse(analyticsRes, '/api/analytics'),
+        parseResponse(userRes, '/api/users/me'),
+      ]);
 
       setChatbots(Array.isArray(chatbotsData) ? chatbotsData : []);
       setStats(statsData);
@@ -217,7 +245,7 @@ export function ChatInterface() {
       setUserProfile(userData);
     } catch (error) {
       console.error('Failed to fetch data:', error);
-      toast.error('Failed to load data');
+      toast.error(error instanceof Error ? error.message : 'Failed to load data');
     } finally {
       setLoading(false);
     }
