@@ -1,10 +1,15 @@
-# 🤖 Turbochat AI
+# Turbochat AI
 
 **Turbochat AI** is a production-ready, full-stack AI chatbot platform. It allows businesses and developers to scrape websites, train on custom documentation, and deploy a source-grounded, premium AI assistant in minutes.
 
-![Turbochat Demo](turbochatdemo.mp4)
+## Demo Video
 
-## 🚀 Key Features
+<video src="chatinterface/public/turbochatdemo.mp4" controls muted playsinline width="100%"></video>
+
+If the embedded player does not render in your viewer, open the demo directly:
+[Watch demo](chatinterface/public/turbochatdemo.mp4)
+
+## Key Features
 
 - **Instant Web Crawling**: Paste a URL and Turbochat learns your entire site, product documentation, and FAQs.
 - **Source-Grounded Answers**: Responses are generated using RAG (Retrieval-Augmented Generation) to ensure accuracy and reduce hallucinations.
@@ -14,7 +19,7 @@
 - **Multi-Model Support**: Powered by OpenAI GPT-4 and Google Gemini for robust, high-quality responses.
 - **Credits & Billing**: Built-in credit system for managing trial and pro tiers.
 
-## 🏗️ Technical Architecture
+## Technical Architecture
 
 - **Frontend**: [Next.js 15](https://nextjs.org/) (App Router), TypeScript, Tailwind CSS, Radix UI.
 - **Backend**: [FastAPI](https://fastapi.tiangolo.com/) (Python), Async processing, Beautiful Soup for scraping.
@@ -22,7 +27,7 @@
 - **Vector Search**: [Pinecone](https://www.pinecone.io/) for efficient semantic retrieval.
 - **Auth**: [NextAuth.js](https://next-auth.js.org/) for secure Google OAuth integration.
 
-## 📂 Project Structure
+##  Project Structure
 
 ```text
 ├── chatinterface/       # Next.js Frontend (Dashboard & Landing Page)
@@ -35,11 +40,11 @@
 ├── database.py          # SQLite schema and database access layer
 ├── database_init.py     # Database initialization script
 ├── webcrawl.py          # Standalone crawler utility
-├── turbochatdemo.mp4    # Hero section demo video
+├── chatinterface/public/turbochatdemo.mp4  # Hero section demo video
 └── docker-compose.yml   # Full-stack Docker orchestration
 ```
 
-## 🛠️ Getting Started
+## Getting Started
 
 ### Prerequisites
 - Python 3.10+
@@ -84,8 +89,8 @@ You can adjust the theme and branding by editing the `globals.css` and the theme
 
 ---
 
-## 🤝 Contributing
-Built with ❤️ for teams that want better customer support. Feel free to open issues or submit PRs to help improve Turbochat.
+## Contributing
+Built with for teams that want better customer support. Feel free to open issues or submit PRs to help improve Turbochat.
 
-## 📄 License
+## License
 MIT
