@@ -84,7 +84,7 @@ cp .env.example .env
 docker-compose up --build
 ```
 
-## 🎨 Customizing the Branding
+## Customizing the Branding
 You can adjust the theme and branding by editing the `globals.css` and the theme configuration in `chatinterface/app/layout.tsx`. All components are built using Tailwind CSS for maximum flexibility.
 
 ---
