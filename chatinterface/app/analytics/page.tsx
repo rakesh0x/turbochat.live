@@ -1,13 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, Loader2, MessageSquare, TrendingUp, Zap } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
+import type { Analytics } from "@/lib/interfaces";
 
-interface Analytics {
-  messageOverTime: Array<{ date: string; messages: number }>;
-  topQuestions: Array<{ questions: string; count: number }>;
-}
 
-function AnalyticsPage({ analytics }: { analytics: Analytics | null }) {
+
+export default function AnalyticsPage({ analytics }: { analytics: Analytics | null }) {
   if (!analytics) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -58,9 +56,7 @@ function AnalyticsPage({ analytics }: { analytics: Analytics | null }) {
         <Card className="border-white/80 bg-white/90 shadow-lg shadow-slate-200/50 dark:border-slate-800/80 dark:bg-slate-950/70 dark:shadow-none">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-            <Activity mode="visible">
-              <div></div>
-            </Activity>
+            <Activity className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">2.8K</div>
@@ -102,13 +98,13 @@ function AnalyticsPage({ analytics }: { analytics: Analytics | null }) {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {analytics.topQuestions?.map((q, i) => (
+              {analytics.topQuestions?.map((q: { question?: string; questions?: string; count: number }, i: number) => (
                 <div key={i} className="flex items-center gap-3 p-2 rounded-lg border">
                   <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center text-xs font-medium">
                     {i + 1}
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-medium">{q.questions}</div>
+                    <div className="text-sm font-medium">{q.question ?? q.questions ?? "Untitled question"}</div>
                     <div className="text-xs text-muted-foreground">{q.count} times</div>
                   </div>
                 </div>

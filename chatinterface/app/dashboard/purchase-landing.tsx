@@ -1,12 +1,8 @@
 "use client"
 
 import { useState } from "react"
-
-interface PurchaseLandingProps {
-  userEmail: string
-  userName: string
-  userId: string
-}
+import posthog from "posthog-js"
+import type { PurchaseLandingProps } from "@/lib/interfaces"
 
 const STARTER_PLAN_PRODUCT_ID = "pdt_0NauJou4mqDCcPVwp4kfS"
 
@@ -23,6 +19,14 @@ export function PurchaseLanding({ userEmail, userName, userId }: PurchaseLanding
     }
 
     setIsLoading(true)
+
+    if (userId) posthog.identify(userId, { email: userEmail, name: userName || undefined })
+    posthog.capture("checkout_initiated", {
+      plan: "starter",
+      trial_period_days: 7,
+      user_id: userId,
+      user_email: userEmail,
+    })
 
     try {
       const response = await fetch("/api/checkout", {
@@ -55,9 +59,21 @@ export function PurchaseLanding({ userEmail, userName, userId }: PurchaseLanding
         throw new Error(data?.message || "Failed to create checkout session")
       }
 
+      posthog.capture("checkout_redirected", {
+        plan: "starter",
+        user_id: userId,
+        user_email: userEmail,
+      })
       window.location.href = data.checkout_url
     } catch (err) {
       const message = err instanceof Error ? err.message : "Checkout failed. Please try again."
+      posthog.capture("checkout_failed", {
+        plan: "starter",
+        user_id: userId,
+        user_email: userEmail,
+        error: message,
+      })
+      posthog.captureException(err)
       setError(message)
     } finally {
       setIsLoading(false)

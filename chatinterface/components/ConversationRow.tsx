@@ -3,27 +3,9 @@
 import { useState, useRef, useEffect } from "react"
 import { MoreHorizontal, Pin, Edit3, Trash2 } from "lucide-react"
 import { cls, timeAgo } from "./utils"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence } from "motion/react"
+import type { ConversationRowProps } from "@/lib/types/ui"
 
-interface ConversationData {
-    id: string;
-    title: string;
-    messages?: any[];
-    messageCount?: number;
-    pinned: boolean;
-    updatedAt: string | Date;
-    preview: string;
-}
-
-interface ConversationRowProps {
-    data: ConversationData;
-    active: boolean;
-    onSelect: () => void;
-    onTogglePin: () => void;
-    onDelete: (id: string) => void;
-    onRename: (id: string, newName: string) => void;
-    showMeta: boolean;
-}
 
 export default function ConversationRow({
     data,

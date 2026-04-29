@@ -2,7 +2,7 @@ import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader,
 import { Label } from "recharts";
 import { Input } from "@/components/ui/input";
 import { SelectIcon, } from "@radix-ui/react-select";
-import { Select, SelectTrigger, SelectContent, SelectGroup, SelectItem, SelectValue } from "@/landing/components/ui/select";
+import { Select, SelectTrigger, SelectContent, SelectGroup, SelectItem, SelectValue } from "@/components/landing/components/ui/select";
 import { Button } from "@/components/ui/button";
 
 function SettingsPage({ chatbot }: { chatbot: any }) {

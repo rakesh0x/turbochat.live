@@ -1,9 +1,7 @@
 import { cls } from "./utils"
+import type { MessageProps } from "@/lib/types/ui"
 
-interface MessageProps {
-    role: "user" | "assistant" | string;
-    children: React.ReactNode;
-}
+
 
 export default function Message({ role, children }: MessageProps) {
     const isUser = role === "user"

@@ -1,7 +1,10 @@
-import { Header } from "@/landing/components/header"
-import { CtaSection } from "@/landing/components/cta-section"
-import { Footer } from "@/landing/components/footer"
+"use client"
+
+import { Header } from "@/components/landing/components/header"
+import { CtaSection } from "@/components/landing/components/cta-section"
+import { Footer } from "@/components/landing/components/footer"
 import Link from "next/link"
+import posthog from "posthog-js"
 
 const plans = [
   {
@@ -82,6 +85,7 @@ function PricingSectionInline() {
                 <a
                   href="mailto:sales@turbochat.live"
                   className="rounded-full bg-foreground text-background hover:bg-foreground/90 px-6 py-2.5 text-sm text-center"
+                  onClick={() => posthog.capture("pricing_plan_clicked", { plan: plan.name, cta: plan.cta })}
                 >
                   {plan.cta}
                 </a>
@@ -89,6 +93,7 @@ function PricingSectionInline() {
                 <Link
                   href="/api/auth/signin/google?callbackUrl=%2Fdashboard"
                   className="rounded-full bg-foreground text-background hover:bg-foreground/90 px-6 py-2.5 text-sm text-center"
+                  onClick={() => posthog.capture("pricing_plan_clicked", { plan: plan.name, cta: plan.cta })}
                 >
                   {plan.cta}
                 </Link>

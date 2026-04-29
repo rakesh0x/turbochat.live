@@ -1,19 +1,13 @@
 "use client"
 
 import { useRef, useState, forwardRef, useImperativeHandle, useEffect } from "react"
+import posthog from "posthog-js"
 import { Send, Loader2, Plus, Mic } from "lucide-react"
 import ComposerActionsPopover from "./ComposerActionsPopover"
 import { cls } from "./utils"
+import type { ComposerHandle, ComposerProps } from "@/lib/types/ui"
 
-interface ComposerProps {
-    onSend: (message: string) => Promise<void>;
-    busy?: boolean;
-}
 
-export interface ComposerHandle {
-    insertTemplate: (templateContent: string) => void;
-    focus: () => void;
-}
 
 const Composer = forwardRef<ComposerHandle, ComposerProps>(function Composer({ onSend, busy }, ref) {
     const [value, setValue] = useState("")
@@ -67,6 +61,9 @@ const Composer = forwardRef<ComposerHandle, ComposerProps>(function Composer({ o
     async function handleSend() {
         if (!value.trim() || sending) return
         setSending(true)
+        posthog.capture("message_sent", {
+            message_length: value.trim().length,
+        })
         try {
             await onSend?.(value)
             setValue("")

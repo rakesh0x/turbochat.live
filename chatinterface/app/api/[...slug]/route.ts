@@ -1,10 +1,10 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getToken } from "next-auth/jwt";
 import jwt from 'jsonwebtoken';
+import { Phone } from 'lucide-react';
 
-// Required for SSE streaming to work — prevents Next.js from buffering responses.
 export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs'; // Edge runtime does not support streaming SSE well
+export const runtime = 'nodejs'; 
 
 const BACKEND_URL = process.env.BACKEND_URL || (process.env.NODE_ENV === 'production' ? 'https://app.turbochat.live' : 'http://127.0.0.1:8000');
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || 'your-secret-key';

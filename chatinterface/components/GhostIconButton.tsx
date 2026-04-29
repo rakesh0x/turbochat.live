@@ -1,9 +1,6 @@
 import React from "react";
+import type { GhostIconButtonProps } from "@/lib/types/ui";
 
-interface GhostIconButtonProps {
-    label: string;
-    children: React.ReactNode;
-}
 
 export default function GhostIconButton({ label, children }: GhostIconButtonProps) {
     return (

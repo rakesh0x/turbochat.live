@@ -2,18 +2,10 @@
 import { Asterisk, MoreHorizontal, Menu, ChevronDown, Sparkles } from "lucide-react"
 import { useState } from "react"
 import GhostIconButton from "./GhostIconButton"
+import type { Chatbot } from "@/lib/types/chat"
+import type { HeaderProps } from "@/lib/types/ui"
 
-interface Chatbot {
-    name: string;
-    icon: string | React.ReactNode;
-    badge: string | null;
-}
 
-interface HeaderProps {
-    createNewChat: () => void;
-    sidebarCollapsed: boolean;
-    setSidebarOpen: (open: boolean) => void;
-}
 
 export default function Header({ createNewChat, sidebarCollapsed, setSidebarOpen }: HeaderProps) {
     const [selectedBot, setSelectedBot] = useState<string>("GPT-5")

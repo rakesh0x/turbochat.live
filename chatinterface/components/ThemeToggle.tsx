@@ -1,10 +1,8 @@
 import React from "react";
 import { Sun, Moon } from "lucide-react";
+import type { ThemeToggleProps } from "@/lib/types/ui";
 
-interface ThemeToggleProps {
-    theme: string;
-    setTheme: React.Dispatch<React.SetStateAction<any>> | ((update: (t: string) => string) => void);
-}
+
 
 export default function ThemeToggle({ theme, setTheme }: ThemeToggleProps) {
     return (

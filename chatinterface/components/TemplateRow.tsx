@@ -2,21 +2,10 @@
 
 import { useState, useRef, useEffect } from "react"
 import { FileText, MoreHorizontal, Copy, Edit3, Trash2 } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence } from "motion/react"
+import type { TemplateRowProps } from "@/lib/types/ui"
 
-interface Template {
-    id: string;
-    name: string;
-    snippet: string;
-}
 
-interface TemplateRowProps {
-    template: Template;
-    onUseTemplate: (template: Template) => void;
-    onEditTemplate: (template: Template) => void;
-    onRenameTemplate: (id: string, newName: string) => void;
-    onDeleteTemplate: (id: string) => void;
-}
 
 export default function TemplateRow({
     template,

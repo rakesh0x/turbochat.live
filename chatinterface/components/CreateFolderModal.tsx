@@ -1,13 +1,9 @@
 "use client"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence } from "motion/react"
 import { X, Lightbulb } from "lucide-react"
 import { useState } from "react"
+import type { CreateFolderModalProps } from "@/lib/types/ui"
 
-interface CreateFolderModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onCreateFolder: (name: string) => void;
-}
 
 export default function CreateFolderModal({ isOpen, onClose, onCreateFolder }: CreateFolderModalProps) {
     const [folderName, setFolderName] = useState<string>("")

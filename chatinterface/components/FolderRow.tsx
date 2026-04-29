@@ -3,27 +3,10 @@
 import { useState, useRef, useEffect } from "react"
 import { FolderIcon, ChevronRight, ChevronDown, MoreHorizontal } from "lucide-react"
 import ConversationRow from "./ConversationRow"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence } from "motion/react"
+import type { FolderRowProps } from "@/lib/types/ui"
 
-interface Conversation {
-    id: string;
-    title: string;
-    preview: string;
-    updatedAt: string | Date;
-    folder?: string | null;
-    pinned?: boolean;
-}
 
-interface FolderRowProps {
-    name: string;
-    count: number;
-    conversations?: Conversation[];
-    selectedId?: string | null;
-    onSelect: (id: string) => void;
-    togglePin: (id: string) => void;
-    onDeleteFolder: (name: string) => void;
-    onRenameFolder: (oldName: string, newName: string) => void;
-}
 
 export default function FolderRow({
     name,

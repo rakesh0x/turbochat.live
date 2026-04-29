@@ -1,18 +1,9 @@
 "use client"
 import { useState } from "react"
-import { Paperclip, Bot, Search, Palette, BookOpen, MoreHorizontal, Globe, ChevronRight, LucideIcon } from "lucide-react"
+import { Paperclip, Bot, Search, Palette, BookOpen, MoreHorizontal, Globe, ChevronRight } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
+import type { Action, ComposerActionsPopoverProps } from "@/lib/types/ui"
 
-interface Action {
-    icon: LucideIcon | React.ComponentType;
-    label: string;
-    badge?: string;
-    action: () => void;
-}
-
-interface ComposerActionsPopoverProps {
-    children: React.ReactNode;
-}
 
 export default function ComposerActionsPopover({ children }: ComposerActionsPopoverProps) {
     const [open, setOpen] = useState(false)

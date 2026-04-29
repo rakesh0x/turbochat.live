@@ -1,5 +1,5 @@
 "use client"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence } from "motion/react"
 import {
     PanelLeftClose,
     PanelLeftOpen,
@@ -23,59 +23,10 @@ import SettingsPopover from "./SettingsPopover"
 import { cls } from "./utils"
 import { useState } from "react"
 import { useIsMobile } from "@/hooks/use-mobile"
+import type { SidebarProps } from "@/lib/types/ui"
+import type { Template } from "@/lib/types/chat"
 
-interface Conversation {
-    id: string;
-    title: string;
-    preview: string;
-    updatedAt: string | Date;
-    folder?: string | null;
-    pinned?: boolean;
-}
 
-interface Folder {
-    id: string;
-    name: string;
-}
-
-interface Template {
-    id: string;
-    name: string;
-    snippet: string;
-    updatedAt?: string;
-}
-
-interface SidebarProps {
-    open: boolean;
-    onClose: () => void;
-    theme: string;
-    setTheme: (theme: string | ((t: string) => string)) => void;
-    collapsed: {
-        pinned: boolean;
-        recent: boolean;
-        folders: boolean;
-        templates: boolean;
-    };
-    setCollapsed: React.Dispatch<React.SetStateAction<any>>;
-    conversations: Conversation[];
-    pinned: Conversation[];
-    recent: Conversation[];
-    folders: Folder[];
-    folderCounts: Record<string, number>;
-    selectedId?: string;
-    onSelect: (id: string) => void;
-    togglePin: (id: string) => void;
-    query: string;
-    setQuery: (query: string) => void;
-    searchRef?: React.RefObject<HTMLInputElement>;
-    createFolder: (name: string) => void;
-    createNewChat: () => void;
-    templates?: Template[];
-    setTemplates?: (templates: Template[]) => void;
-    onUseTemplate?: (template: Template) => void;
-    sidebarCollapsed?: boolean;
-    setSidebarCollapsed?: (collapsed: boolean) => void;
-}
 
 export default function Sidebar({
     open,

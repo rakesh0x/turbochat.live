@@ -1,24 +1,11 @@
 "use client"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence } from "motion/react"
 import { X, SearchIcon, Plus, Clock } from "lucide-react"
 import { useState, useEffect, useMemo } from "react"
+import type { Conversation } from "@/lib/types/chat"
+import type { SearchModalProps } from "@/lib/types/ui"
 
-interface Conversation {
-    id: string;
-    title: string;
-    preview: string;
-    updatedAt: string | Date;
-}
 
-interface SearchModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    conversations: Conversation[];
-    selectedId?: string;
-    onSelect: (id: string) => void;
-    togglePin?: (id: string) => void;
-    createNewChat: () => void;
-}
 
 type TimeGroup = "Today" | "Yesterday" | "Previous 7 Days" | "Older"
 

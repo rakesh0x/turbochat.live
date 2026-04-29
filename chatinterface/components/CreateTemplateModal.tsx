@@ -1,15 +1,10 @@
 "use client"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence } from "motion/react"
 import { X, Lightbulb } from "lucide-react"
 import { useState, useEffect } from "react"
-import { Template } from "./mockData"
+import type { CreateTemplateModalProps } from "@/lib/types/ui"
 
-interface CreateTemplateModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onCreateTemplate: (template: Omit<Template, 'id'> | Template) => void;
-    editingTemplate?: Template | null;
-}
+
 
 export default function CreateTemplateModal({
     isOpen,

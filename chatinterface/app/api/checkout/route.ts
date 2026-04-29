@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 //takes the user to dodo checkout page taking all the 
 export async function POST(req: NextRequest) {
@@ -63,6 +64,15 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await response.json();
+    getPostHogClient().capture({
+      distinctId: userId,
+      event: "checkout_session_created",
+      properties: {
+        user_email: userEmail,
+        trial_period_days: trial_period_days ?? null,
+        product_count: Array.isArray(product_cart) ? product_cart.length : 1,
+      },
+    });
     return NextResponse.json(data);
   } catch (error) {
     console.error("Dodo Payments API Route Error:", error);

@@ -8,7 +8,7 @@ import ChatPane from "./ChatPane"
 import GhostIconButton from "./GhostIconButton"
 import ThemeToggle from "./ThemeToggle"
 import { INITIAL_CONVERSATIONS, INITIAL_TEMPLATES, INITIAL_FOLDERS, Conversation, Message, Template, Folder } from "./mockData"
-import { ComposerHandle } from "./Composer"
+import type { ComposerHandle } from "@/lib/interfaces"
 
 export default function AIAssistantUI() {
     const [theme, setTheme] = useState<string>(() => {
@@ -82,6 +82,7 @@ export default function AIAssistantUI() {
 
     const [isThinking, setIsThinking] = useState(false)
     const [thinkingConvId, setThinkingConvId] = useState<string | null>(null)
+    const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null)
 
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
@@ -213,6 +214,7 @@ export default function AIAssistantUI() {
                         createdAt: new Date().toISOString(),
                     }
                     const msgs = [...(c.messages || []), asstMsg]
+                    setStreamingMessageId(asstMsg.id)
                     return {
                         ...c,
                         messages: msgs,
@@ -232,11 +234,12 @@ export default function AIAssistantUI() {
                     if (c.id !== currentConvId) return c
                     const errorMsg: Message = {
                         id: Math.random().toString(36).slice(2),
-                        role: "assistant", // Corrected to assistant for mock error
+                        role: "assistant",
                         content: "Sorry, I couldn't connect to the AI service. Please make sure the Python server is running.",
                         createdAt: new Date().toISOString(),
                     }
                     const msgs = [...(c.messages || []), errorMsg]
+                    setStreamingMessageId(errorMsg.id)
                     return {
                         ...c,
                         messages: msgs,
@@ -346,6 +349,7 @@ export default function AIAssistantUI() {
                         onResendMessage={(messageId) => selected && resendMessage(selected.id, messageId)}
                         isThinking={isThinking && thinkingConvId === selected?.id}
                         onPauseThinking={pauseThinking}
+                        streamingMessageId={streamingMessageId}
                     />
                 </main>
             </div>

@@ -527,7 +527,7 @@ def _stream_gemini(prompt: str):
                 text = getattr(chunk, "text", None)
                 if text:
                     yield text
-            return
+            return2
         except google_exceptions.ResourceExhausted:
             print(f"[Gemini-Stream] {model_name} rate limit reached. Switching fallback...")
             continue

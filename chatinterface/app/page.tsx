@@ -1,13 +1,13 @@
-import { Header } from "@/landing/components/header"
-import { HeroSection } from "@/landing/components/hero-section"
-import { HowItWorks } from "@/landing/components/how-it-works"
-import { FaqSection } from "@/landing/components/faq-section"
-import { CtaSection } from "@/landing/components/cta-section"
-import { Footer } from "@/landing/components/footer"
+import { Header } from "@/components/landing/header"
+import { HeroSection } from "@/components/landing/hero-section"
+import { HowItWorks } from "@/components/landing/how-it-works"
+import { FaqSection } from "@/components/landing/faq-section"
+import { CtaSection } from "@/components/landing/cta-section"
+import { Footer } from "@/components/landing/footer"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { getServerSession } from "next-auth/next"
-import { GET } from "@/app/api/auth/[...nextauth]/route"
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 
 export const dynamic = "force-dynamic"
 
@@ -109,7 +109,7 @@ function PricingSectionInline() {
 }
 
 export default async function Home() {
-  const session = await getServerSession(GET as any)
+  const session = await getServerSession(authOptions)
 
   if (session) {
     redirect("/dashboard")

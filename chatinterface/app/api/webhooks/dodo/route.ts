@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function POST(req: Request) {
   try {
@@ -44,6 +45,26 @@ export async function POST(req: Request) {
       if (!updateRes.ok) {
         throw new Error("Failed to update credits in backend");
       }
+
+      const posthog = getPostHogClient();
+      const distinctId = userId || userEmail!;
+      posthog.identify({
+        distinctId,
+        properties: {
+          email: userEmail,
+        },
+      });
+      posthog.capture({
+        distinctId,
+        event: "payment_succeeded",
+        properties: {
+          user_id: userId,
+          user_email: userEmail,
+          plan: planName,
+          credits_added: creditsToAdd,
+          event_id: eventId,
+        },
+      });
 
       return NextResponse.json({ message: "Credits updated successfully", credits: creditsToAdd });
     }

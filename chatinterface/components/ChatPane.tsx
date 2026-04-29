@@ -3,13 +3,13 @@
 import { useState, forwardRef, useImperativeHandle, useRef } from "react"
 import { Pencil, RefreshCw, Check, X, Square } from "lucide-react"
 import Message from "./Message"
-import Composer, { ComposerHandle } from "./Composer"
+import Composer from "./Composer"
 import { cls, timeAgo } from "./utils"
-import { Conversation, Message as MessageType } from "./mockData"
+import { TypingAnimation } from "./ui/typing-animation"
+import type { ChatPaneHandle, ChatPaneProps, ComposerHandle, ThinkingMessageProps } from "@/lib/types/ui"
+import type { Message as MessageType } from "@/lib/types/chat"
 
-interface ThinkingMessageProps {
-    onPause: () => void;
-}
+
 
 function ThinkingMessage({ onPause }: ThinkingMessageProps) {
     return (
@@ -32,21 +32,10 @@ function ThinkingMessage({ onPause }: ThinkingMessageProps) {
     )
 }
 
-export interface ChatPaneProps {
-    conversation?: Conversation | null;
-    onSend?: (content: string) => void;
-    onEditMessage?: (messageId: string, newContent: string) => void;
-    onResendMessage?: (messageId: string) => void;
-    isThinking?: boolean;
-    onPauseThinking?: () => void;
-}
 
-export interface ChatPaneHandle {
-    insertTemplate: (templateContent: string) => void;
-}
 
 const ChatPane = forwardRef<ChatPaneHandle, ChatPaneProps>(function ChatPane(
-    { conversation, onSend, onEditMessage, onResendMessage, isThinking, onPauseThinking },
+    { conversation, onSend, onEditMessage, onResendMessage, isThinking, onPauseThinking, streamingMessageId },
     ref,
 ) {
     const [editingId, setEditingId] = useState<string | null>(null)
@@ -162,7 +151,18 @@ const ChatPane = forwardRef<ChatPaneHandle, ChatPaneProps>(function ChatPane(
                                     </div>
                                 ) : (
                                     <Message role={m.role}>
-                                        <div className="whitespace-pre-wrap">{m.content}</div>
+                                        {m.role === "assistant" && m.id === streamingMessageId ? (
+                                            <TypingAnimation
+                                                text={m.content}
+                                                className="text-sm leading-relaxed"
+                                                duration={14}
+                                                showCursor={true}
+                                                blinkCursor={true}
+                                                cursorStyle="line"
+                                            />
+                                        ) : (
+                                            <div className="whitespace-pre-wrap">{m.content}</div>
+                                        )}
                                         {m.role === "user" && (
                                             <div className="mt-2 flex gap-3 text-[11px] text-white/70">
                                                 <button className="inline-flex items-center gap-1 hover:text-white transition-colors" onClick={() => startEdit(m)}>
