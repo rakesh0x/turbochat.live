@@ -1,3 +1,4 @@
+"use client"
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";

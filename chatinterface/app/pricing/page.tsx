@@ -1,8 +1,8 @@
 "use client"
 
-import { Header } from "@/components/landing/components/header"
-import { CtaSection } from "@/components/landing/components/cta-section"
-import { Footer } from "@/components/landing/components/footer"
+import { Header } from "@/components/landing/header"
+import { CtaSection } from "@/components/landing/cta-section"
+import { Footer } from "@/components/landing/footer"
 import Link from "next/link"
 import posthog from "posthog-js"
 
