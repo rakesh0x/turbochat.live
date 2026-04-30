@@ -1,7 +1,9 @@
+"use client";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, Loader2, MessageSquare, TrendingUp, Zap } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
-import type { Analytics } from "@/lib/interfaces";
+import type { Analytics } from "@/lib/types/analytics";
 
 
 

@@ -11,7 +11,7 @@ const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || 'your-secret-key';
 
 
 async function proxyRequest(request: NextRequest, slug: string[]) {
-  const url = new URL(request.url);``
+  const url = new URL(request.url);
   const backendPath = `/api/${slug.join('/')}`;
   const targetUrl = `${BACKEND_URL}${backendPath}${url.search}`;
 

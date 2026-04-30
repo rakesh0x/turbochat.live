@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import posthog from "posthog-js";
 import { toast } from "sonner";

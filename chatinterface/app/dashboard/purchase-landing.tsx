@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import posthog from "posthog-js"
-import type { PurchaseLandingProps } from "@/lib/interfaces"
+import type { PurchaseLandingProps } from "@/lib/types/billing"
 
 const STARTER_PLAN_PRODUCT_ID = "pdt_0NauJou4mqDCcPVwp4kfS"
 

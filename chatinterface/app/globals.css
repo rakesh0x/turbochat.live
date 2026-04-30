@@ -116,12 +116,17 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --animate-blink-cursor: blink-cursor 1.2s step-end infinite;
+
   @keyframes blink-cursor {
-  0%, 49% {
-    opacity: 1;
+
+    0%,
+    49% {
+      opacity: 1;
     }
-  50%, 100% {
-    opacity: 0;
+
+    50%,
+    100% {
+      opacity: 0;
     }
   }
 }
@@ -130,6 +135,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }

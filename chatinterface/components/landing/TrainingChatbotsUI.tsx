@@ -36,7 +36,7 @@ import {
 } from './ui/dropdown-menu';
 import type { MenuItem } from '@/lib/types/ui';
 
-const urltogo = window.location.href;
+// window.location access moved inside useEffect to prevent SSR errors
 
 const DashboardPage = dynamic(() => import('@/components/DashboardPage'));
 const CreateChatbotPage = dynamic(() => import('@/components/createChatbot'));
@@ -128,7 +128,8 @@ export function ChatInterface() {
 
   useEffect(() => {
     async function resultsfromBFF() {
-      const response = await fetch(`${urltogo}/api/bff`, {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+      const response = await fetch(`${baseUrl}/api/bff`, {
         method: "POST",
         body: JSON.stringify(payload)
       });

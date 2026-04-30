@@ -5,7 +5,7 @@ import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader,
 import { motion } from "framer-motion";
 import { TrendingUp, Plus, Activity, ArrowUpRight, Download, Github, RefreshCw, Bot, Globe, Zap, MessageSquare } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import type { DashboardPageProps } from "@/lib/interfaces";
+import type { DashboardPageProps } from "@/lib/types/ui";
 
 function DashboardPage({ stats, chatbots, loading, canCreateChatbot, onCreateChatbot }: DashboardPageProps) {
   if (loading) {

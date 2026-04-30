@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from 'next/font/google';
-import './globals.css';
+import './globals.css'
 import { Analytics } from "@vercel/analytics/next"
 import Image from "next/image";
 
@@ -91,7 +91,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
-        <Providers>{children}<Analytics/></Providers>
+        <Providers>{children}<Analytics /></Providers>
       </body>
     </html>
   );
