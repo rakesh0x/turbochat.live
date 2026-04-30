@@ -8,7 +8,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  outputFileTracingRoot: path.join(process.cwd(), '../../'),
+  outputFileTracingRoot: path.join(chatinterface, './'),
   async rewrites() {
     return [
       {
