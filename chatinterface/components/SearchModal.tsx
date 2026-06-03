@@ -2,6 +2,7 @@
 import { motion, AnimatePresence } from "motion/react"
 import { X, SearchIcon, Plus, Clock } from "lucide-react"
 import { useState, useEffect, useMemo } from "react"
+import posthog from "posthog-js"
 import type { Conversation } from "@/lib/types/chat"
 import type { SearchModalProps } from "@/lib/types/ui"
 
@@ -63,6 +64,7 @@ export default function SearchModal({
     }
 
     const handleNewChat = () => {
+        posthog.capture("new_chat_started", { source: "search_modal" })
         createNewChat()
         handleClose()
     }
@@ -107,7 +109,13 @@ export default function SearchModal({
                             <input
                                 type="text"
                                 value={query}
-                                onChange={(e) => setQuery(e.target.value)}
+                                onChange={(e) => {
+                                    const newQuery = e.target.value
+                                    setQuery(newQuery)
+                                    if (newQuery.trim().length === 1) {
+                                        posthog.capture("conversation_searched", { query_length: newQuery.trim().length })
+                                    }
+                                }}
                                 placeholder="Search conversations..."
                                 className="flex-1 bg-transparent text-lg outline-none placeholder:text-muted-foreground"
                                 autoFocus

@@ -1,3 +1,5 @@
+"use client";
+import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -79,7 +81,7 @@ export default function SettingsPage({ chatbot }: { chatbot: any }) {
 
       <div className="flex justify-end gap-2">
         <Button variant="outline">Cancel</Button>
-        <Button>Save Changes</Button>
+        <Button onClick={() => posthog.capture("chatbot_settings_saved", { chatbot_id: chatbot.id, chatbot_name: chatbot.name })}>Save Changes</Button>
       </div>
     </div>
   );

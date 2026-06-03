@@ -1,4 +1,6 @@
+"use client";
 import { Download, Globe } from "lucide-react";
+import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -17,11 +19,11 @@ export default function TrainingPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Button variant="outline" className="h-24 flex-col gap-2 rounded-2xl border-slate-300/80 bg-white/85 dark:border-slate-700 dark:bg-slate-900/70">
+            <Button variant="outline" className="h-24 flex-col gap-2 rounded-2xl border-slate-300/80 bg-white/85 dark:border-slate-700 dark:bg-slate-900/70" onClick={() => posthog.capture("training_website_added")}>
               <Globe className="w-6 h-6" />
               <span>Add Website</span>
             </Button>
-            <Button variant="outline" className="h-24 flex-col gap-2 rounded-2xl border-slate-300/80 bg-white/85 dark:border-slate-700 dark:bg-slate-900/70">
+            <Button variant="outline" className="h-24 flex-col gap-2 rounded-2xl border-slate-300/80 bg-white/85 dark:border-slate-700 dark:bg-slate-900/70" onClick={() => posthog.capture("training_files_uploaded")}>
               <Download className="w-6 h-6" />
               <span>Upload Files</span>
             </Button>

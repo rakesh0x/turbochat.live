@@ -23,7 +23,6 @@ from .config import (
     index,
 )
 
-
 def clean_text(text: str) -> str:
     if not text:
         return ""
@@ -69,7 +68,7 @@ def reserve_unique_share_slug(cur, base_slug: str) -> str:
 
 def train_chatbot_sync(chatbot_id: str, website: str, limit: int = 10):
     try:
-        print(f"Starting training for {chatbot_id} at {website} with limit {limit}", flush=True)
+        print(f"`Start`ing training for {chatbot_id} at {website} with limit {limit}", flush=True)
         raw_text = get_data(website, limit=limit)
 
         if not raw_text or not raw_text.strip() or is_crawl_error_text(raw_text):
@@ -166,7 +165,6 @@ def get_openai_response(prompt: str, model: str = OPENAI_MODEL) -> str:
     except Exception as e:
         print(f"OpenAI error: {e}")
         return "Sorry, I couldn't generate a response."
-
 
 def get_gemini_response(prompt: str) -> str:
     if not GEMINI_API_KEY:
@@ -492,7 +490,7 @@ def _build_prompt(query: str, semantic_context: str, structured_context: str) ->
             "Instructions:\n"
             "- USE MARKDOWN formatting for your response.\n"
             "- Put every bullet point or item on a separate NEW LINE.\n"
-            "- Use bolding (**item**) for product names or key terms.\n"
+            "- Dont use bolding for any (**item**) and for product names or key terms.\n"
             "- Only include products that satisfy the customer's filter.\n"
             "- If no products match exactly, say so honestly.\n"
             "- Be concise and friendly.\n\nResponse:"
@@ -502,8 +500,8 @@ def _build_prompt(query: str, semantic_context: str, structured_context: str) ->
             "You are a helpful assistant trained on this business's website content.\n"
             "Answer only from the provided context. Be concise and factual.\n\n"
             "Formatting Rules:\n"
-            "1. USE MARKDOWN (**bolding**, *italics*, etc.).\n"
-            "2. If you are listing points, put each point on its own NEW LINE starting with a bullet point (*).\n\n"
+            "1. DON'T USE MARKDOWN (**bolding**, *italics*, etc.).\n"
+            "2. If you are listing points, put each point on its own NEW LINE starting with a bullet point (>).\n\n"
             f"Context:\n{semantic_context}\n\nQuestion: {query}\nAnswer:"
         )
     return (

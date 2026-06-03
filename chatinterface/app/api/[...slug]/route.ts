@@ -19,7 +19,6 @@ async function proxyRequest(request: NextRequest, slug: string[]) {
     const token = await getToken({ req: request, secret: NEXTAUTH_SECRET });
     const headers = new Headers();
 
-    // Inject custom JWT for backend if authenticated token exists.
     const userId = (token?.sub as string | undefined) || ((token as any)?.id as string | undefined);
     const userEmail = (token?.email as string | undefined) || ((token as any)?.user?.email as string | undefined);
     if (userId && userEmail) {

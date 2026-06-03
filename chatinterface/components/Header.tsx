@@ -1,6 +1,7 @@
 "use client"
 import { Asterisk, MoreHorizontal, Menu, ChevronDown, Sparkles } from "lucide-react"
 import { useState } from "react"
+import posthog from "posthog-js"
 import GhostIconButton from "./GhostIconButton"
 import type { Chatbot } from "@/lib/types/chat"
 import type { HeaderProps } from "@/lib/types/ui"
@@ -53,6 +54,7 @@ export default function Header({ createNewChat, sidebarCollapsed, setSidebarOpen
                                     <button
                                         key={bot.name}
                                         onClick={() => {
+                                            posthog.capture("ai_model_selected", { model: bot.name, previous_model: selectedBot })
                                             setSelectedBot(bot.name)
                                             setIsDropdownOpen(false)
                                         }}

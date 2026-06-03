@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import type { MyChatbotsPageProps } from "@/lib/interfaces";
+import posthog from "posthog-js";
 
 export default function MyChatbotsPage({
   chatbots,
@@ -42,9 +43,14 @@ export default function MyChatbotsPage({
       await fetch(`/api/chatbots/${chatbotToDelete}`, {
         method: 'DELETE'
       });
+      posthog.capture("chatbot_deleted", {
+        chatbot_id: chatbotToDelete,
+        user_email: session?.user?.email,
+      });
       toast.success('Chatbot deleted');
       onRefresh();
     } catch (error) {
+      posthog.captureException(error);
       toast.error('Failed to delete chatbot');
     }
     setDeleteDialogOpen(false);
@@ -109,7 +115,7 @@ export default function MyChatbotsPage({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onSelectChatbot(bot)}>
+                    <DropdownMenuItem onClick={() => { posthog.capture("chatbot_selected", { chatbot_id: bot.id, chatbot_name: bot.name }); onSelectChatbot(bot); }}>
                       <PlayCircle className="w-4 h-4 mr-2" />
                       Test
                     </DropdownMenuItem>

@@ -11,7 +11,6 @@ from database import get_db_connection, release_db_connection
 
 security = HTTPBearer()
 
-
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
     try:

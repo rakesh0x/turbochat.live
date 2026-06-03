@@ -82,11 +82,10 @@ export default function CreateChatbotPage({
       })
       setStep(2);
       setIsProcessing(true);
-      setLogs([{ text: 'Initializing Crawl4AI...', timestamp: new Date().toLocaleTimeString() }]);
+      setLogs([{ text: 'Initializing Crawling engine...', timestamp: new Date().toLocaleTimeString() }]);
       setProgress(10);
 
-      // 1. Create the chatbot (starts background training)
-      const res = await fetch('/api/chatbots', {
+      const res = await fetch('/api/chatbot/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -376,9 +376,7 @@ export function ChatInterface() {
         </div>
       </aside>
 
-      {/* Main Content */}
       <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
-        {/* Header */}
         <header className="h-16 border-b border-white/70 dark:border-slate-800/80 flex items-center justify-between px-4 md:px-6 bg-white/65 backdrop-blur-2xl dark:bg-slate-950/55">
           <div className="flex items-center gap-3">
             <Button
@@ -392,7 +390,6 @@ export function ChatInterface() {
             </Button>
 
             <div>
-             
               <h1 className="text-lg font-semibold tracking-tight">
                 {menuItems.find(item => item.id === currentPage)?.label || 'Dashboard'}
               </h1>
