@@ -10,8 +10,12 @@ load_dotenv()
 
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 INDEX_NAME = os.getenv("PINECONE_INDEX", "chatbot")
+
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODELS = ["gemini-2.0-flash", "gemini-flash-latest", "gemini-1.5-flash-8b"]
@@ -27,6 +31,11 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 
 client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+
+groq_client = OpenAI(
+    api_key=GROQ_API_KEY,
+    base_url="https://api.groq.com/openai/v1",
+) if GROQ_API_KEY else None
 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)

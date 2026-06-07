@@ -18,7 +18,9 @@ from .config import (
     GEMINI_MODELS,
     LLM_PROVIDER,
     OPENAI_MODEL,
+    GROQ_MODEL,
     client,
+    groq_client,
     executor,
     index,
 )
@@ -189,9 +191,27 @@ def get_gemini_response(prompt: str) -> str:
     return "Sorry, all models are currently exhausted. Please try again in 1 minute."
 
 
+def get_groq_response(prompt: str, model: str = GROQ_MODEL) -> str:
+    if not groq_client:
+        return "Groq API key not configured."
+    try:
+        completion = groq_client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1024,
+            temperature=0.7,
+        )
+        return completion.choices[0].message.content
+    except Exception as e:
+        print(f"Groq error: {e}")
+        return "Sorry, I couldn't generate a response."
+
+
 def get_llm_response(prompt: str) -> str:
     if LLM_PROVIDER == "gemini":
         return get_gemini_response(prompt)
+    if LLM_PROVIDER == "groq":
+        return get_groq_response(prompt)
     return get_openai_response(prompt)
 
 
@@ -525,7 +545,7 @@ def _stream_gemini(prompt: str):
                 text = getattr(chunk, "text", None)
                 if text:
                     yield text
-            return2
+            return
         except google_exceptions.ResourceExhausted:
             print(f"[Gemini-Stream] {model_name} rate limit reached. Switching fallback...")
             continue
@@ -558,7 +578,30 @@ def _stream_openai(prompt: str):
         yield "Sorry, I couldn't generate a response."
 
 
+def _stream_groq(prompt: str):
+    if not groq_client:
+        yield "Groq API key not configured."
+        return
+    try:
+        stream = groq_client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1024,
+            temperature=0.7,
+            stream=True,
+        )
+        for chunk in stream:
+            delta = chunk.choices[0].delta.content
+            if delta:
+                yield delta
+    except Exception as e:
+        print(f"Groq stream error: {e}")
+        yield "Sorry, I couldn't generate a response."
+
+
 def _stream_llm(prompt: str):
     if LLM_PROVIDER == "gemini":
         return _stream_gemini(prompt)
+    if LLM_PROVIDER == "groq":
+        return _stream_groq(prompt)
     return _stream_openai(prompt)
