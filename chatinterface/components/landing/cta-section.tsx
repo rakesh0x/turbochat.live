@@ -12,8 +12,9 @@ export function CtaSection() {
       <div className="relative max-w-3xl mx-auto text-center">
         <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl mb-4">Ship better support with TurboChat</h2>
         <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-          Replace repetitive support replies with a trained assistant that answers instantly using your own website and
-          documentation.
+          The best custom AI chatbot for SaaS support. Train AI chatbot on website docs, embed an AI
+          support widget, and reduce support ticket volume with AI &mdash; all in one RAG chatbot platform.
+          Start free, no credit card required.
         </p>
         <Button
           className="rounded-full bg-foreground text-background hover:bg-foreground/90 px-6"

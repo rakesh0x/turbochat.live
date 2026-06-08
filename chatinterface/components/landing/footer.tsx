@@ -24,6 +24,9 @@ export function Footer() {
           <Link href="#faq" className="text-sm hover:text-muted-foreground transition-colors">
             FAQ
           </Link>
+          <Link href="/blog" className="text-sm hover:text-muted-foreground transition-colors">
+            Blog
+          </Link>
         </nav>
 
         {/* Copyright and legal */}

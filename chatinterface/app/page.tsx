@@ -3,6 +3,7 @@ import { HeroSection } from "@/components/landing/hero-section"
 import { HowItWorks } from "@/components/landing/how-it-works"
 import { FaqSection } from "@/components/landing/faq-section"
 import { CtaSection } from "@/components/landing/cta-section"
+import { BlogSection } from "@/components/landing/blog-section"
 import { Footer } from "@/components/landing/footer"
 import Link from "next/link"
 import { redirect } from "next/navigation"
@@ -122,6 +123,7 @@ export default async function Home() {
       <HowItWorks />
       <PricingSectionInline />
       <FaqSection />
+      <BlogSection />
       <CtaSection />
       <Footer />
     </main>

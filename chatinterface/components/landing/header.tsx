@@ -23,6 +23,9 @@ export function Header() {
         <Link href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
           FAQ
         </Link>
+        <Link href="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+          Blog
+        </Link>
       </nav>
       <div className="flex items-center gap-3">
         {session?.user ? (

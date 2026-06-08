@@ -15,18 +15,20 @@ export function HowItWorks() {
             launch AI support on your site
           </h2>
           <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-            Connect your content, customize behavior, and deploy a production-ready assistant your team and customers
-            can trust.
+            Learn how to train an AI chatbot on website docs, customize it to your brand, and
+            embed an AI support widget &mdash; all without engineering hours. Turbochat is the
+            RAG chatbot platform built for SaaS teams.
           </p>
         </div>
 
         {/* Step 1 */}
         <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
           <div className="order-2 md:order-1">
-            <h3 className="font-serif text-2xl md:text-3xl mb-4">1. Train on your website and docs</h3>
+            <h3 className="font-serif text-2xl md:text-3xl mb-4">1. Train AI chatbot on website docs</h3>
             <p className="text-muted-foreground leading-relaxed">
-              Add your website, help center, PDFs, and product docs. TurboChat indexes your content so responses stay
-              grounded in your actual business information.
+              Add your website, help center, PDFs, and product docs. TurboChat uses RAG (Retrieval-Augmented
+              Generation) to index your content so responses stay grounded in your actual business information.
+              This is how to train an AI chatbot on website docs the right way.
             </p>
           </div>
           <div className="order-1 md:order-2">
@@ -51,10 +53,10 @@ export function HowItWorks() {
         {/* Step 3 */}
         <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
           <div className="order-2 md:order-1">
-            <h3 className="font-serif text-2xl md:text-3xl mb-4">3. Publish where customers already are</h3>
+            <h3 className="font-serif text-2xl md:text-3xl mb-4">3. Embed AI support widget on your website</h3>
             <p className="text-muted-foreground leading-relaxed">
-              Launch on your own domain and embed on your product site. Customers get instant answers in the same place
-              they browse docs and features.
+              Copy a single snippet to embed an AI support widget on your website. Launch on your own domain
+              and product site. Customers get instant RAG chatbot answers in the same place they browse docs and features.
             </p>
           </div>
           <div className="order-1 md:order-2">
@@ -68,10 +70,11 @@ export function HowItWorks() {
             <PaymentsCard />
           </div>
           <div>
-            <h3 className="font-serif text-2xl md:text-3xl mb-4">4. Scale with usage and subscriptions</h3>
+            <h3 className="font-serif text-2xl md:text-3xl mb-4">4. Reduce support ticket volume with AI</h3>
             <p className="text-muted-foreground leading-relaxed">
-              Start with a free trial, then move to paid plans as your volume grows. TurboChat supports subscription
-              plans built for SaaS support teams.
+              Start with a free trial, then move to paid plans as your volume grows. TurboChat helps reduce
+              customer support ticket volume with AI automation built for SaaS support teams &mdash; an
+              affordable Intercom alternative for startups.
             </p>
           </div>
         </div>
