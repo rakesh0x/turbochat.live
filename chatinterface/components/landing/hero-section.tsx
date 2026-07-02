@@ -10,15 +10,13 @@ export function HeroSection() {
       <div className="relative max-w-7xl mx-auto px-6 pt-16 pb-8">
         <div className="text-center max-w-3xl mx-auto">
           <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl leading-tight text-balance">
-            Train an AI chatbot on your
+            Your customers have questions.
             <br />
-            website docs in minutes
+            Your website has the answers.
           </h1>
           <p className="mt-6 text-muted-foreground text-lg max-w-xl mx-auto">
-            TurboChat is a <strong>RAG chatbot platform for customer service</strong> that learns from your help
-            center, PDFs, and product docs. Embed an AI support widget on your website and reduce support
-            ticket volume with AI &mdash; the best custom AI chatbot for <strong>SaaS support</strong> and an
-            affordable <strong>Intercom alternative</strong> for startups.
+            TurboChat learns from your website and docs, then answers customer questions instantly.
+            No more repeating the same replies &mdash; just set it up and let it handle the rest.
           </p>
           <Button
             className="mt-8 rounded-full bg-foreground text-background hover:bg-foreground/90 px-6"

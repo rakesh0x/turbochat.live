@@ -1,0 +1,13 @@
+.env
+.git
+.gitignore
+__pycache__
+*.pyc
+.DS_Store
+README.md
+docker-compose.yml
+Dockerfile*
+test_*.py
+chatinterface
+scraper/__pycache__
+backend/__pycache__

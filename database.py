@@ -8,9 +8,6 @@ load_dotenv()
 
 database_url = os.getenv('DATABASE_URL')
 
-# Connection pool (min 1 connection, max 10)
-pool = SimpleConnectionPool(1, 10, database_url)
-
 
 def get_db_connection():
     """Get a connection from the pool with RealDictCursor factory."""
@@ -30,6 +27,12 @@ def close_pool():
 
 def init_db():
     """Create tables if they don't exist."""
+
+    global pool
+
+    if pool is None:
+        pool = SimpleConnectionPool(1, 10, database_url)
+
     conn = get_db_connection()
     try:
         cur = conn.cursor()
