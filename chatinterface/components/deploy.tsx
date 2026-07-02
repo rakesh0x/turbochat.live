@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import posthog from "posthog-js";
 import { toast } from "sonner";
-import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Globe, Github, Rocket, Copy, Download } from "lucide-react";
+import { Lineicons } from "@lineiconshq/react-lineicons";
+import { Spinner3Outlined, Globe1Outlined, GithubOutlined, Rocket5Outlined, CopyAiOutlined, Download1Outlined } from "@lineiconshq/free-icons";
 
 export function DeployPage({ chatbot }: { chatbot: any }) {
   const [shareLoading, setShareLoading] = useState(false);
@@ -140,14 +141,14 @@ export function DeployPage({ chatbot }: { chatbot: any }) {
                     className="absolute right-2 top-2"
                     onClick={() => handleCopy(hostedShareUrl)}
                   >
-                    <Copy className="h-4 w-4" />
+                    <Lineicons icon={CopyAiOutlined} size={16} />
                   </Button>
                 </div>
               ) : null}
 
               <div className="flex flex-wrap gap-2">
                 <Button onClick={handlePublishHosted} disabled={shareLoading} className="gap-2">
-                  {shareLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
+                  {shareLoading ? <Lineicons icon={Spinner3Outlined} size={16} className="animate-spin" /> : <Lineicons icon={Globe1Outlined} size={16} />}
                   Publish Mini Site
                 </Button>
                 <Button variant="outline" onClick={handleUnpublishHosted} disabled={shareLoading || !isSharePublic}>
@@ -175,7 +176,7 @@ export function DeployPage({ chatbot }: { chatbot: any }) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white to-slate-50 p-4 dark:border-slate-800 dark:from-slate-900 dark:to-slate-900/70">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Github className="w-5 h-5 text-primary" />
+                    <Lineicons icon={GithubOutlined} size={20} className="text-primary" />
                   </div>
                   <h4 className="font-semibold text-sm">Option A: GitHub Repo</h4>
                   <p className="text-xs text-muted-foreground leading-relaxed">
@@ -212,14 +213,14 @@ This repository contains my AI Chatbot frontend, powered by [ChatBot AI RAG-as-a
                       htmlA.click();
                     }, 500);
                   }}>
-                    <Download className="w-3 h-3" />
+                    <Lineicons icon={Download1Outlined} size={12} />
                     Download Repo Bundle
                   </Button>
                 </div>
 
                 <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white to-amber-50 p-4 dark:border-slate-800 dark:from-slate-900 dark:to-amber-950/20">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Rocket className="w-5 h-5 text-primary" />
+                    <Lineicons icon={Rocket5Outlined} size={20} className="text-primary" />
                   </div>
                   <h4 className="font-semibold text-sm">Option B: All-in-One Site</h4>
                   <p className="text-xs text-muted-foreground leading-relaxed">
@@ -266,7 +267,7 @@ This repository contains my AI Chatbot frontend, powered by [ChatBot AI RAG-as-a
                     htmlA.download = 'index.html';
                     htmlA.click();
                   }}>
-                    <Download className="w-3 h-3" />
+                    <Lineicons icon={Download1Outlined} size={12} />
                     Export index.html
                   </Button>
                 </div>

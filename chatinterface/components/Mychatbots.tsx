@@ -4,7 +4,8 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { Bot, Loader2, MoreHorizontal, PlayCircle, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Lineicons } from "@lineiconshq/react-lineicons";
+import { BotpressOutlined, Spinner3Outlined, MenuMeatballs1Outlined, PlayOutlined, PlusOutlined, RefreshCircle1ClockwiseOutlined, Trash3Outlined } from "@lineiconshq/free-icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,7 +60,7 @@ export default function MyChatbotsPage({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <Lineicons icon={Spinner3Outlined} size={24} className="animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -69,14 +70,14 @@ export default function MyChatbotsPage({
       <Card className="mx-auto max-w-2xl border-white/80 bg-gradient-to-br from-white via-slate-50 to-amber-50 shadow-xl shadow-slate-200/60 dark:border-slate-800/80 dark:from-slate-950 dark:via-slate-900 dark:to-amber-950/20 dark:shadow-none">
         <CardContent className="pt-12 pb-12 text-center space-y-4">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 shadow-lg shadow-slate-400/40 dark:from-slate-100 dark:to-slate-300">
-            <Bot className="w-8 h-8 text-white dark:text-slate-900" />
+            <Lineicons icon={BotpressOutlined} size={32} className="text-white dark:text-slate-900" />
           </div>
           <div>
             <h3 className="text-lg font-semibold">No chatbots yet</h3>
             <p className="text-muted-foreground text-sm mt-1">Create your first chatbot to get started</p>
           </div>
           <Button onClick={onCreateChatbot} disabled={!canCreateChatbot}>
-            <Plus className="w-4 h-4 mr-2" />
+            <Lineicons icon={PlusOutlined} size={16} className="mr-2" />
             Create Chatbot
           </Button>
         </CardContent>
@@ -89,19 +90,19 @@ export default function MyChatbotsPage({
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{chatbots.length} chatbots</p>
         <Button onClick={onRefresh} variant="outline" size="sm" className="rounded-xl border-slate-300/80 bg-white/85 dark:border-slate-700 dark:bg-slate-900/70">
-          <RefreshCw className="w-4 h-4 mr-2" />
+          <Lineicons icon={RefreshCircle1ClockwiseOutlined} size={16} className="mr-2" />
           Refresh
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {chatbots.map((bot) => (
-          <Card key={bot.id} className="border-white/80 bg-white/90 shadow-lg shadow-slate-200/50 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-200/70 dark:border-slate-800/80 dark:bg-slate-950/70 dark:shadow-none">
+          <Card key={bot.id} className="border-white/80 bg-white/90 shadow-lg shadow-slate-200/50 dark:border-slate-800/80 dark:bg-slate-950/70 dark:shadow-none">
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-slate-900 to-slate-700 text-white shadow-md shadow-slate-300/60 dark:from-slate-100 dark:to-slate-300 dark:text-slate-900 dark:shadow-none">
-                    <Bot className="w-5 h-5 text-white dark:text-slate-900" />
+                    <Lineicons icon={BotpressOutlined} size={20} className="text-white dark:text-slate-900" />
                   </div>
                   <div>
                     <CardTitle className="text-base">{bot.name}</CardTitle>
@@ -111,16 +112,16 @@ export default function MyChatbotsPage({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="w-4 h-4" />
+                      <Lineicons icon={MenuMeatballs1Outlined} size={16} />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => { posthog.capture("chatbot_selected", { chatbot_id: bot.id, chatbot_name: bot.name }); onSelectChatbot(bot); }}>
-                      <PlayCircle className="w-4 h-4 mr-2" />
+                      <Lineicons icon={PlayOutlined} size={16} className="mr-2" />
                       Test
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => { setChatbotToDelete(bot.id); setDeleteDialogOpen(true); }}>
-                      <Trash2 className="w-4 h-4 mr-2" />
+                      <Lineicons icon={Trash3Outlined} size={16} className="mr-2" />
                       Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -136,11 +137,11 @@ export default function MyChatbotsPage({
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Pages</span>
-                <span className="font-medium">{bot.pagesScraped}</span>
+                <span className="stat-value font-medium">{bot.pagesScraped}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Messages</span>
-                <span className="font-medium">{bot.monthlyMessages}</span>
+                <span className="stat-value font-medium">{bot.monthlyMessages}</span>
               </div>
               <Separator />
               <p className="text-xs text-muted-foreground">

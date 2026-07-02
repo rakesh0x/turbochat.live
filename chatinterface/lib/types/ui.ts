@@ -77,6 +77,8 @@ export interface DashboardPageProps {
   loading: boolean;
   canCreateChatbot: boolean;
   onCreateChatbot: () => void;
+  userProfile?: any;
+  analytics?: any;
 }
 
 export interface FolderRowProps {

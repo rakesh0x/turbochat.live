@@ -8,6 +8,7 @@ load_dotenv()
 
 database_url = os.getenv('DATABASE_URL')
 
+pool = None
 
 def get_db_connection():
     """Get a connection from the pool with RealDictCursor factory."""

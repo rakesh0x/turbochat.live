@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react";
-import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@radix-ui/react-separator";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BotIcon, RefreshCwIcon, MessageSquareIcon, SendIcon } from "lucide-react";
+import { Lineicons } from "@lineiconshq/react-lineicons";
+import { BotpressOutlined, RefreshCircle1ClockwiseOutlined, Message2Outlined, Share1Outlined } from "@lineiconshq/free-icons";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { Input } from "@/components/ui/input";
 import { TypingAnimation } from "@/components/ui/typing-animation";
@@ -135,7 +136,7 @@ export function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-slate-900 to-slate-700 shadow-md shadow-slate-300/60 dark:from-slate-100 dark:to-slate-300 dark:shadow-none">
-              <BotIcon className="w-5 h-5 text-white dark:text-slate-900" />
+              <Lineicons icon={BotpressOutlined} size={20} className="text-white dark:text-slate-900" />
             </div>
             <div>
               <CardTitle className="text-base">{chatbot.name}</CardTitle>
@@ -167,7 +168,7 @@ export function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
             size="sm"
             onClick={() => { setMessages([]); sessionId.current = `session-${Date.now()}`; }}
           >
-            <RefreshCwIcon className="w-4 h-4 mr-2" />
+            <Lineicons icon={RefreshCircle1ClockwiseOutlined} size={16} className="mr-2" />
             New Chat
           </Button>
         </CardContent>
@@ -186,7 +187,7 @@ export function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
               <div className="flex items-center justify-center h-full text-center">
                 <div className="space-y-2">
                   <div className="w-12 h-12 mx-auto rounded-full bg-muted flex items-center justify-center">
-                    <MessageSquareIcon className="w-6 h-6 text-muted-foreground" />
+                    <Lineicons icon={Message2Outlined} size={24} className="text-muted-foreground" />
                   </div>
                   <p className="text-sm text-muted-foreground">Start a conversation</p>
                 </div>
@@ -243,7 +244,7 @@ export function PlaygroundPage({ chatbot }: PlaygroundPageProps) {
                 </Button>
               ) : (
                 <Button onClick={handleSend} disabled={!input.trim()} size="icon">
-                  <SendIcon className="w-4 h-4" />
+                  <Lineicons icon={Share1Outlined} size={16} />
                 </Button>
               )}
             </div>

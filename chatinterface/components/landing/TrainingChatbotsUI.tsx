@@ -3,23 +3,23 @@
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'motion/react';
+import { Lineicons } from "@lineiconshq/react-lineicons";
 import {
-  LayoutDashboard,
-  Plus,
-  Bot,
-  Database,
-  PlayCircle,
-  Rocket,
-  BarChart3,
-  CreditCard,
-  Settings,
-  Bell,
-  Zap,
-  ChevronDown,
-  LogOut,
-  Menu,
-  X
-} from 'lucide-react';
+  DashboardSquare1Outlined,
+  BotpressOutlined,
+  Database2Outlined,
+  PlayOutlined,
+  Rocket5Outlined,
+  BarChart4Outlined,
+  CreditCardMultipleOutlined,
+  Gear1Outlined,
+  Bell1Outlined,
+  Bolt2Outlined,
+  ChevronDownOutlined,
+  ExitOutlined,
+  MenuHamburger1Outlined,
+  XmarkOutlined
+} from "@lineiconshq/free-icons";
 import { useRouter } from 'next/navigation';
 import { signOut, useSession } from '@/lib/nextAuthReact';
 import { Button } from './ui/button';
@@ -39,7 +39,6 @@ import type { MenuItem } from '@/lib/types/ui';
 // window.location access moved inside useEffect to prevent SSR errors
 
 const DashboardPage = dynamic(() => import('@/components/DashboardPage'));
-const CreateChatbotPage = dynamic(() => import('@/components/createChatbot'));
 const MyChatbotsPage = dynamic(() => import('@/components/Mychatbots'));
 const PlaygroundPage = dynamic(() => import('./playground').then((mod) => mod.PlaygroundPage));
 const DeployPage = dynamic(() => import('@/components/deploy').then((mod) => mod.DeployPage));
@@ -70,15 +69,15 @@ function BillingPage({
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <div className="rounded-xl border border-slate-200/70 p-4 dark:border-slate-800">
             <p className="text-xs text-muted-foreground">Credits</p>
-            <p className="mt-1 text-2xl font-semibold">{credits}</p>
+            <p className="stat-value mt-1 text-2xl font-semibold">{credits}</p>
           </div>
           <div className="rounded-xl border border-slate-200/70 p-4 dark:border-slate-800">
             <p className="text-xs text-muted-foreground">Free Trials</p>
-            <p className="mt-1 text-2xl font-semibold">{trials}</p>
+            <p className="stat-value mt-1 text-2xl font-semibold">{trials}</p>
           </div>
           <div className="rounded-xl border border-slate-200/70 p-4 dark:border-slate-800">
             <p className="text-xs text-muted-foreground">Monthly Messages</p>
-            <p className="mt-1 text-2xl font-semibold">{Number(totalMessages).toLocaleString()}</p>
+            <p className="stat-value mt-1 text-2xl font-semibold">{Number(totalMessages).toLocaleString()}</p>
           </div>
         </div>
         <p className="text-sm text-muted-foreground">You currently manage {chatbotCount} chatbot(s). Upgrade your plan for higher limits.</p>
@@ -97,15 +96,14 @@ const payload = {
 }
 
 const menuItems: MenuItem[] = [
-  { icon: LayoutDashboard, label: 'Dashboard', id: 'dashboard' },
-  { icon: Plus, label: 'Create a Chatbot', id: 'create' },
-  { icon: Bot, label: 'My Chatbots', id: 'chatbots' },
-  { icon: Database, label: 'Training & Data', id: 'training' },
-  { icon: PlayCircle, label: 'Playground', id: 'playground' },
-  { icon: Rocket, label: 'Deploy', id: 'deploy' },
-  { icon: BarChart3, label: 'Analytics', id: 'analytics' },
-  { icon: CreditCard, label: 'Billing', id: 'billing' },
-  { icon: Settings, label: 'Settings', id: 'settings' },
+  { icon: DashboardSquare1Outlined, label: 'Dashboard', id: 'dashboard' },
+  { icon: BotpressOutlined, label: 'My Chatbots', id: 'chatbots' },
+  { icon: Database2Outlined, label: 'Training & Data', id: 'training' },
+  { icon: PlayOutlined, label: 'Playground', id: 'playground' },
+  { icon: Rocket5Outlined, label: 'Deploy', id: 'deploy' },
+  { icon: BarChart4Outlined, label: 'Analytics', id: 'analytics' },
+  { icon: CreditCardMultipleOutlined, label: 'Billing', id: 'billing' },
+  { icon: Gear1Outlined, label: 'Settings', id: 'settings' },
 ];
 
 const TEMP_DISABLE_CREDIT_BLOCKADE = true;
@@ -146,19 +144,8 @@ export function ChatInterface() {
     void resultsfromBFF();
   }, []);
 
-  const getCreateBlockMessage = () => {
-    if (TEMP_DISABLE_CREDIT_BLOCKADE) return '';
-    if (remainingCredits > 0 || remainingFreeTrials > 0) return '';
-    return 'You have no credits or free trials left. Please upgrade to create a chatbot.';
-  };
-
   const handleCreatePageAccess = () => {
-    if (!canCreateChatbot) {
-      toast.error(getCreateBlockMessage());
-      setCurrentPage('billing');
-      return;
-    }
-    setCurrentPage('create');
+    router.push('/onboarding');
   };
 
   const handleLogout = async () => {
@@ -174,6 +161,15 @@ export function ChatInterface() {
   useEffect(() => {
     (false);
   }, [currentPage]);
+
+  const onboardingGateRef = useRef(false);
+
+  useEffect(() => {
+    if (!loading && chatbots.length === 0 && !onboardingGateRef.current) {
+      onboardingGateRef.current = true;
+      router.push('/onboarding');
+    }
+  }, [loading, chatbots, router]);
 
   const fetchData = async () => {
     try {
@@ -235,7 +231,7 @@ export function ChatInterface() {
   };
 
   return (
-    <div className="relative flex h-screen overflow-hidden bg-[radial-gradient(circle_at_top,_#fff7ed_0%,_#fffbeb_35%,_#f8fafc_80%)] text-slate-900 dark:bg-[radial-gradient(circle_at_top,_#0f172a_0%,_#020617_45%,_#020617_100%)] dark:text-slate-100">
+    <div className="relative flex h-screen overflow-hidden bg-[#f7f5f3] text-slate-900 dark:bg-[radial-gradient(circle_at_top,_#0f172a_0%,_#020617_45%,_#020617_100%)] dark:text-slate-100">
       <div className="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-amber-300/35 blur-3xl dark:bg-amber-500/10" />
       <div className="pointer-events-none absolute -right-16 bottom-10 h-80 w-80 rounded-full bg-cyan-300/30 blur-3xl dark:bg-cyan-500/10" />
       <Toaster />
@@ -281,7 +277,7 @@ export function ChatInterface() {
                   onClick={() => setMobileSidebarOpen(false)}
                   aria-label="Close menu"
                 >
-                  <X className="h-4 w-4" />
+                  <Lineicons icon={XmarkOutlined} size={16} />
                 </Button>
               </div>
 
@@ -295,10 +291,9 @@ export function ChatInterface() {
                         ? 'bg-slate-900 text-white shadow-md shadow-slate-400/30 dark:bg-slate-100 dark:text-slate-900'
                         : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-slate-100'
                         }`}
-                      onClick={() => item.id === 'create' ? handleCreatePageAccess() : setCurrentPage(item.id)}
-                      disabled={item.id === 'create' && !canCreateChatbot}
+                      onClick={() => setCurrentPage(item.id)}
                     >
-                      <item.icon className="mr-2 h-4 w-4" />
+                    <Lineicons icon={item.icon as any} size={16} className="mr-2 shrink-0" />
                       {item.label}
                     </Button>
                   ))}
@@ -310,7 +305,7 @@ export function ChatInterface() {
       </AnimatePresence>
 
       {/* Sidebar */}
-      <aside className="relative z-10 hidden w-72 shrink-0 border-r border-white/50 bg-white/65 backdrop-blur-2xl dark:border-slate-800/70 dark:bg-slate-950/60 md:flex md:flex-col">
+      <aside className="relative z-10 hidden w-72 shrink-0 border-r border-white/50 bg-white dark:border-slate-800/70 dark:bg-slate-950/60 md:flex md:flex-col">
         {/* Logo */}
         <div className="h-20 flex items-center px-6 border-b border-white/60 dark:border-slate-800/80">
           <div className="flex items-center gap-2">
@@ -328,10 +323,9 @@ export function ChatInterface() {
 
         {/* Navigation */}
         <ScrollArea className="flex-1 px-4 py-5">
-          <div className="rounded-2xl border border-white/70 bg-white/70 p-3 shadow-sm shadow-slate-200/50 dark:border-slate-800/80 dark:bg-slate-900/60 dark:shadow-none">
-            <p className="px-2 pb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Navigation</p>
-            <nav className="space-y-1.5">
-              {menuItems.map((item) => (
+          <p className="px-2 pb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Navigation</p>
+          <nav className="space-y-1.5">
+            {menuItems.map((item) => (
                 <Button
                   key={item.id}
                   variant={currentPage === item.id ? 'secondary' : 'ghost'}
@@ -339,15 +333,13 @@ export function ChatInterface() {
                     ? 'bg-slate-900 text-white shadow-md shadow-slate-400/30 dark:bg-slate-100 dark:text-slate-900'
                     : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-slate-100'
                     }`}
-                  onClick={() => item.id === 'create' ? handleCreatePageAccess() : setCurrentPage(item.id)}
-                  disabled={item.id === 'create' && !canCreateChatbot}
+                  onClick={() => setCurrentPage(item.id)}
                 >
-                  <item.icon className="w-4 h-4 mr-2" />
+                  <Lineicons icon={item.icon as any} size={16} className="mr-2 shrink-0" />
                   {item.label}
                 </Button>
               ))}
             </nav>
-          </div>
         </ScrollArea>
 
         {/* User Profile */}
@@ -362,13 +354,13 @@ export function ChatInterface() {
                   <div className="text-sm font-medium truncate">Rakesh Jha</div>
                   <div className="text-xs text-muted-foreground truncate">{userProfile?.plan || 'Free'} Plan • {remainingCredits} Credits • {remainingFreeTrials} Free Trials</div>
                 </div>
-                <ChevronDown className="w-4 h-4 ml-2" />
+                <Lineicons icon={ChevronDownOutlined} size={16} className="ml-2" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem>Profile</DropdownMenuItem>
               <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="w-4 h-4 mr-2" />
+                <Lineicons icon={ExitOutlined} size={16} className="mr-2" />
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -376,7 +368,7 @@ export function ChatInterface() {
         </div>
       </aside>
 
-      <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
+      <div className="dashboard-app relative z-10 flex flex-1 flex-col overflow-hidden">
         <header className="h-16 border-b border-white/70 dark:border-slate-800/80 flex items-center justify-between px-4 md:px-6 bg-white/65 backdrop-blur-2xl dark:bg-slate-950/55">
           <div className="flex items-center gap-3">
             <Button
@@ -386,7 +378,7 @@ export function ChatInterface() {
               onClick={() => setMobileSidebarOpen(true)}
               aria-label="Open menu"
             >
-              <Menu className="h-4.5 w-4.5" />
+              <Lineicons icon={MenuHamburger1Outlined} size={18} />
             </Button>
 
             <div>
@@ -398,7 +390,7 @@ export function ChatInterface() {
 
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="relative">
-              <Bell className="w-4 h-4" />
+            <Lineicons icon={Bell1Outlined} size={16} />
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full" />
             </Button>
             <Button
@@ -407,7 +399,7 @@ export function ChatInterface() {
               className="rounded-full border-amber-300/60 bg-gradient-to-r from-amber-100/90 to-yellow-50 px-4 shadow-[0_8px_24px_rgba(245,158,11,0.25)] transition hover:from-amber-100 hover:to-amber-50 dark:border-amber-500/40 dark:from-amber-950/50 dark:to-amber-900/30"
               onClick={() => router.push('/pricing')}
             >
-              <CreditCard className="mr-1.5 h-3.5 w-3.5 text-amber-700 dark:text-amber-300" />
+              <Lineicons icon={CreditCardMultipleOutlined} size={14} className="mr-1.5 text-amber-700 dark:text-amber-300" />
               <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">{remainingCredits} Credits</span>
             </Button>
             <Button
@@ -416,11 +408,11 @@ export function ChatInterface() {
               className="rounded-full border-cyan-300/60 bg-gradient-to-r from-cyan-100/85 to-sky-50 px-4 shadow-[0_8px_24px_rgba(6,182,212,0.22)] transition hover:from-cyan-100 hover:to-sky-100 dark:border-cyan-500/40 dark:from-cyan-950/50 dark:to-sky-900/30"
               onClick={() => router.push('/pricing')}
             >
-              <Zap className="mr-1.5 h-3.5 w-3.5 text-cyan-700 dark:text-cyan-300" />
+              <Lineicons icon={Bolt2Outlined} size={14} className="mr-1.5 text-cyan-700 dark:text-cyan-300" />
               <span className="text-sm font-semibold text-cyan-700 dark:text-cyan-300">{remainingFreeTrials} Trials</span>
             </Button>
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-destructive">
-              <LogOut className="w-4 h-4 mr-2" />
+              <Lineicons icon={ExitOutlined} size={16} className="mr-2" />
               <span className="text-sm">Logout</span>
             </Button>
           </div>
@@ -436,22 +428,8 @@ export function ChatInterface() {
                 loading={loading}
                 canCreateChatbot={canCreateChatbot}
                 onCreateChatbot={handleCreatePageAccess}
-              />
-            )}
-            {currentPage === 'create' && (
-              <CreateChatbotPage
-                onComplete={(createdBot: any) => {
-                  if (createdBot) {
-                    setSelectedChatbot(createdBot);
-                  }
-                  fetchData();
-                  setCurrentPage('deploy');
-                  toast.success('Chatbot created. You can deploy it now.');
-                }}
-                canCreateChatbot={canCreateChatbot}
-                remainingCredits={remainingCredits}
-                remainingFreeTrials={remainingFreeTrials}
-                onBlocked={() => setCurrentPage('billing')}
+                userProfile={userProfile}
+                analytics={analytics}
               />
             )}
             {currentPage === 'chatbots' && (

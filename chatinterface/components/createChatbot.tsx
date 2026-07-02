@@ -4,7 +4,8 @@ import { useRef, useState } from "react";
 import posthog from "posthog-js";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { Check, Loader2 } from "lucide-react";
+import { Lineicons } from "@lineiconshq/react-lineicons";
+import { CheckOutlined, Spinner3Outlined } from "@lineiconshq/free-icons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,12 +21,14 @@ export default function CreateChatbotPage({
   remainingCredits,
   remainingFreeTrials,
   onBlocked,
+  successButtonText = "Deploy Now",
 }: {
   onComplete: (createdBot: any) => void;
   canCreateChatbot: boolean;
   remainingCredits: number;
   remainingFreeTrials: number;
   onBlocked: () => void;
+  successButtonText?: string;
 }) {
   const [step, setStep] = useState(1);
   const [url, setUrl] = useState('');
@@ -208,7 +211,7 @@ export default function CreateChatbotPage({
               <div className="flex flex-col items-center">
                 <div className={`h-10 w-10 rounded-2xl flex items-center justify-center text-sm font-semibold ${step >= s ? 'bg-slate-900 text-white shadow-md shadow-slate-500/25 dark:bg-slate-100 dark:text-slate-900' : 'bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
                   }`}>
-                  {step > s ? <Check className="w-4 h-4" /> : s}
+                  {step > s ? <Lineicons icon={CheckOutlined} size={16} /> : s}
                 </div>
                 <span className="text-xs text-slate-500 mt-2">
                   {s === 1 ? 'Setup' : s === 2 ? 'Training' : 'Complete'}
@@ -315,7 +318,7 @@ export default function CreateChatbotPage({
                     ))}
                     {isProcessing && (
                       <div className="flex items-center gap-2 text-muted-foreground">
-                        <Loader2 className="w-3 h-3 animate-spin" />
+                        <Lineicons icon={Spinner3Outlined} size={12} className="animate-spin" />
                         <span>Processing...</span>
                       </div>
                     )}
@@ -332,7 +335,7 @@ export default function CreateChatbotPage({
         <Card className="border-emerald-200/80 bg-gradient-to-br from-white via-emerald-50 to-cyan-50 shadow-xl shadow-emerald-100/80 dark:border-emerald-900/40 dark:from-slate-950 dark:via-emerald-950/30 dark:to-cyan-950/20 dark:shadow-none">
           <CardContent className="pt-12 pb-12 text-center space-y-4">
             <div className="w-16 h-16 mx-auto rounded-full bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center">
-              <Check className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+              <Lineicons icon={CheckOutlined} size={32} className="text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
               <h2 className="text-2xl font-bold">Chatbot Created!</h2>
@@ -340,7 +343,7 @@ export default function CreateChatbotPage({
             </div>
             <div className="grid grid-cols-3 gap-3 max-w-sm mx-auto">
               <div className="p-3 rounded-lg border border-slate-200/70 bg-white/80 dark:border-slate-800 dark:bg-slate-900/70">
-                <div className="text-xl font-bold">23</div>
+                <div className="stat-value text-xl font-bold">23</div>
                 <div className="text-xs text-muted-foreground">Pages</div>
               </div>
               <div className="p-3 rounded-lg border border-slate-200/70 bg-white/80 dark:border-slate-800 dark:bg-slate-900/70">
@@ -348,7 +351,7 @@ export default function CreateChatbotPage({
                 <div className="text-xs text-muted-foreground">Model</div>
               </div>
               <div className="p-3 rounded-lg border border-slate-200/70 bg-white/80 dark:border-slate-800 dark:bg-slate-900/70">
-                <div className="text-xl font-bold">100%</div>
+                <div className="stat-value text-xl font-bold">100%</div>
                 <div className="text-xs text-muted-foreground">Complete</div>
               </div>
             </div>
@@ -356,7 +359,7 @@ export default function CreateChatbotPage({
               onClick={() => finishCreation(createdBot)}
               className="mx-auto rounded-xl bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
             >
-              Deploy Now
+              {successButtonText}
             </Button>
           </CardContent>
         </Card>
