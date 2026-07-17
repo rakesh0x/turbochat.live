@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import { Button } from "./ui/button"
 import { signInWithGoogle } from "@/lib/auth"
 
@@ -8,25 +7,27 @@ export function HeroSection() {
   return (
     <section className="relative w-full overflow-hidden bg-white">
       <div className="relative max-w-7xl mx-auto px-6 pt-16 pb-8">
-        <div className="text-center max-w-3xl mx-auto">
-          <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl leading-tight text-balance">
+        <div className="text-center mx-auto">
+          <h1 className="mx-auto max-w-5xl font-serif text-4xl md:text-5xl lg:text-[72px] leading-[1.05] tracking-[-0.04em]">
             Your customers have questions.
             <br />
             Your website has the answers.
           </h1>
-          <p className="mt-6 text-muted-foreground text-lg max-w-xl mx-auto">
-            TurboChat learns from your website and docs, then answers customer questions instantly.
-            No more repeating the same replies &mdash; just set it up and let it handle the rest.
+
+          <p className="mt-8 max-w-2xl mx-auto text-lg text-muted-foreground leading-8">
+            TurboChat learns from your website and docs, then answers customer
+            questions instantly.
           </p>
+
           <Button
-            className="mt-8 rounded-full bg-foreground text-background hover:bg-foreground/90 px-6"
+            className="mt-10 rounded-full bg-foreground text-background hover:bg-foreground/90 px-6"
             onClick={() => signInWithGoogle()}
           >
             Start free trial
           </Button>
         </div>
 
-        <div className="mx-auto mt-12 w-full max-w-4xl">
+        <div className="mx-auto mt-16 w-full max-w-5xl">
           <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl">
             <video
               className="w-full h-auto object-cover"

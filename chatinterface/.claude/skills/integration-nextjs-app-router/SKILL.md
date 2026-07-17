@@ -35,7 +35,7 @@ The example project shows the target implementation pattern. Consult the documen
 
 - **Environment variables**: Always use environment variables for PostHog keys. Never hardcode them.
 - **Minimal changes**: Add PostHog code alongside existing integrations. Don't replace or restructure existing code.
-- **Match the example**: Your implementation should follow the example project's patterns as closely as possible.
+- **Match the example**: implementation should follow the example project's patterns as closely as possible.
 
 ## Framework guidelines
 
