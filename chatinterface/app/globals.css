@@ -148,3 +148,69 @@
 .dashboard-app :where([data-slot="card-title"], .stat-label, .section-title, .stat-value) {
   font-family: var(--font-serif);
 }
+
+/* ------------------------------------------------------------------ */
+/* Landing page polish                                                  */
+/* ------------------------------------------------------------------ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+::selection {
+  background: rgba(124, 58, 237, 0.18);
+}
+
+@keyframes tc-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-tc-marquee {
+  animation: tc-marquee var(--marquee-duration, 42s) linear infinite;
+}
+
+@keyframes tc-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes tc-ping-soft {
+  0% {
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(124, 58, 237, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0);
+  }
+}
+
+.animate-tc-ping-soft {
+  animation: tc-ping-soft 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.tc-bg-grid {
+  background-image: linear-gradient(to right, rgba(15, 23, 42, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.045) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+.dark .tc-bg-grid {
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+}
+
+.tc-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
