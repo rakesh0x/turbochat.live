@@ -44,7 +44,7 @@ export function Footer() {
 
         {/* Large logo */}
         <div className="overflow-hidden text-center">
-          <h2 className="text-[8rem] md:text-[12rem] lg:text-[16rem] tracking-tight leading-none lowercase font-serif font-light text-accent">
+          <h2 className="text-[8rem] md:text-[12rem] lg:text-[16rem] tracking-tight leading-none lowercase font-display font-light text-accent">
             turbochat
           </h2>
         </div>

@@ -68,7 +68,7 @@ export default function BlogPage() {
 
       {/* Simple nav */}
       <header className="w-full py-4 px-6 flex items-center justify-between max-w-7xl mx-auto">
-        <Link href="/" className="font-serif text-xl italic">
+        <Link href="/" className="font-display text-xl font-semibold tracking-[-0.03em]">
           turbochat
         </Link>
         <Link
@@ -83,7 +83,7 @@ export default function BlogPage() {
         {/* Header */}
         <div className="mb-12">
           <p className="text-sm text-muted-foreground mb-4">Blog &middot; June 2026</p>
-          <h1 className="font-serif text-4xl md:text-5xl leading-tight mb-6">
+          <h1 className="font-display font-medium text-4xl md:text-5xl leading-tight mb-6">
             How to Train AI Chatbot on Website Docs: A Step-by-Step Guide
           </h1>
           <p className="text-lg text-muted-foreground">
@@ -97,7 +97,7 @@ export default function BlogPage() {
 
         {/* 1. Why */}
         <section className="mb-12">
-          <h2 className="font-serif text-2xl md:text-3xl mb-4">
+          <h2 className="font-display font-medium text-2xl md:text-3xl mb-4">
             1. Why Train an AI Chatbot on Your Existing Documentation?
           </h2>
           <div className="space-y-4 text-muted-foreground leading-relaxed">
@@ -125,7 +125,7 @@ export default function BlogPage() {
 
         {/* 2. Preparing */}
         <section className="mb-12">
-          <h2 className="font-serif text-2xl md:text-3xl mb-4">
+          <h2 className="font-display font-medium text-2xl md:text-3xl mb-4">
             2. Preparing Your Website Docs and Knowledge Base for AI Training
           </h2>
           <div className="space-y-4 text-muted-foreground leading-relaxed">
@@ -154,7 +154,7 @@ export default function BlogPage() {
 
         {/* 3. Step-by-Step */}
         <section className="mb-12">
-          <h2 className="font-serif text-2xl md:text-3xl mb-4">
+          <h2 className="font-display font-medium text-2xl md:text-3xl mb-4">
             3. Step-by-Step: How to Train AI Chatbot on Website Docs
           </h2>
           <div className="space-y-8 text-muted-foreground leading-relaxed">
@@ -215,7 +215,7 @@ export default function BlogPage() {
 
         {/* 4. Guardrails */}
         <section className="mb-12">
-          <h2 className="font-serif text-2xl md:text-3xl mb-4">
+          <h2 className="font-display font-medium text-2xl md:text-3xl mb-4">
             4. Setting Guardrails and Refining Chatbot Responses
           </h2>
           <div className="space-y-4 text-muted-foreground leading-relaxed">
@@ -240,7 +240,7 @@ export default function BlogPage() {
 
         {/* 5. Testing / Deploy */}
         <section className="mb-12">
-          <h2 className="font-serif text-2xl md:text-3xl mb-4">
+          <h2 className="font-display font-medium text-2xl md:text-3xl mb-4">
             5. Testing and Deploying Your Custom AI Support Agent
           </h2>
           <div className="space-y-4 text-muted-foreground leading-relaxed">
@@ -265,7 +265,7 @@ export default function BlogPage() {
 
         {/* 6. Monitoring */}
         <section className="mb-12">
-          <h2 className="font-serif text-2xl md:text-3xl mb-4">
+          <h2 className="font-display font-medium text-2xl md:text-3xl mb-4">
             6. Monitoring Performance and Continuous Learning
           </h2>
           <div className="space-y-4 text-muted-foreground leading-relaxed">
@@ -294,7 +294,7 @@ export default function BlogPage() {
 
         {/* CTA */}
         <div className="border-t pt-12 mt-12 text-center">
-          <h2 className="font-serif text-2xl mb-4">
+          <h2 className="font-display font-medium text-2xl mb-4">
             Ready to train your own AI chatbot?
           </h2>
           <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
@@ -314,7 +314,7 @@ export default function BlogPage() {
       {/* Simple footer */}
       <footer className="py-8 px-6 border-t">
         <div className="max-w-3xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <Link href="/" className="font-serif text-lg italic">
+          <Link href="/" className="font-display text-lg font-semibold tracking-[-0.03em]">
             turbochat
           </Link>
           <p className="text-sm text-muted-foreground">&copy; 2026 TurboChat AI. All rights reserved.</p>

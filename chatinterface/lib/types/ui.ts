@@ -79,6 +79,43 @@ export interface DashboardPageProps {
   onCreateChatbot: () => void;
   userProfile?: any;
   analytics?: any;
+  /** Overview links into the rest of the console, so it needs the shell's nav. */
+  onNavigate?: (page: string) => void;
+  onSelectChatbot?: (bot: any) => void;
+}
+
+/* Analytics and Conversations are workspace-scoped: they answer for the account
+   and narrow to one chatbot only when the reader asks. Both own their filters
+   (range, chatbot, status, paging) so both fetch their own slice rather than
+   reading the container's fixed 30-day, all-bots payload.
+
+   Analytics still takes `analytics` as a first paint: the container has already
+   fetched it, so the screen has real numbers on it before its own request
+   lands, instead of a skeleton the reader has to wait through twice. */
+export interface AnalyticsPageProps {
+  analytics: any;
+  chatbots?: any[];
+  loading?: boolean;
+  onNavigate?: (page: string) => void;
+  onSelectChatbot?: (bot: any) => void;
+}
+
+export interface ConversationsPageProps {
+  chatbots: any[];
+  loading?: boolean;
+  onNavigate?: (page: string) => void;
+  onSelectChatbot?: (bot: any) => void;
+}
+
+export interface IntegrationsPageProps {
+  chatbots: any[];
+  selectedChatbot?: any;
+  loading?: boolean;
+  onNavigate?: (page: string) => void;
+}
+
+export interface SettingsPageProps {
+  chatbot?: any;
 }
 
 export interface FolderRowProps {

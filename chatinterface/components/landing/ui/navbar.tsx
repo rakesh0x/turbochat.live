@@ -30,10 +30,11 @@ export function Navbar() {
                 style={{
                   left: '5px',
                   top: '5px',
-                  fontFamily: "'Jersey 10'",
+                  fontFamily: 'var(--font-inter-tight), var(--font-inter), sans-serif',
                   fontStyle: 'normal',
-                  fontWeight: 400,
-                  fontSize: '30px',
+                  fontWeight: 600,
+                  fontSize: '26px',
+                  letterSpacing: '-0.03em',
                   lineHeight: '24px',
                   whiteSpace: 'nowrap',
                   color: '#FFFFFF'

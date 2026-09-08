@@ -50,10 +50,10 @@ function FakeSite() {
 export function ProductMockup() {
   return (
     <div className="relative mx-auto mt-16 max-w-5xl">
-      {/* ambient glow */}
+      {/* ambient lift */}
       <div
         aria-hidden
-        className="absolute -inset-x-10 -inset-y-8 rounded-[48px] bg-gradient-to-r from-violet-500/20 via-fuchsia-500/15 to-indigo-500/20 blur-3xl"
+        className="absolute -inset-x-8 -inset-y-6 rounded-[48px] bg-violet-500/10 blur-3xl dark:bg-violet-500/15"
       />
 
       <div className="relative overflow-hidden rounded-2xl border bg-card shadow-2xl shadow-black/10 dark:shadow-black/40">

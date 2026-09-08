@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- Turbochat — "The Cited Line". Two quiet lines of a page and, between
+       them, the answer: a marker swipe, heavier than the text it covers, that
+       outruns the paragraph and runs off the right edge of the frame.
+       Page lines 2.4, cited line 3.4, gaps 3.3, flush left at 4, square ends.
+       See components/brand/logo.tsx for the reasoning. -->
+  <rect width="24" height="24" rx="5.4" fill="#14181B"/>
+  <rect x="4" y="4.6" width="12" height="2.4" fill="#B0B3B2"/>
+  <rect x="4" y="10.3" width="20" height="3.4" fill="#F2E14B"/>
+  <rect x="4" y="17" width="7.5" height="2.4" fill="#B0B3B2"/>
+</svg>

@@ -7,11 +7,56 @@ import { toast } from "sonner";
 import { Lineicons } from "@lineiconshq/react-lineicons";
 import { CheckOutlined, Spinner3Outlined } from "@lineiconshq/free-icons";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Field,
+  Mono,
+  Panel,
+  PanelBody,
+  PanelFooter,
+  PanelHeader,
+  Segmented,
+  exact,
+  plural,
+} from "@/components/dashboard/kit";
+
+/* ==========================================================================
+   Create a chatbot  ·  /create
+   --------------------------------------------------------------------------
+   Three steps, and the middle one takes minutes — so the middle one has to be
+   worth watching. It now reads as a build log rather than a spinner with a
+   percentage: the same timestamps, in a mono well, above a meter that moves.
+
+   The success step used to report "23 pages", "GPT-4" and "100%" as literal
+   strings in the JSX, while `createdBot.pagesScraped` sat unused two lines
+   away. It reports the real crawl now, and says nothing about the model,
+   because nothing in the response tells us which one answered.
+
+   None of the creation logic changed: same endpoints, same polling interval,
+   same posthog events, same credit guard.
+   ========================================================================== */
+
+const CRAWL_PRESETS = [
+  { value: '10', label: '10' },
+  { value: '25', label: '25' },
+  { value: '50', label: '50' },
+] as const;
+
+const STEPS = [
+  { id: 1, label: 'Setup' },
+  { id: 2, label: 'Reading' },
+  { id: 3, label: 'Ready' },
+] as const;
+
+function hostOf(raw: string): string {
+  if (!raw) return '';
+  try {
+    return new URL(raw.startsWith('http') ? raw : `https://${raw}`).host.replace(/^www\./, '');
+  } catch {
+    return raw.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+  }
+}
 
 const TEMP_DISABLE_CREDIT_BLOCKADE = true;
 
@@ -202,167 +247,213 @@ export default function CreateChatbotPage({
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      {/* Progress Steps */}
-      <div className="rounded-3xl border border-white/80 bg-white/85 p-6 shadow-xl shadow-slate-200/50 backdrop-blur dark:border-slate-800/80 dark:bg-slate-950/70 dark:shadow-none">
-        <div className="flex items-center justify-between">
-          {[1, 2, 3].map((s, i) => (
-            <div key={s} className="flex items-center flex-1">
-              <div className="flex flex-col items-center">
-                <div className={`h-10 w-10 rounded-2xl flex items-center justify-center text-sm font-semibold ${step >= s ? 'bg-slate-900 text-white shadow-md shadow-slate-500/25 dark:bg-slate-100 dark:text-slate-900' : 'bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                  }`}>
-                  {step > s ? <Lineicons icon={CheckOutlined} size={16} /> : s}
-                </div>
-                <span className="text-xs text-slate-500 mt-2">
-                  {s === 1 ? 'Setup' : s === 2 ? 'Training' : 'Complete'}
+    <div className="space-y-6">
+      {/* Where you are. Quiet, mono, and it never claims a step you haven't
+          finished — the tick only appears once the step is behind you. */}
+      <ol className="flex items-center gap-2">
+        {STEPS.map((item, index) => {
+          const done = step > item.id;
+          const here = step === item.id;
+          return (
+            <li key={item.id} className="flex flex-1 items-center gap-2">
+              <span className="flex items-center gap-2">
+                <span
+                  className={
+                    done
+                      ? 'flex size-5 items-center justify-center rounded-full bg-signal text-[0.6875rem] text-signal-ink'
+                      : here
+                        ? 'flex size-5 items-center justify-center rounded-full border border-foreground bg-foreground tc-micro text-background'
+                        : 'flex size-5 items-center justify-center rounded-full border border-border bg-surface-2 tc-micro text-muted-foreground'
+                  }
+                >
+                  {done ? <Lineicons icon={CheckOutlined} className="size-3" /> : item.id}
                 </span>
-              </div>
-              {i < 2 && (
-                <div className={`flex-1 h-0.5 mx-2 ${step > s ? 'bg-slate-900 dark:bg-slate-100' : 'bg-slate-200 dark:bg-slate-800'
-                  }`} />
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
+                <span
+                  className={
+                    here || done
+                      ? 'tc-meta font-medium text-foreground'
+                      : 'tc-meta text-muted-foreground'
+                  }
+                >
+                  {item.label}
+                </span>
+              </span>
+              {index < STEPS.length - 1 ? (
+                <span
+                  className={`h-px flex-1 ${done ? 'bg-foreground/30' : 'bg-border'}`}
+                  aria-hidden="true"
+                />
+              ) : null}
+            </li>
+          );
+        })}
+      </ol>
 
-      {/* Step 1: Enter URL */}
       {step === 1 && (
-        <Card className="overflow-hidden border-white/80 bg-white/90 shadow-xl shadow-slate-200/60 dark:border-slate-800/80 dark:bg-slate-950/70 dark:shadow-none">
-          <CardHeader>
-            <CardTitle className="text-2xl tracking-tight">Configure Your Chatbot</CardTitle>
-            <CardDescription>Launch your assistant with the right domain scope and crawl depth.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Website URL</Label>
+        <Panel>
+          <PanelHeader
+            eyebrow="/create"
+            title="What should it read?"
+            description="Give it a site and we read the pages, turn them into text it can search, and hand you a widget."
+          />
+          <PanelBody className="space-y-6">
+            <Field
+              label="Website URL"
+              htmlFor="tc-url"
+              hint={url ? `We will start at ${hostOf(url)} and follow links from there.` : 'The page we start from — usually your home page or your docs index.'}
+            >
               <Input
+                id="tc-url"
                 placeholder="https://example.com"
                 value={url}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUrl(e.target.value)}
               />
-            </div>
-            <div className="space-y-2">
-              <Label>Chatbot Name</Label>
+            </Field>
+
+            <Field
+              label="Chatbot name"
+              htmlFor="tc-name"
+              hint="Only you see this. It is how the chatbot is listed in your console."
+            >
               <Input
-                placeholder="Customer Support Bot"
+                id="tc-name"
+                placeholder="Support assistant"
                 value={chatbotName}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setChatbotName(e.target.value)}
               />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <Label>Crawl Limit (Pages)</Label>
-                <span className="text-xs font-mono text-muted-foreground">{crawlLimit} pages</span>
+            </Field>
+
+            <Field
+              label="Pages to read"
+              htmlFor="tc-limit"
+              hint="More pages means broader answers and a longer first crawl. You can add sources later."
+            >
+              <div className="flex flex-wrap items-center gap-3">
+                <Segmented
+                  size="sm"
+                  value={String(crawlLimit)}
+                  onChange={(next) => setCrawlLimit(parseInt(next, 10) || 10)}
+                  options={CRAWL_PRESETS.map((item) => ({ value: item.value, label: item.label }))}
+                />
+                <Input
+                  id="tc-limit"
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={crawlLimit}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setCrawlLimit(parseInt(e.target.value) || 10)
+                  }
+                  className="h-8 w-20"
+                  aria-label="Pages to read"
+                />
+                <Mono>{plural(crawlLimit, 'page')}</Mono>
               </div>
-              <Input
-                type="number"
-                min={1}
-                max={100}
-                value={crawlLimit}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCrawlLimit(parseInt(e.target.value) || 10)}
-              />
+            </Field>
+
+            {!canCreateChatbot && (
+              <p className="rounded-md border border-danger-border bg-danger-soft px-4 py-3 text-sm text-danger">
+                {exact(remainingCredits)} credits and {exact(remainingFreeTrials)} free trials left.
+                Upgrade your plan to create another chatbot.
+              </p>
+            )}
+          </PanelBody>
+          <PanelFooter className="justify-between">
+            <span className="tc-meta text-muted-foreground">
+              The first crawl usually finishes in a couple of minutes.
+            </span>
+            <Button onClick={startRealTraining} disabled={!url || !chatbotName || !canCreateChatbot}>
+              Start reading
+            </Button>
+          </PanelFooter>
+        </Panel>
+      )}
+
+      {step === 2 && (
+        <Panel>
+          <PanelHeader
+            eyebrow="/index"
+            title="Reading your site"
+            description="You can leave this page open or come back to it — the crawl keeps going either way."
+          />
+          <PanelBody className="space-y-6">
+            <div>
+              <div className="flex items-baseline justify-between">
+                <span className="tc-eyebrow">progress</span>
+                <Mono>{progress}%</Mono>
+              </div>
+              <span
+                className="tc-meter mt-2 h-1.5"
+                style={{ ['--tc-fill' as any]: `${progress}%` }}
+              >
+                <span className="tc-meter-bar" />
+              </span>
             </div>
-            <div className="rounded-2xl border border-amber-200/70 bg-gradient-to-r from-amber-50 to-orange-50 p-4 dark:border-amber-900/50 dark:from-amber-950/30 dark:to-orange-950/20">
+
+            <div className="tc-well p-0">
+              <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+                <span className="tc-eyebrow">crawl log</span>
+                {isProcessing ? (
+                  <span className="flex items-center gap-2 tc-micro text-muted-foreground">
+                    <span className="tc-live-dot" />
+                    working
+                  </span>
+                ) : (
+                  <span className="tc-micro text-muted-foreground">stopped</span>
+                )}
+              </div>
+              <ScrollArea className="h-64">
+                <div className="space-y-1.5 px-4 py-3 tc-micro">
+                  {logs.map((log, i) => (
+                    <div key={i} className="flex gap-3 text-muted-foreground">
+                      <span className="shrink-0 text-foreground/60">{log.timestamp}</span>
+                      <span className="min-w-0 text-foreground">{log.text}</span>
+                    </div>
+                  ))}
+                  {isProcessing && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Lineicons icon={Spinner3Outlined} className="size-3 animate-spin" />
+                      <span>waiting for the crawler…</span>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+          </PanelBody>
+        </Panel>
+      )}
+
+      {step === 3 && (
+        <Panel className="border-success-border">
+          <PanelBody className="space-y-6 py-10 text-center">
+            <span className="mx-auto flex size-12 items-center justify-center rounded-full border border-success-border bg-success-soft">
+              <Lineicons icon={CheckOutlined} className="size-5 text-success-ink" />
+            </span>
+            <div className="space-y-1.5">
+              <h2 className="font-display text-xl font-medium tracking-[-0.02em] text-foreground">
+                {createdBot?.name || chatbotName} is ready
+              </h2>
               <p className="text-sm text-muted-foreground">
-                Powered by Crawl4AI. We'll crawl up to {crawlLimit} pages, extract Markdown content, and train your AI.
+                It has read your site and can answer questions about it. Next: try it, then embed it.
               </p>
             </div>
-            {!canCreateChatbot && (
-              <div className="p-4 rounded-xl border border-destructive/30 bg-destructive/10">
-                <p className="text-sm text-destructive">
-                  You have {remainingCredits} credits and {remainingFreeTrials} free trials. Upgrade your plan to create more chatbots.
-                </p>
+            <dl className="mx-auto grid max-w-md grid-cols-2 gap-px overflow-hidden rounded-md border border-border bg-border">
+              <div className="bg-card px-4 py-3">
+                <dt className="tc-eyebrow">pages read</dt>
+                <dd className="tc-num mt-1 font-mono text-xl text-foreground">
+                  {exact(Number(createdBot?.pagesScraped) || 0)}
+                </dd>
               </div>
-            )}
-          </CardContent>
-          <CardContent className="pt-0">
-            <Button
-              onClick={startRealTraining}
-              disabled={!url || !chatbotName || !canCreateChatbot}
-              className="w-full rounded-xl bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
-            >
-              Start Training
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 2: Training */}
-      {step === 2 && (
-        <Card className="border-white/80 bg-white/90 shadow-xl shadow-slate-200/60 dark:border-slate-800/80 dark:bg-slate-950/70 dark:shadow-none">
-          <CardHeader>
-            <CardTitle>Training in Progress</CardTitle>
-            <CardDescription>This may take a few minutes</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Progress</span>
-                <span className="font-medium">{progress}%</span>
+              <div className="bg-card px-4 py-3">
+                <dt className="tc-eyebrow">source</dt>
+                <dd className="mt-1 truncate tc-path text-foreground">
+                  {hostOf(String(createdBot?.website ?? url)) || '—'}
+                </dd>
               </div>
-              <Progress value={progress} />
-            </div>
-
-            <Card className="border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/50">
-              <CardHeader>
-                <CardTitle className="text-sm">Training Logs</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-64">
-                  <div className="space-y-1 font-mono text-xs">
-                    {logs.map((log, i) => (
-                      <div key={i} className="text-muted-foreground">
-                        <span className="text-foreground">[{log.timestamp}]</span> {log.text}
-                      </div>
-                    ))}
-                    {isProcessing && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Lineicons icon={Spinner3Outlined} size={12} className="animate-spin" />
-                        <span>Processing...</span>
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 3: Success */}
-      {step === 3 && (
-        <Card className="border-emerald-200/80 bg-gradient-to-br from-white via-emerald-50 to-cyan-50 shadow-xl shadow-emerald-100/80 dark:border-emerald-900/40 dark:from-slate-950 dark:via-emerald-950/30 dark:to-cyan-950/20 dark:shadow-none">
-          <CardContent className="pt-12 pb-12 text-center space-y-4">
-            <div className="w-16 h-16 mx-auto rounded-full bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center">
-              <Lineicons icon={CheckOutlined} size={32} className="text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold">Chatbot Created!</h2>
-              <p className="text-muted-foreground mt-1">Your chatbot is ready. Taking you to Deploy...</p>
-            </div>
-            <div className="grid grid-cols-3 gap-3 max-w-sm mx-auto">
-              <div className="p-3 rounded-lg border border-slate-200/70 bg-white/80 dark:border-slate-800 dark:bg-slate-900/70">
-                <div className="stat-value text-xl font-bold">23</div>
-                <div className="text-xs text-muted-foreground">Pages</div>
-              </div>
-              <div className="p-3 rounded-lg border border-slate-200/70 bg-white/80 dark:border-slate-800 dark:bg-slate-900/70">
-                <div className="text-xl font-bold">GPT-4</div>
-                <div className="text-xs text-muted-foreground">Model</div>
-              </div>
-              <div className="p-3 rounded-lg border border-slate-200/70 bg-white/80 dark:border-slate-800 dark:bg-slate-900/70">
-                <div className="stat-value text-xl font-bold">100%</div>
-                <div className="text-xs text-muted-foreground">Complete</div>
-              </div>
-            </div>
-            <Button
-              onClick={() => finishCreation(createdBot)}
-              className="mx-auto rounded-xl bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
-            >
-              {successButtonText}
-            </Button>
-          </CardContent>
-        </Card>
+            </dl>
+            <Button onClick={() => finishCreation(createdBot)}>{successButtonText}</Button>
+          </PanelBody>
+        </Panel>
       )}
     </div>
   );

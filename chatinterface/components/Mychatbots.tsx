@@ -1,14 +1,19 @@
+'use client';
 
-"use client";
-
-import { useState } from "react";
-import { useSession } from "next-auth/react";
-import { toast } from "sonner";
-import { Lineicons } from "@lineiconshq/react-lineicons";
-import { BotpressOutlined, Spinner3Outlined, MenuMeatballs1Outlined, PlayOutlined, PlusOutlined, RefreshCircle1ClockwiseOutlined, Trash3Outlined } from "@lineiconshq/free-icons";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMemo, useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { toast } from 'sonner';
+import posthog from 'posthog-js';
+import { Lineicons } from '@lineiconshq/react-lineicons';
+import {
+  BotpressOutlined,
+  MenuMeatballs1Outlined,
+  PlayOutlined,
+  RefreshCircle1ClockwiseOutlined,
+  Trash3Outlined,
+} from '@lineiconshq/free-icons';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -16,16 +21,60 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
-import type { MyChatbotsPageProps } from "@/lib/interfaces";
-import posthog from "posthog-js";
+} from '@/components/ui/dropdown-menu';
+import {
+  EmptyState,
+  Fact,
+  Mono,
+  PageHeader,
+  Panel,
+  PanelBody,
+  Row,
+  RowHead,
+  RowList,
+  RowsSkeleton,
+  Segmented,
+  StatusPill,
+  Toolbar,
+  compact,
+  exact,
+  plural,
+} from '@/components/dashboard/kit';
+import { hostOf, isLive, isWorking, shortDate } from '@/lib/insights';
+import type { MyChatbotsPageProps } from '@/lib/types/ui';
+
+/* ==========================================================================
+   Chatbots  ·  /agents
+   --------------------------------------------------------------------------
+   This was a grid of gradient cards, one per chatbot, each repeating the same
+   three labels — Status, Pages, Messages — beside its own value. Three cards
+   in and you are reading labels, not data.
+
+   A ledger inverts that: the labels are said once in the header row, the
+   values line up in columns, and the eye can run down one column to compare.
+   It also scales — the card grid was pleasant at three bots and unusable at
+   thirty. The filter and search exist for the same reason.
+
+   Deletion is unchanged in behaviour but no longer anonymous: the dialog
+   names the chatbot you are about to lose.
+   ========================================================================== */
+
+const FILTERS = [
+  { value: 'all', label: 'All' },
+  { value: 'live', label: 'Answering' },
+  { value: 'working', label: 'Indexing' },
+] as const;
+
+type FilterValue = (typeof FILTERS)[number]['value'];
+
+const COLS =
+  'grid-cols-[minmax(0,1fr)_6.5rem_2rem] sm:grid-cols-[minmax(0,1fr)_7rem_4.5rem_5.5rem_6rem_2rem]';
 
 export default function MyChatbotsPage({
   chatbots,
@@ -37,14 +86,39 @@ export default function MyChatbotsPage({
 }: MyChatbotsPageProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [chatbotToDelete, setChatbotToDelete] = useState<string | null>(null);
+  const [filter, setFilter] = useState<FilterValue>('all');
+  const [query, setQuery] = useState('');
   const { data: session } = useSession();
 
+  const rows = useMemo(() => (Array.isArray(chatbots) ? chatbots : []), [chatbots]);
+
+  const doomed = useMemo(
+    () => rows.find((bot) => String(bot?.id) === String(chatbotToDelete)) ?? null,
+    [rows, chatbotToDelete],
+  );
+
+  const visible = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return rows.filter((bot) => {
+      if (filter === 'live' && !isLive(bot)) return false;
+      if (filter === 'working' && !isWorking(bot)) return false;
+      if (!needle) return true;
+      return `${bot?.name ?? ''} ${hostOf(bot)}`.toLowerCase().includes(needle);
+    });
+  }, [rows, filter, query]);
+
+  const liveCount = useMemo(
+    () => rows.filter(isLive).length,
+    [rows],
+  );
+
+  /* Unchanged: same endpoint, same event, same refresh. */
   const handleDelete = async () => {
     try {
       await fetch(`/api/chatbots/${chatbotToDelete}`, {
-        method: 'DELETE'
+        method: 'DELETE',
       });
-      posthog.capture("chatbot_deleted", {
+      posthog.capture('chatbot_deleted', {
         chatbot_id: chatbotToDelete,
         user_email: session?.user?.email,
       });
@@ -57,107 +131,189 @@ export default function MyChatbotsPage({
     setDeleteDialogOpen(false);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Lineicons icon={Spinner3Outlined} size={24} className="animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (chatbots.length === 0) {
-    return (
-      <Card className="mx-auto max-w-2xl border-white/80 bg-gradient-to-br from-white via-slate-50 to-amber-50 shadow-xl shadow-slate-200/60 dark:border-slate-800/80 dark:from-slate-950 dark:via-slate-900 dark:to-amber-950/20 dark:shadow-none">
-        <CardContent className="pt-12 pb-12 text-center space-y-4">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 shadow-lg shadow-slate-400/40 dark:from-slate-100 dark:to-slate-300">
-            <Lineicons icon={BotpressOutlined} size={32} className="text-white dark:text-slate-900" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold">No chatbots yet</h3>
-            <p className="text-muted-foreground text-sm mt-1">Create your first chatbot to get started</p>
-          </div>
-          <Button onClick={onCreateChatbot} disabled={!canCreateChatbot}>
-            <Lineicons icon={PlusOutlined} size={16} className="mr-2" />
-            Create Chatbot
-          </Button>
-        </CardContent>
-      </Card>
-    );
+  function open(bot: any) {
+    posthog.capture('chatbot_selected', { chatbot_id: bot?.id, chatbot_name: bot?.name });
+    onSelectChatbot(bot);
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{chatbots.length} chatbots</p>
-        <Button onClick={onRefresh} variant="outline" size="sm" className="rounded-xl border-slate-300/80 bg-white/85 dark:border-slate-700 dark:bg-slate-900/70">
-          <Lineicons icon={RefreshCircle1ClockwiseOutlined} size={16} className="mr-2" />
-          Refresh
-        </Button>
-      </div>
+    <>
+      <PageHeader
+        eyebrow="/agents"
+        title="Chatbots"
+        description="Every chatbot in this workspace, what it has read, and how much it is being asked."
+        meta={
+          <>
+            <Fact label="total" value={exact(rows.length)} />
+            <Fact label="answering" value={exact(liveCount)} />
+          </>
+        }
+        actions={
+          <>
+            <Button variant="outline" onClick={onRefresh} className="gap-2">
+              <Lineicons icon={RefreshCircle1ClockwiseOutlined} className="size-4" />
+              Refresh
+            </Button>
+            <Button onClick={onCreateChatbot} disabled={!canCreateChatbot}>
+              New chatbot
+            </Button>
+          </>
+        }
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {chatbots.map((bot) => (
-          <Card key={bot.id} className="border-white/80 bg-white/90 shadow-lg shadow-slate-200/50 dark:border-slate-800/80 dark:bg-slate-950/70 dark:shadow-none">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-slate-900 to-slate-700 text-white shadow-md shadow-slate-300/60 dark:from-slate-100 dark:to-slate-300 dark:text-slate-900 dark:shadow-none">
-                    <Lineicons icon={BotpressOutlined} size={20} className="text-white dark:text-slate-900" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-base">{bot.name}</CardTitle>
-                    <CardDescription className="text-xs">{bot.website}</CardDescription>
-                  </div>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Lineicons icon={MenuMeatballs1Outlined} size={16} />
+      {loading ? (
+        <Panel>
+          <PanelBody className="pt-5">
+            <RowsSkeleton rows={4} />
+          </PanelBody>
+        </Panel>
+      ) : rows.length === 0 ? (
+        <Panel>
+          <PanelBody className="pt-5">
+            <EmptyState
+              icon={BotpressOutlined}
+              title="No chatbots yet"
+              body="A chatbot reads your site or your documents, then answers questions about them. Point one at a URL and it is live in a few minutes."
+              action={
+                <Button onClick={onCreateChatbot} disabled={!canCreateChatbot}>
+                  Create your first chatbot
+                </Button>
+              }
+              secondary={
+                canCreateChatbot ? null : (
+                  <span className="tc-meta text-muted-foreground">
+                    Add credits to create a chatbot.
+                  </span>
+                )
+              }
+            />
+          </PanelBody>
+        </Panel>
+      ) : (
+        <Panel>
+          <PanelBody className="space-y-0 px-3 pt-4 sm:px-4">
+            <Toolbar count={`${exact(visible.length)} ${plural(visible.length, 'chatbot')}`}>
+              <Input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Filter by name or site…"
+                className="h-8 w-full sm:w-56"
+                aria-label="Filter chatbots"
+              />
+              <Segmented
+                size="sm"
+                value={filter}
+                onChange={(next) => setFilter(next as FilterValue)}
+                options={FILTERS.map((item) => ({ value: item.value, label: item.label }))}
+              />
+            </Toolbar>
+
+            {visible.length === 0 ? (
+              <div className="pb-2">
+                <EmptyState
+                  icon={BotpressOutlined}
+                  title="Nothing matches"
+                  body="No chatbot in this workspace matches that filter. Clear it to see all of them again."
+                  action={
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setQuery('');
+                        setFilter('all');
+                      }}
+                    >
+                      Clear filters
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => { posthog.capture("chatbot_selected", { chatbot_id: bot.id, chatbot_name: bot.name }); onSelectChatbot(bot); }}>
-                      <Lineicons icon={PlayOutlined} size={16} className="mr-2" />
-                      Test
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => { setChatbotToDelete(bot.id); setDeleteDialogOpen(true); }}>
-                      <Lineicons icon={Trash3Outlined} size={16} className="mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  }
+                />
               </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Status</span>
-                <Badge variant={bot.status === 'active' ? 'default' : 'secondary'} className="text-xs capitalize rounded-full px-2.5">
-                  {bot.status}
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Pages</span>
-                <span className="stat-value font-medium">{bot.pagesScraped}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Messages</span>
-                <span className="stat-value font-medium">{bot.monthlyMessages}</span>
-              </div>
-              <Separator />
-              <p className="text-xs text-muted-foreground">
-                Updated {new Date(bot.lastUpdated).toLocaleDateString()}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            ) : (
+              <>
+                <RowHead className={COLS}>
+                  <span>Chatbot</span>
+                  <span>Status</span>
+                  <span className="hidden text-right sm:block">Pages</span>
+                  <span className="hidden text-right sm:block">Messages</span>
+                  <span className="hidden text-right sm:block">Updated</span>
+                  <span className="sr-only">Actions</span>
+                </RowHead>
+                <RowList>
+                  {visible.map((bot) => (
+                    <Row key={bot?.id} className={`${COLS} items-center`}>
+                      <button
+                        type="button"
+                        onClick={() => open(bot)}
+                        className="min-w-0 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                      >
+                        <span className="block truncate tc-label text-foreground group-hover:text-signal">
+                          {bot?.name || 'Untitled chatbot'}
+                        </span>
+                        <span className="mt-0.5 block truncate tc-micro text-muted-foreground">
+                          {hostOf(bot) || 'no source yet'}
+                        </span>
+                      </button>
+                      <span>
+                        <StatusPill status={bot?.status} />
+                      </span>
+                      <Mono className="hidden text-right sm:block">
+                        {compact(Number(bot?.pagesScraped) || 0)}
+                      </Mono>
+                      <Mono className="hidden text-right sm:block">
+                        {compact(Number(bot?.monthlyMessages) || 0)}
+                      </Mono>
+                      <Mono className="hidden text-right sm:block">{shortDate(bot?.lastUpdated)}</Mono>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 text-muted-foreground hover:text-foreground"
+                            aria-label={`Actions for ${bot?.name || 'chatbot'}`}
+                          >
+                            <Lineicons icon={MenuMeatballs1Outlined} className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => open(bot)}>
+                            <Lineicons icon={PlayOutlined} className="size-4" />
+                            Open in playground
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => {
+                              setChatbotToDelete(bot?.id);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Lineicons icon={Trash3Outlined} className="size-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </Row>
+                  ))}
+                </RowList>
+              </>
+            )}
+          </PanelBody>
+        </Panel>
+      )}
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Chatbot</DialogTitle>
+            <DialogTitle>Delete this chatbot?</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this chatbot? This action cannot be undone.
+              {doomed?.name ? (
+                <>
+                  <span className="font-medium text-foreground">{doomed.name}</span> and everything
+                  it has read will be removed. Conversations already logged against it go too. This
+                  cannot be undone.
+                </>
+              ) : (
+                'This chatbot and everything it has read will be removed. This cannot be undone.'
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -165,11 +321,11 @@ export default function MyChatbotsPage({
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
-              Delete
+              Delete chatbot
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

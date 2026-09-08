@@ -2,6 +2,7 @@
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Reveal } from "./reveal"
+import { SectionHeading } from "./panel"
 
 const faqs = [
   {
@@ -35,23 +36,25 @@ export function Faq() {
     <section id="faq" className="scroll-mt-24 py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-5">
         <div className="grid gap-10 lg:grid-cols-[1fr_1.4fr]">
-          <Reveal>
-            <div className="lg:sticky lg:top-28">
-              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-400">
-                FAQ
-              </p>
-              <h2 className="font-serif text-3xl font-medium tracking-tight sm:text-4xl md:text-5xl">
-                Questions, answered.
-              </h2>
-              <p className="mt-4 text-muted-foreground">
-                Can&apos;t find what you&apos;re looking for?{" "}
-                <a href="mailto:hello@turbochat.live" className="font-medium text-foreground underline underline-offset-4 hover:text-violet-600">
-                  Email us
-                </a>{" "}
-                — a human replies within a day.
-              </p>
-            </div>
-          </Reveal>
+          <div className="lg:sticky lg:top-28">
+            <SectionHeading
+              align="left"
+              eyebrow="FAQ"
+              title="Questions, answered."
+              lead={
+                <>
+                  Can&apos;t find what you&apos;re looking for?{" "}
+                  <a
+                    href="mailto:hello@turbochat.live"
+                    className="font-medium text-foreground underline decoration-border underline-offset-4 transition-colors hover:decoration-foreground"
+                  >
+                    Email us
+                  </a>{" "}
+                  — a human replies within a day.
+                </>
+              }
+            />
+          </div>
 
           <Reveal delay={0.08}>
             <Accordion type="single" collapsible className="w-full">

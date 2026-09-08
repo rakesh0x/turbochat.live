@@ -142,6 +142,28 @@ def init_db():
         cur.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS user_id VARCHAR(255)")
         cur.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS conversation_id VARCHAR(255)")
 
+        # Answer quality, recorded at generation time on the assistant row.
+        #
+        # `grounded` is the only defensible proxy for "did the bot resolve this":
+        # it is TRUE when retrieval returned usable context and FALSE when the
+        # prompt fell through to the "I don't have enough information" branch.
+        # It stays NULL for every message written before this column existed, so
+        # the analytics endpoint can exclude unmeasured rows rather than counting
+        # them as successes. `latency_ms` is wall-clock generation time — it is
+        # not recoverable from the two timestamps, because both rows are written
+        # after the answer is produced.
+        cur.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS grounded BOOLEAN")
+        cur.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS latency_ms INTEGER")
+
+        # Every analytics query filters by owner and orders by time; the
+        # conversation views group by thread. Without these, both do a seq scan
+        # over the whole message history on each dashboard load.
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_messages_user_time ON messages (user_id, timestamp DESC)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_messages_bot_time ON messages (chatbot_id, timestamp DESC)")
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages (chatbot_id, conversation_id, timestamp)"
+        )
+
         # Dodo webhook events table (idempotency)
         cur.execute("""
             CREATE TABLE IF NOT EXISTS dodo_webhook_events (

@@ -1,255 +1,287 @@
 "use client"
 
-import {
-  BarChart3,
-  Code2,
-  FileText,
-  Globe,
-  Link2,
-  Palette,
-  ShieldCheck,
-  Users,
-} from "lucide-react"
-import { Reveal } from "./reveal"
+import { useEffect, useState } from "react"
+import { Check, Globe2, LineChart, RefreshCw, ShieldHalf, Users } from "lucide-react"
+import { Card, CardBody, SectionHeading, Stage, useStageSequence } from "./panel"
 
-function Card({
-  className = "",
-  icon,
-  iconClass = "",
-  title,
-  description,
-  children,
-  delay = 0,
-}: {
-  className?: string
-  icon: React.ReactNode
-  iconClass?: string
-  title: string
-  description: string
-  children?: React.ReactNode
-  delay?: number
-}) {
+/* ------------------------------------------------------------------ *
+ * Every card ends in a fragment of product UI that plays a short,
+ * self-explaining workflow the first time it scrolls past. Two of them
+ * (languages, guardrails) are hand-drivable — the toggle genuinely
+ * changes what the sample reply says, because that *is* the feature.
+ * ------------------------------------------------------------------ */
+
+const GAPS = [
+  { q: "Do you ship to Japan?", asked: 41, missing: true },
+  { q: "How do I cancel mid-cycle?", asked: 28, missing: false },
+  { q: "Is there a Zapier integration?", asked: 17, missing: true },
+]
+
+function GapsCard() {
+  const { ref, frame } = useStageSequence(GAPS.length + 2, 460)
+
   return (
-    <Reveal delay={delay} className={className}>
-      <div className="group flex h-full flex-col overflow-hidden rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-violet-300/60 hover:shadow-[0_20px_60px_-20px_rgba(124,58,237,0.25)] dark:hover:border-violet-500/40">
-        <div className="mb-4 flex items-center gap-3">
-          <span
-            className={`grid h-10 w-10 place-items-center rounded-xl ${iconClass ?? "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-300"}`}
-          >
-            {icon}
-          </span>
-          <h3 className="text-[17px] font-semibold tracking-tight">{title}</h3>
+    <Card className="md:col-span-3" delay={0}>
+      <CardBody eyebrow="Content gaps" icon={<LineChart />} title="It tells you what your docs are missing">
+        Every question it had to refuse becomes a ranked list of pages nobody has written yet. Ticket volume turns into
+        a documentation backlog, in priority order.
+      </CardBody>
+      <Stage stageRef={ref} label="unanswered · last 7 days">
+        <div className="min-h-[128px] divide-y divide-border/50">
+          {GAPS.map((g, i) =>
+            frame > i ? (
+              <div key={g.q} className="animate-tc-rise flex items-center gap-3 px-4 py-2.5">
+                <span className="min-w-0 flex-1 truncate text-[12.5px] text-foreground/85">{g.q}</span>
+                <span className="shrink-0 font-mono text-[10.5px] tabular-nums text-muted-foreground">
+                  ×{g.asked}
+                </span>
+                <span className="w-[74px] shrink-0 text-right">
+                  {frame > i + 1 ? (
+                    <span
+                      className={`animate-tc-rise inline-block rounded-md px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.1em] ${
+                        g.missing ? "bg-foreground/10 text-foreground/75" : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {g.missing ? "no source" : "thin"}
+                    </span>
+                  ) : null}
+                </span>
+              </div>
+            ) : null,
+          )}
         </div>
-        <p className="mb-5 text-sm leading-relaxed text-muted-foreground">{description}</p>
-        <div className="mt-auto">{children}</div>
-      </div>
-    </Reveal>
+        <div className="border-t border-border/50 px-4 py-2.5">
+          <span
+            className={`block font-mono text-[10.5px] text-muted-foreground transition-opacity duration-500 ${
+              frame >= GAPS.length + 1 ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            86 questions · 11 with no source → write these first
+          </span>
+        </div>
+      </Stage>
+    </Card>
   )
 }
 
-const sources = [
-  { name: "docs.yourco.com", type: "Website", status: "Indexed", width: "w-full" },
-  { name: "support-playbook.pdf", type: "PDF", status: "Indexed", width: "w-4/5" },
-  { name: "help-center.notion.site", type: "Notion", status: "Indexed", width: "w-[88%]" },
-  { name: "api-reference.md", type: "Markdown", status: "Syncing…", width: "w-2/3" },
+function HandoffCard() {
+  const { ref, frame } = useStageSequence(4, 700)
+
+  return (
+    <Card className="md:col-span-3" delay={0.06}>
+      <CardBody eyebrow="Escalation" icon={<Users />} title="Hands off before a customer gets stuck">
+        When nothing scores high enough — or someone just wants a person — the whole thread lands in Slack with the
+        sources it checked. Your teammate reads context, not a cold “hi”.
+      </CardBody>
+      <Stage stageRef={ref} label="handoff · #support">
+        <div className="min-h-[152px] space-y-2 px-4 py-3.5">
+          <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-background px-3 py-2">
+            <span className="min-w-0 flex-1 truncate text-[12px] text-foreground/85">“Do you ship to Japan?”</span>
+            <span className="relative h-1 w-14 shrink-0 overflow-hidden rounded-full bg-foreground/10">
+              <span
+                className="absolute inset-y-0 left-0 rounded-full bg-foreground/35 transition-[width] duration-700 ease-out"
+                style={{ width: frame >= 1 ? "31%" : "88%" }}
+              />
+            </span>
+            <span className="w-7 shrink-0 text-right font-mono text-[10.5px] tabular-nums text-muted-foreground">
+              {frame >= 1 ? "0.31" : "—"}
+            </span>
+          </div>
+
+          {frame >= 1 ? (
+            <p className="animate-tc-rise pl-1 font-mono text-[10.5px] text-muted-foreground">
+              below 0.75 threshold → escalate
+            </p>
+          ) : null}
+
+          {frame >= 2 ? (
+            <div className="animate-tc-rise rounded-lg border border-border/60 bg-background px-3 py-2.5">
+              <div className="flex items-center gap-2">
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-foreground/8 font-mono text-[9px] font-semibold text-foreground/70">
+                  MK
+                </span>
+                <span className="text-[12px] font-medium text-foreground">Assigned to Maya</span>
+                <span className="ml-auto font-mono text-[10px] text-muted-foreground">12s</span>
+              </div>
+              {frame >= 3 ? (
+                <p className="animate-tc-rise mt-2 flex items-center gap-1.5 border-t border-border/50 pt-2 font-mono text-[10.5px] text-muted-foreground">
+                  <Check className="h-3 w-3 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  4-turn transcript + retrieval log attached
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </Stage>
+    </Card>
+  )
+}
+
+const LANGS = [
+  { code: "EN", label: "English", line: "Returns are accepted within 30 days of delivery." },
+  { code: "ES", label: "Español", line: "Aceptamos devoluciones dentro de los 30 días posteriores a la entrega." },
+  { code: "JA", label: "日本語", line: "配送から30日以内であれば、返品を承っております。" },
 ]
+
+function LanguagesCard() {
+  const [i, setI] = useState(0)
+  const [held, setHeld] = useState(false)
+
+  useEffect(() => {
+    if (held) return
+    const id = setInterval(() => setI((v) => (v + 1) % LANGS.length), 2600)
+    return () => clearInterval(id)
+  }, [held])
+
+  return (
+    <Card className="md:col-span-2" delay={0}>
+      <CardBody eyebrow="Languages" icon={<Globe2 />} title="One source, every language">
+        Write the policy once. It replies in whatever language the customer typed, from the exact same indexed passage.
+      </CardBody>
+      <Stage>
+        <div className="px-4 py-3.5">
+          <div className="flex gap-1.5">
+            {LANGS.map((l, n) => (
+              <button
+                key={l.code}
+                type="button"
+                onClick={() => {
+                  setI(n)
+                  setHeld(true)
+                }}
+                aria-pressed={n === i}
+                className={`cursor-pointer rounded-md px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors ${
+                  n === i
+                    ? "bg-foreground text-background"
+                    : "bg-background text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {l.code}
+              </button>
+            ))}
+          </div>
+          <p key={i} className="animate-tc-rise mt-3 min-h-[52px] text-[12.5px] leading-relaxed text-foreground/85">
+            {LANGS[i].line}
+          </p>
+          <p className="flex items-center gap-1.5 border-t border-border/50 pt-2.5 font-mono text-[10px] text-muted-foreground">
+            <Check className="h-3 w-3 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            same source · /help/returns-policy
+          </p>
+        </div>
+      </Stage>
+    </Card>
+  )
+}
+
+function FreshnessCard() {
+  const { ref, frame } = useStageSequence(4, 640)
+
+  return (
+    <Card className="md:col-span-2" delay={0.06}>
+      <CardBody eyebrow="Freshness" icon={<RefreshCw />} title="Never answers from last quarter">
+        TurboChat re-crawls on a schedule and re-embeds only what actually changed, so a pricing edit reaches the widget
+        without anyone remembering to retrain it.
+      </CardBody>
+      <Stage stageRef={ref}>
+        <div className="min-h-[124px] space-y-2 px-4 py-3.5">
+          <div className="flex items-center justify-between font-mono text-[10.5px]">
+            <span className="text-muted-foreground">re-crawl</span>
+            <span className="text-foreground/80">daily · 04:00 UTC</span>
+          </div>
+          <div className="h-[3px] overflow-hidden rounded-full bg-foreground/8">
+            <span
+              className="block h-full rounded-full bg-foreground/40 transition-[width] duration-[900ms] ease-out"
+              style={{ width: frame >= 1 ? "100%" : "8%" }}
+            />
+          </div>
+          {frame >= 2 ? (
+            <div className="animate-tc-rise rounded-lg border border-border/60 bg-background px-2.5 py-2">
+              <p className="font-mono text-[11px] text-foreground/85">/pricing</p>
+              <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+                <span className="text-emerald-600 dark:text-emerald-400">+4</span> chunks ·{" "}
+                <span className="text-foreground/70">−1</span> stale
+                {frame >= 3 ? <span className="text-foreground/70"> · re-embedded 2m ago</span> : null}
+              </p>
+            </div>
+          ) : null}
+          <p className="font-mono text-[10.5px] text-muted-foreground">
+            {frame >= 2 ? "141 pages unchanged · skipped" : "scanning 142 pages…"}
+          </p>
+        </div>
+      </Stage>
+    </Card>
+  )
+}
+
+function GuardrailsCard() {
+  const [grounded, setGrounded] = useState(true)
+
+  return (
+    <Card className="md:col-span-2" delay={0.12}>
+      <CardBody eyebrow="Guardrails" icon={<ShieldHalf />} title="Decide what it will not say">
+        Keep it inside your own content, and off anything a human should own. Flip the rule below to see what the other
+        kind of chatbot does with a question it has no source for.
+      </CardBody>
+      <Stage>
+        <div className="px-4 py-3.5">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={grounded}
+            onClick={() => setGrounded((v) => !v)}
+            className="flex w-full cursor-pointer items-center gap-2.5 text-left"
+          >
+            <span
+              className={`relative h-4 w-7 shrink-0 rounded-full transition-colors ${
+                grounded ? "bg-foreground" : "bg-foreground/20"
+              }`}
+            >
+              <span
+                className="absolute top-0.5 h-3 w-3 rounded-full bg-background transition-transform duration-200"
+                style={{ transform: grounded ? "translateX(15px)" : "translateX(3px)" }}
+              />
+            </span>
+            <span className="font-mono text-[11px] text-foreground/85">answer only from my content</span>
+          </button>
+
+          <div className="mt-3 border-t border-border/50 pt-3">
+            <p className="mb-2 text-[11.5px] text-muted-foreground">“Do you ship to Japan?”</p>
+            <p key={String(grounded)} className="animate-tc-rise text-[12.5px] leading-relaxed text-foreground/85">
+              {grounded
+                ? "I couldn’t find anything about international shipping in your content — want me to pass this to the team?"
+                : "Yes, we ship worldwide with 5–7 day delivery and free returns."}
+            </p>
+            <p
+              className={`mt-2 font-mono text-[10px] ${
+                grounded ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"
+              }`}
+            >
+              {grounded ? "no source → escalated to a human" : "invented · no source in your content"}
+            </p>
+          </div>
+        </div>
+      </Stage>
+    </Card>
+  )
+}
 
 export function Features() {
   return (
     <section id="features" className="scroll-mt-24 py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-5">
-        <Reveal className="mx-auto mb-14 max-w-2xl text-center">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-400">
-            Features
-          </p>
-          <h2 className="font-serif text-3xl font-medium tracking-tight sm:text-4xl md:text-5xl">
-            Everything you need to ship an AI support agent.
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            No engineers required. No model tuning. No black box — every answer is grounded in your content.
-          </p>
-        </Reveal>
+        <SectionHeading
+          className="mb-14"
+          eyebrow="Built for support"
+          title="The five things that decide whether a customer leaves happy."
+          lead="No agent studio, no flow builder, no per-seat licence. Just the parts of support software you open every day."
+        />
 
         <div className="grid grid-cols-1 gap-5 md:grid-cols-6">
-          {/* Train on anything */}
-          <Card
-            className="md:col-span-4"
-            icon={<Globe className="h-5 w-5" />}
-            title="Train on anything"
-            description="Paste a URL, upload PDFs, or connect your help center. TurboChat crawls, chunks, and indexes it all into a knowledge base your agent can actually cite."
-            delay={0}
-          >
-            <div className="space-y-2">
-              {sources.map((src) => (
-                <div
-                  key={src.name}
-                  className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 px-3 py-2 text-xs"
-                >
-                  <div className="flex min-w-0 items-center gap-2">
-                    <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    <span className="truncate font-medium text-foreground/90">{src.name}</span>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <span className="text-muted-foreground">{src.type}</span>
-                    <span
-                      className={`flex items-center gap-1.5 font-medium ${
-                        src.status === "Indexed"
-                          ? "text-emerald-600 dark:text-emerald-400"
-                          : "text-amber-600 dark:text-amber-400"
-                      }`}
-                    >
-                      <span
-                        className={`h-1.5 w-1.5 rounded-full ${
-                          src.status === "Indexed" ? "bg-emerald-500" : "animate-pulse bg-amber-500"
-                        }`}
-                      />
-                      {src.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Grounded answers */}
-          <Card
-            className="md:col-span-2"
-            icon={<ShieldCheck className="h-5 w-5" />}
-            iconClass="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
-            title="Grounded, cited answers"
-            description="RAG pulls from your real content — no hallucinations, every reply traceable to a source."
-            delay={0.08}
-          >
-            <div className="rounded-xl border bg-muted/40 p-4">
-              <p className="text-xs leading-relaxed text-foreground/85">
-                “Our refund window is <span className="font-semibold">30 days</span> from delivery…”
-              </p>
-              <span className="mt-3 inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-[10px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-                <Link2 className="h-2.5 w-2.5" />
-                Source: /returns-policy
-              </span>
-            </div>
-          </Card>
-
-          {/* Brand voice */}
-          <Card
-            className="md:col-span-2"
-            icon={<Palette className="h-5 w-5" />}
-            iconClass="bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-500/10 dark:text-fuchsia-400"
-            title="Your brand, your voice"
-            description="Logo, colors, assistant name, and tone — the widget looks native to your product."
-            delay={0.04}
-          >
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 text-[10px] font-bold text-white">
-                  Y
-                </span>
-                <span className="text-sm font-semibold">Yuna · your assistant</span>
-              </div>
-              <div className="flex gap-1.5">
-                {["#7c3aed", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444"].map((c) => (
-                  <span key={c} className="h-6 w-6 rounded-full border-2 border-card shadow-sm" style={{ background: c }} />
-                ))}
-              </div>
-              <div>
-                <div className="mb-1 flex justify-between text-[10px] text-muted-foreground">
-                  <span>Casual</span>
-                  <span>Professional</span>
-                </div>
-                <div className="relative h-1.5 rounded-full bg-muted">
-                  <span className="absolute left-[38%] h-3.5 w-3.5 -translate-y-[30%] rounded-full border-2 border-white bg-violet-600 shadow" />
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Embed */}
-          <Card
-            className="md:col-span-4"
-            icon={<Code2 className="h-5 w-5" />}
-            iconClass="bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400"
-            title="Embed in one line"
-            description="Copy one snippet into your site — React, Webflow, WordPress, anything. The chat bubble shows up already trained and on-brand."
-            delay={0.12}
-          >
-            <div className="overflow-hidden rounded-xl border bg-muted/40">
-              <div className="flex items-center gap-1.5 border-b bg-background/60 px-3 py-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
-                <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
-                <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
-                <span className="ml-2 text-[10px] text-muted-foreground">index.html</span>
-              </div>
-              <pre className="overflow-x-auto p-4 text-[12px] leading-relaxed">
-                <code>
-                  <span className="text-muted-foreground">{"<script"}</span> <span className="text-violet-600 dark:text-violet-400">src</span>
-                  <span className="text-muted-foreground">=</span><span className="text-emerald-600 dark:text-emerald-400">"https://turbochat.live/widget.js"</span>
-                  <span className="text-muted-foreground">{"></script>"}</span>
-                  {"\n"}
-                  <span className="text-muted-foreground">{"<script>"}</span>
-                  <span className="text-foreground">ChatbotWidget</span>
-                  <span className="text-muted-foreground">.init({"{ chatbotId: "}</span>
-                  <span className="text-emerald-600 dark:text-emerald-400">"xyz-123"</span>
-                  <span className="text-muted-foreground">{" })"}</span>
-                  <span className="text-muted-foreground">{"</script>"}</span>
-                </code>
-              </pre>
-            </div>
-          </Card>
-
-          {/* Analytics */}
-          <Card
-            className="md:col-span-3"
-            icon={<BarChart3 className="h-5 w-5" />}
-            iconClass="bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
-            title="See every conversation"
-            description="Track resolution rate, spot gaps in your docs, and know exactly what customers keep asking."
-            delay={0.08}
-          >
-            <div className="flex h-28 items-end gap-2">
-              {[42, 58, 40, 66, 78, 52, 88, 70, 94, 60, 82, 100].map((h, i) => (
-                <span
-                  key={i}
-                  className="flex-1 rounded-t-md bg-gradient-to-t from-violet-600/20 to-violet-500 transition-all duration-300 hover:to-violet-400"
-                  style={{ height: `${h}%` }}
-                />
-              ))}
-            </div>
-            <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
-              <span>Mon</span>
-              <span className="font-semibold text-emerald-600 dark:text-emerald-400">▲ 92% resolved</span>
-            </div>
-          </Card>
-
-          {/* Human handoff */}
-          <Card
-            className="md:col-span-3"
-            icon={<Users className="h-5 w-5" />}
-            iconClass="bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400"
-            title="Human handoff, one click"
-            description="When a customer needs a real person, the agent hands the full transcript to your team in Slack or email."
-            delay={0.12}
-          >
-            <div className="space-y-2">
-              <div className="rounded-xl border bg-muted/40 p-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-foreground/85">Escalate to a teammate</p>
-                  <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-600 dark:bg-rose-500/10 dark:text-rose-300">
-                    Live
-                  </span>
-                </div>
-                <p className="mt-1.5 text-[11px] text-muted-foreground">
-                  Full context + transcript included — no one has to re-ask.
-                </p>
-              </div>
-              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                <span className="grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-500 text-[9px] font-bold text-white">
-                  MK
-                </span>
-                Assigned to Maya · support@yourco.com
-              </div>
-            </div>
-          </Card>
+          <GapsCard />
+          <HandoffCard />
+          <LanguagesCard />
+          <FreshnessCard />
+          <GuardrailsCard />
         </div>
       </div>
     </section>

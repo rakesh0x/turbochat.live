@@ -21,8 +21,8 @@ export function LogoMarquee() {
   return (
     <section className="border-y bg-muted/30 py-12">
       <div className="mx-auto max-w-7xl px-5">
-        <p className="mb-8 text-center text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-          Works with every site you already use
+        <p className="mb-8 text-center font-mono text-[10.5px] uppercase tracking-[0.2em] text-muted-foreground">
+          One snippet · every stack you already ship on
         </p>
         <div className="relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)]">
           <div
@@ -31,10 +31,10 @@ export function LogoMarquee() {
           >
             {row.map((name, i) => (
               <span key={`${name}-${i}`} className="flex items-center">
-                <span className="px-8 text-lg font-semibold tracking-tight text-foreground/45 transition-colors hover:text-foreground/80 sm:px-10">
+                <span className="px-8 text-[15px] font-medium tracking-[-0.01em] text-foreground/50 transition-colors hover:text-foreground sm:px-10">
                   {name}
                 </span>
-                <span className="h-1.5 w-1.5 rounded-full bg-foreground/15" />
+                <span aria-hidden className="h-4 w-px bg-border" />
               </span>
             ))}
           </div>

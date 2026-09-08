@@ -7,8 +7,8 @@ import { Hero } from "@/components/landing/v2/hero"
 import { LogoMarquee } from "@/components/landing/v2/logo-marquee"
 import { Stats } from "@/components/landing/v2/stats"
 import { Features } from "@/components/landing/v2/features"
-import { HowItWorks } from "@/components/landing/v2/how-it-works"
-import { Testimonials } from "@/components/landing/v2/testimonials"
+import { Workflow } from "@/components/landing/v2/workflow"
+import { Insights } from "@/components/landing/v2/insights"
 import { Pricing } from "@/components/landing/v2/pricing"
 import { Faq } from "@/components/landing/v2/faq"
 import { FinalCta } from "@/components/landing/v2/final-cta"
@@ -35,9 +35,9 @@ export default async function Home() {
         <Hero />
         <LogoMarquee />
         <Stats />
+        <Workflow />
         <Features />
-        <HowItWorks />
-        <Testimonials />
+        <Insights />
         <Pricing />
         <Faq />
         <FinalCta />

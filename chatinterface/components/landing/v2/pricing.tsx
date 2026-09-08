@@ -4,6 +4,7 @@ import { useState } from "react"
 import { ArrowRight, Check } from "lucide-react"
 import { signInWithGoogle } from "@/lib/auth"
 import { Reveal } from "./reveal"
+import { SectionHeading } from "./panel"
 
 const plans = [
   {
@@ -61,17 +62,12 @@ export function Pricing() {
   return (
     <section id="pricing" className="scroll-mt-24 border-y bg-muted/30 py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-5">
-        <Reveal className="mx-auto mb-10 max-w-2xl text-center">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-400">
-            Pricing
-          </p>
-          <h2 className="font-serif text-3xl font-medium tracking-tight sm:text-4xl md:text-5xl">
-            Simple plans that scale with you.
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            Start free, prove the value, upgrade as chat volume grows. No per-seat surprises.
-          </p>
-        </Reveal>
+        <SectionHeading
+          className="mb-10"
+          eyebrow="Pricing"
+          title="Simple plans that scale with you."
+          lead="Start free, prove the value, upgrade as chat volume grows. Priced on usage, never per seat."
+        />
 
         {/* billing toggle */}
         <Reveal className="mb-12 flex items-center justify-center gap-3">
@@ -81,19 +77,18 @@ export function Pricing() {
             aria-checked={yearly}
             aria-label="Toggle yearly billing"
             onClick={() => setYearly((v) => !v)}
-            className="relative h-7 w-13 rounded-full bg-foreground/15 p-1 transition-colors"
-            style={{ width: 52 }}
+            className="relative h-7 w-[52px] cursor-pointer rounded-full bg-foreground/15 transition-colors"
           >
             <span
-              className="block h-5 w-5 rounded-full bg-foreground shadow transition-transform duration-200"
-              style={{ transform: yearly ? "translateX(24px)" : "translateX(0)" }}
+              className="absolute top-1 block h-5 w-5 rounded-full bg-foreground shadow transition-transform duration-200"
+              style={{ transform: yearly ? "translateX(28px)" : "translateX(4px)" }}
             />
           </button>
           <span className={`text-sm font-medium ${yearly ? "text-foreground" : "text-muted-foreground"}`}>
             Yearly
           </span>
-          <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-            Save 20%
+          <span className="rounded-full bg-foreground/8 px-2.5 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.1em] text-foreground/70">
+            save 20%
           </span>
         </Reveal>
 
@@ -103,25 +98,25 @@ export function Pricing() {
             return (
               <Reveal key={plan.name} delay={i * 0.08}>
                 <div
-                  className={`relative flex h-full flex-col rounded-3xl border p-7 transition-all duration-300 ${
+                  className={`tc-raise relative flex h-full flex-col rounded-3xl border bg-card p-7 transition-colors duration-300 ${
                     plan.highlighted
-                      ? "border-violet-500/50 bg-card shadow-[0_30px_80px_-30px_rgba(124,58,237,0.45)]"
-                      : "border-border bg-card hover:border-foreground/20"
+                      ? "border-foreground/25 ring-1 ring-foreground/10"
+                      : "border-border/70 hover:border-foreground/20"
                   }`}
                 >
                   {plan.highlighted ? (
-                    <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3.5 py-1 text-xs font-semibold text-white shadow-lg">
-                      Most popular
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-violet-600 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-white">
+                      most popular
                     </span>
                   ) : null}
 
                   <div className="mb-6">
-                    <h3 className="font-serif text-2xl">{plan.name}</h3>
+                    <h3 className="font-display font-medium text-2xl">{plan.name}</h3>
                     <p className="mt-1 text-sm text-muted-foreground">{plan.tagline}</p>
                   </div>
 
                   <div className="mb-6 flex items-baseline gap-1.5">
-                    <span className="font-serif text-5xl font-medium tracking-tight">${price}</span>
+                    <span className="font-display text-5xl font-medium tracking-tight">${price}</span>
                     <span className="text-sm text-muted-foreground">/ month</span>
                   </div>
                   {yearly && price > 0 ? (
@@ -136,10 +131,8 @@ export function Pricing() {
                     {plan.features.map((f) => (
                       <li key={f} className="flex items-start gap-2.5 text-sm">
                         <span
-                          className={`mt-0.5 grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full ${
-                            plan.highlighted
-                              ? "bg-violet-600 text-white"
-                              : "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                          className={`mt-0.5 grid h-[17px] w-[17px] shrink-0 place-items-center rounded-full ${
+                            plan.highlighted ? "bg-foreground text-background" : "bg-foreground/10 text-foreground/70"
                           }`}
                         >
                           <Check className="h-3 w-3" />
@@ -155,7 +148,7 @@ export function Pricing() {
                       className={`group inline-flex h-12 items-center justify-center gap-1.5 rounded-full text-sm font-semibold transition-colors ${
                         plan.highlighted
                           ? "bg-violet-600 text-white hover:bg-violet-500"
-                          : "border bg-background text-foreground hover:bg-muted"
+                          : "border border-border/70 bg-background text-foreground hover:bg-muted"
                       }`}
                     >
                       {plan.cta}
@@ -164,10 +157,10 @@ export function Pricing() {
                   ) : (
                     <button
                       onClick={() => signInWithGoogle()}
-                      className={`group inline-flex h-12 items-center justify-center gap-1.5 rounded-full text-sm font-semibold transition-colors ${
+                      className={`group inline-flex h-12 cursor-pointer items-center justify-center gap-1.5 rounded-full text-sm font-semibold transition-colors ${
                         plan.highlighted
-                          ? "bg-violet-600 text-white shadow-[0_8px_24px_rgba(124,58,237,0.35)] hover:bg-violet-500"
-                          : "border bg-background text-foreground hover:bg-muted"
+                          ? "bg-violet-600 text-white hover:bg-violet-500"
+                          : "border border-border/70 bg-background text-foreground hover:bg-muted"
                       }`}
                     >
                       {plan.cta}

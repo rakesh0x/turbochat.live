@@ -28,7 +28,7 @@ export function LandingNav() {
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4">
       <div
-        className={`mx-auto flex h-14 max-w-6xl items-center justify-between rounded-full border bg-background/80 pl-5 pr-2 shadow-sm backdrop-blur-xl transition-all duration-300 ${
+        className={`mx-auto flex h-14 max-w-6xl items-center justify-between rounded-full border bg-background/80 pl-5 pr-2 shadow-sm backdrop-blur-xl transition-[border-color,box-shadow] duration-300 ${
           scrolled ? "border-border shadow-lg shadow-black/5 dark:shadow-black/20" : "border-transparent"
         }`}
       >
@@ -57,7 +57,7 @@ export function LandingNav() {
           </button>
           <button
             onClick={() => signInWithGoogle()}
-            className="group inline-flex h-9 items-center gap-1.5 rounded-full bg-violet-600 px-4 text-sm font-semibold text-white shadow-[0_6px_20px_rgba(124,58,237,0.35)] transition-all hover:bg-violet-500"
+            className="group inline-flex h-9 items-center gap-1.5 rounded-full bg-violet-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
           >
             Start free
             <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />

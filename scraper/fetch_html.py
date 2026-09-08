@@ -6,6 +6,9 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
+from firecrawl import FirecrawlApp
+app = FirecrawlApp(api_key="fc-92a20f3a8a114090a90e88ba680b96ec")
+
 
 def _extract_text_and_links(url: str):
     headers = {
@@ -95,7 +98,7 @@ async def main(site_to_crawl: str, limit: int = 10) -> str:
             max_depth=3,
             max_pages=max_pages,
             include_external=False,
-        ),
+        ), 
         stream=False,
         verbose=False,
     )

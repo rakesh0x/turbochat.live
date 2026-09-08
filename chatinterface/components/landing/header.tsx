@@ -10,7 +10,7 @@ export function Header() {
 
   return (
     <header className="w-full py-4 px-6 flex items-center justify-between max-w-7xl mx-auto">
-      <Link href="/" className="font-serif text-xl italic">
+      <Link href="/" className="font-display text-xl font-semibold tracking-[-0.03em]">
         turbochat
       </Link>
       <nav className="hidden md:flex items-center gap-8">

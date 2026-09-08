@@ -1,8 +1,9 @@
 import asyncio
 import json
+import time
 import uuid
-from datetime import datetime
-from typing import List
+from datetime import datetime, timedelta
+from typing import List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -18,7 +19,8 @@ from .chat_engine import (
     _parse_price_constraints,
     _query_structured_items,
     _stream_llm,
-    ask_question,
+    ask_question_with_meta,
+    is_grounded,
     clean_text,
     is_crawl_error_text,
     make_share_slug,
@@ -411,17 +413,469 @@ async def get_user_me(user: dict = Depends(get_current_user)):
     }
 
 
+# ---------------------------------------------------------------------------
+# Analytics
+#
+# This replaced a hardcoded stub that returned three invented dates and two
+# invented questions to every caller, unauthenticated. Everything below is
+# counted from the `messages` table for the signed-in owner only, and anything
+# that is not measured comes back as null so the dashboard can draw an em dash
+# instead of a zero that looks like a real reading.
+#
+# `days` and `chatbotId` scope every figure in the response, so one filter row
+# in the UI can drive the whole screen.
+# ---------------------------------------------------------------------------
+
+MAX_RANGE_DAYS = 90
+# Bound as a query parameter, never interpolated, so `%` needs no escaping.
+_EMAIL_RE = r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"
+
+
+def _clamp_days(days: int) -> int:
+    try:
+        value = int(days)
+    except (TypeError, ValueError):
+        return 30
+    return max(1, min(MAX_RANGE_DAYS, value))
+
+
+def _owned_chatbot_ids(cur, user_id: str, chatbot_id: Optional[str]) -> List[str]:
+    """Never trust `chatbotId` from the query string — intersect it with ownership."""
+    if chatbot_id:
+        cur.execute(
+            "SELECT id FROM chatbots WHERE user_id = %s AND id = %s",
+            (user_id, chatbot_id),
+        )
+    else:
+        cur.execute("SELECT id FROM chatbots WHERE user_id = %s", (user_id,))
+    return [row["id"] for row in cur.fetchall()]
+
+
+def _thread_key_sql(alias: str = "m") -> str:
+    """A conversation is a thread within one chatbot.
+
+    Rows written before the widget sent a session id have a NULL
+    `conversation_id`; those count as one thread each rather than being silently
+    merged into a single fake mega-conversation.
+    """
+    return f"({alias}.chatbot_id || ':' || COALESCE(NULLIF({alias}.conversation_id, ''), {alias}.id))"
+
+
 @router.get("/api/analytics")
-async def get_analytics():
+async def get_analytics(
+    chatbotId: Optional[str] = None,
+    days: int = 30,
+    user: dict = Depends(get_current_user),
+):
+    window = _clamp_days(days)
+    since = datetime.now() - timedelta(days=window - 1)
+    since_day = since.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        bot_ids = _owned_chatbot_ids(cur, user["id"], chatbotId)
+
+        if not bot_ids:
+            cur.close()
+            return {
+                "range": {"days": window, "from": since_day.isoformat()},
+                "chatbotId": chatbotId,
+                "totals": _empty_totals(),
+                "messagesOverTime": [],
+                "topQuestions": [],
+                "unansweredQuestions": [],
+                "byChatbot": [],
+            }
+
+        scope = (tuple(bot_ids), since_day)
+        thread = _thread_key_sql()
+
+        # Volume per day. Days with no traffic are filled in below rather than
+        # dropped, so the chart does not compress a quiet week into a short line.
+        cur.execute(
+            f"""
+            SELECT DATE(m.timestamp) AS day,
+                   COUNT(*) FILTER (WHERE m.role = 'user') AS questions,
+                   COUNT(DISTINCT {thread}) AS conversations
+            FROM messages m
+            WHERE m.chatbot_id IN %s AND m.timestamp >= %s
+            GROUP BY DATE(m.timestamp)
+            ORDER BY day
+            """,
+            scope,
+        )
+        by_day = {str(row["day"]): row for row in cur.fetchall()}
+
+        series = []
+        for offset in range(window):
+            day = (since_day + timedelta(days=offset)).date()
+            row = by_day.get(str(day))
+            series.append(
+                {
+                    "date": day.isoformat(),
+                    "messages": int(row["questions"]) if row else 0,
+                    "conversations": int(row["conversations"]) if row else 0,
+                }
+            )
+
+        # Totals. `answered`/`unanswered` count only rows where groundedness was
+        # actually recorded; `unmeasured` is reported separately so the answer
+        # rate is never diluted by history from before the column existed.
+        cur.execute(
+            f"""
+            SELECT COUNT(*) FILTER (WHERE m.role = 'user') AS questions,
+                   COUNT(*) FILTER (WHERE m.role = 'assistant') AS replies,
+                   COUNT(DISTINCT {thread}) AS conversations,
+                   COUNT(*) FILTER (WHERE m.role = 'assistant' AND m.grounded IS TRUE) AS answered,
+                   COUNT(*) FILTER (WHERE m.role = 'assistant' AND m.grounded IS FALSE) AS unanswered,
+                   COUNT(*) FILTER (WHERE m.role = 'assistant' AND m.grounded IS NULL) AS unmeasured,
+                   COUNT(DISTINCT DATE(m.timestamp)) AS active_days,
+                   PERCENTILE_CONT(0.5) WITHIN GROUP (
+                       ORDER BY m.latency_ms
+                   ) FILTER (WHERE m.latency_ms IS NOT NULL) AS median_latency,
+                   MAX(m.timestamp) AS last_active
+            FROM messages m
+            WHERE m.chatbot_id IN %s AND m.timestamp >= %s
+            """,
+            scope,
+        )
+        agg = cur.fetchone() or {}
+
+        answered = int(agg.get("answered") or 0)
+        unanswered = int(agg.get("unanswered") or 0)
+        measured = answered + unanswered
+        median_latency = agg.get("median_latency")
+
+        totals = {
+            "messages": int(agg.get("questions") or 0),
+            "replies": int(agg.get("replies") or 0),
+            "conversations": int(agg.get("conversations") or 0),
+            "answered": answered,
+            "unanswered": unanswered,
+            "unmeasured": int(agg.get("unmeasured") or 0),
+            "answerRate": round(answered / measured, 4) if measured else None,
+            "medianLatencyMs": int(median_latency) if median_latency is not None else None,
+            "activeDays": int(agg.get("active_days") or 0),
+            "lastActiveAt": str(agg["last_active"]) if agg.get("last_active") else None,
+        }
+
+        # What people ask, verbatim. Grouped case-insensitively but reported in
+        # the wording that came up most, because the phrasing is the thing the
+        # retrieval has to match.
+        cur.execute(
+            """
+            SELECT MODE() WITHIN GROUP (ORDER BY m.content) AS question,
+                   COUNT(*) AS count
+            FROM messages m
+            WHERE m.chatbot_id IN %s AND m.timestamp >= %s
+              AND m.role = 'user' AND LENGTH(TRIM(m.content)) > 2
+            GROUP BY LOWER(TRIM(m.content))
+            ORDER BY count DESC, question ASC
+            LIMIT 12
+            """,
+            scope,
+        )
+        top_questions = [
+            {"question": row["question"], "count": int(row["count"])} for row in cur.fetchall()
+        ]
+
+        # Knowledge gaps: questions whose reply had no context behind it. This is
+        # the one list on the whole dashboard that is directly actionable — every
+        # row is a page the customer should add to the bot's knowledge.
+        cur.execute(
+            f"""
+            SELECT MODE() WITHIN GROUP (ORDER BY q.content) AS question,
+                   COUNT(*) AS count,
+                   MAX(q.timestamp) AS last_asked,
+                   MODE() WITHIN GROUP (ORDER BY q.chatbot_id) AS chatbot_id
+            FROM messages q
+            JOIN messages a
+              ON a.chatbot_id = q.chatbot_id
+             AND COALESCE(a.conversation_id, '') = COALESCE(q.conversation_id, '')
+             AND a.role = 'assistant'
+             AND a.grounded IS FALSE
+             AND a.timestamp >= q.timestamp
+             AND a.timestamp < q.timestamp + INTERVAL '2 minutes'
+            WHERE q.chatbot_id IN %s AND q.timestamp >= %s AND q.role = 'user'
+            GROUP BY LOWER(TRIM(q.content))
+            ORDER BY count DESC, last_asked DESC
+            LIMIT 12
+            """,
+            scope,
+        )
+        unanswered_questions = [
+            {
+                "question": row["question"],
+                "count": int(row["count"]),
+                "lastAskedAt": str(row["last_asked"]),
+                "chatbotId": row["chatbot_id"],
+            }
+            for row in cur.fetchall()
+        ]
+
+        # Per-chatbot breakdown, so "which of these is carrying the load" is a
+        # fact rather than a guess. Included even when a single bot is selected;
+        # the caller decides whether to show it.
+        cur.execute(
+            f"""
+            SELECT c.id, c.name,
+                   COUNT(m.id) FILTER (WHERE m.role = 'user') AS questions,
+                   COUNT(DISTINCT {thread}) AS conversations,
+                   COUNT(m.id) FILTER (WHERE m.role = 'assistant' AND m.grounded IS TRUE) AS answered,
+                   COUNT(m.id) FILTER (WHERE m.role = 'assistant' AND m.grounded IS FALSE) AS unanswered,
+                   MAX(m.timestamp) AS last_active
+            FROM chatbots c
+            LEFT JOIN messages m
+              ON m.chatbot_id = c.id AND m.timestamp >= %s
+            WHERE c.id IN %s
+            GROUP BY c.id, c.name
+            ORDER BY questions DESC, c.name ASC
+            """,
+            (since_day, tuple(bot_ids)),
+        )
+        by_chatbot = []
+        for row in cur.fetchall():
+            bot_answered = int(row["answered"] or 0)
+            bot_unanswered = int(row["unanswered"] or 0)
+            bot_measured = bot_answered + bot_unanswered
+            by_chatbot.append(
+                {
+                    "id": row["id"],
+                    "name": row["name"],
+                    "messages": int(row["questions"] or 0),
+                    "conversations": int(row["conversations"] or 0),
+                    "answered": bot_answered,
+                    "unanswered": bot_unanswered,
+                    "answerRate": round(bot_answered / bot_measured, 4) if bot_measured else None,
+                    "lastActiveAt": str(row["last_active"]) if row["last_active"] else None,
+                }
+            )
+
+        cur.close()
+    finally:
+        release_db_connection(conn)
+
     return {
-        "messagesOverTime": [
-            {"date": "Feb 1", "messages": 120},
-            {"date": "Feb 5", "messages": 450},
-            {"date": "Feb 10", "messages": 380},
+        "range": {"days": window, "from": since_day.isoformat()},
+        "chatbotId": chatbotId,
+        "totals": totals,
+        # `messagesOverTime` keeps its original key so existing readers of this
+        # endpoint keep working; the series is real now.
+        "messagesOverTime": series,
+        "topQuestions": top_questions,
+        "unansweredQuestions": unanswered_questions,
+        "byChatbot": by_chatbot,
+    }
+
+
+def _empty_totals() -> dict:
+    return {
+        "messages": 0,
+        "replies": 0,
+        "conversations": 0,
+        "answered": 0,
+        "unanswered": 0,
+        "unmeasured": 0,
+        "answerRate": None,
+        "medianLatencyMs": None,
+        "activeDays": 0,
+        "lastActiveAt": None,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Conversations
+#
+# The `messages` table already held every customer exchange; nothing in the
+# product ever showed them. These two endpoints turn it into an inbox: a list
+# grouped into threads, and one transcript.
+#
+# Both are scoped to the signed-in owner. The pre-existing
+# /api/chatbots/{id}/conversation route takes a chatbot id straight from the URL
+# with no auth dependency, which is fine for the public widget replaying its own
+# session but is not something the console should read customer history through.
+# ---------------------------------------------------------------------------
+
+
+@router.get("/api/conversations")
+async def list_conversations(
+    chatbotId: Optional[str] = None,
+    status: str = "all",
+    days: int = 30,
+    limit: int = 50,
+    offset: int = 0,
+    user: dict = Depends(get_current_user),
+):
+    window = _clamp_days(days)
+    since_day = (datetime.now() - timedelta(days=window - 1)).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    page = max(1, min(200, int(limit or 50)))
+    skip = max(0, int(offset or 0))
+
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        bot_ids = _owned_chatbot_ids(cur, user["id"], chatbotId)
+
+        if not bot_ids:
+            cur.close()
+            return {
+                "conversations": [],
+                "counts": {"all": 0, "unanswered": 0, "contacts": 0},
+                "hasMore": False,
+            }
+
+        thread = _thread_key_sql()
+
+        # One row per thread, with the facts the list needs: what was asked
+        # first, how long it ran, whether anything went unanswered, and whether
+        # the visitor left a way to reach them.
+        #
+        # A "contact" is an email address the visitor typed into the chat. It is
+        # detected, not collected — there is no lead form in the widget — so it
+        # is labelled as what it is and never counted as a qualified lead.
+        base = f"""
+            SELECT {thread} AS thread_id,
+                   MIN(m.chatbot_id) AS chatbot_id,
+                   MIN(NULLIF(m.conversation_id, '')) AS conversation_id,
+                   -- A thread with no session id is keyed by its own message
+                   -- id, so this is the value the transcript endpoint can look
+                   -- up. Without it the list would hand back the composite
+                   -- thread key and every such row would 404.
+                   MIN(m.id) AS first_message_id,
+                   COUNT(*) AS messages,
+                   MIN(m.timestamp) AS started_at,
+                   MAX(m.timestamp) AS last_active_at,
+                   BOOL_OR(m.role = 'assistant' AND m.grounded IS FALSE) AS has_unanswered,
+                   MAX(CASE WHEN m.role = 'user' AND m.content ~* %s
+                            THEN SUBSTRING(m.content FROM %s) END) AS contact_email,
+                   (ARRAY_AGG(m.content ORDER BY m.timestamp ASC)
+                       FILTER (WHERE m.role = 'user'))[1] AS opener
+            FROM messages m
+            WHERE m.chatbot_id IN %s AND m.timestamp >= %s
+            GROUP BY {thread}
+        """
+        params: list = [_EMAIL_RE, _EMAIL_RE, tuple(bot_ids), since_day]
+
+        having = ""
+        if status == "unanswered":
+            having = "HAVING BOOL_OR(m.role = 'assistant' AND m.grounded IS FALSE)"
+        elif status == "contacts":
+            having = "HAVING BOOL_OR(m.role = 'user' AND m.content ~* %s)"
+            params.append(_EMAIL_RE)
+
+        cur.execute(
+            f"{base} {having} ORDER BY last_active_at DESC LIMIT %s OFFSET %s",
+            tuple(params + [page + 1, skip]),
+        )
+        rows = cur.fetchall()
+        has_more = len(rows) > page
+        rows = rows[:page]
+
+        names: dict = {}
+        cur.execute("SELECT id, name FROM chatbots WHERE id IN %s", (tuple(bot_ids),))
+        for row in cur.fetchall():
+            names[row["id"]] = row["name"]
+
+        # The tab counts, so switching filters never shows a number the list
+        # then contradicts.
+        cur.execute(
+            f"""
+            SELECT COUNT(*) AS all_threads,
+                   COUNT(*) FILTER (WHERE t.has_unanswered) AS unanswered_threads,
+                   COUNT(*) FILTER (WHERE t.contact_email IS NOT NULL) AS contact_threads
+            FROM (
+                SELECT BOOL_OR(m.role = 'assistant' AND m.grounded IS FALSE) AS has_unanswered,
+                       MAX(CASE WHEN m.role = 'user' AND m.content ~* %s
+                                THEN m.content END) AS contact_email
+                FROM messages m
+                WHERE m.chatbot_id IN %s AND m.timestamp >= %s
+                GROUP BY {thread}
+            ) t
+            """,
+            (_EMAIL_RE, tuple(bot_ids), since_day),
+        )
+        counts = cur.fetchone() or {}
+        cur.close()
+    finally:
+        release_db_connection(conn)
+
+    return {
+        "conversations": [
+            {
+                "id": row["conversation_id"] or row["first_message_id"],
+                "threadId": row["thread_id"],
+                "chatbotId": row["chatbot_id"],
+                "chatbotName": names.get(row["chatbot_id"]),
+                "opener": (row["opener"] or "").strip() or None,
+                "messages": int(row["messages"]),
+                "startedAt": str(row["started_at"]),
+                "lastActiveAt": str(row["last_active_at"]),
+                "unanswered": bool(row["has_unanswered"]),
+                "contactEmail": row["contact_email"],
+            }
+            for row in rows
         ],
-        "topQuestions": [
-            {"question": "How do I sign up?", "count": 45},
-            {"question": "What is the pricing?", "count": 32},
+        "counts": {
+            "all": int(counts.get("all_threads") or 0),
+            "unanswered": int(counts.get("unanswered_threads") or 0),
+            "contacts": int(counts.get("contact_threads") or 0),
+        },
+        "hasMore": has_more,
+    }
+
+
+@router.get("/api/conversations/{conversation_id}")
+async def get_conversation_transcript(
+    conversation_id: str,
+    chatbotId: Optional[str] = None,
+    user: dict = Depends(get_current_user),
+):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        bot_ids = _owned_chatbot_ids(cur, user["id"], chatbotId)
+        if not bot_ids:
+            cur.close()
+            raise HTTPException(status_code=404, detail="Conversation not found")
+
+        # Threads with no session id are keyed by their own message id, so match
+        # either form and let ownership do the filtering.
+        cur.execute(
+            """
+            SELECT m.id, m.chatbot_id, m.role, m.content, m.timestamp, m.grounded, m.latency_ms
+            FROM messages m
+            WHERE m.chatbot_id IN %s
+              AND (m.conversation_id = %s OR m.id = %s)
+            ORDER BY m.timestamp ASC
+            """,
+            (tuple(bot_ids), conversation_id, conversation_id),
+        )
+        rows = cur.fetchall()
+        cur.close()
+    finally:
+        release_db_connection(conn)
+
+    if not rows:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    return {
+        "id": conversation_id,
+        "chatbotId": rows[0]["chatbot_id"],
+        "startedAt": str(rows[0]["timestamp"]),
+        "lastActiveAt": str(rows[-1]["timestamp"]),
+        "messages": [
+            {
+                "id": row["id"],
+                "role": row["role"],
+                "content": row["content"],
+                "timestamp": str(row["timestamp"]),
+                "grounded": row["grounded"],
+                "latencyMs": row["latency_ms"],
+            }
+            for row in rows
         ],
     }
 
@@ -483,7 +937,8 @@ async def chat(chatbot_id: str, request: ChatRequest):
                 release_db_connection(conn)
             history = [{"role": row["role"], "content": row["content"]} for row in reversed(rows)]
 
-        response = await ask_question(chatbot_id, request.message, history)
+        answer = await ask_question_with_meta(chatbot_id, request.message, history)
+        response = answer["response"]
 
         conn = get_db_connection()
         try:
@@ -494,8 +949,19 @@ async def chat(chatbot_id: str, request: ChatRequest):
                 (str(uuid.uuid4()), chatbot_id, owner_user_id, "user", request.message, datetime.now().isoformat(), request.conversation_id),
             )
             cur.execute(
-                "INSERT INTO messages (id, chatbot_id, user_id, role, content, timestamp, conversation_id) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                (str(uuid.uuid4()), chatbot_id, owner_user_id, "assistant", response, datetime.now().isoformat(), request.conversation_id),
+                "INSERT INTO messages (id, chatbot_id, user_id, role, content, timestamp, conversation_id, grounded, latency_ms) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                (
+                    str(uuid.uuid4()),
+                    chatbot_id,
+                    owner_user_id,
+                    "assistant",
+                    response,
+                    datetime.now().isoformat(),
+                    request.conversation_id,
+                    answer["grounded"],
+                    answer["latency_ms"],
+                ),
             )
             conn.commit()
             cur.close()
@@ -620,9 +1086,12 @@ async def chat_stream(chatbot_id: str, request: ChatRequest):
     prompt = clean_text(_build_prompt(request.message, semantic_ctx, structured_ctx))
 
     conversation_id = request.conversation_id
+    # Recorded now, while the context is still in scope. See `is_grounded`.
+    grounded = is_grounded(semantic_ctx, structured_ctx)
 
     async def event_generator():
         full_tokens: List[str] = []
+        started = time.perf_counter()
         try:
             token_queue: asyncio.Queue = asyncio.Queue()
 
@@ -675,8 +1144,8 @@ async def chat_stream(chatbot_id: str, request: ChatRequest):
                     ),
                 )
                 cur2.execute(
-                    "INSERT INTO messages (id, chatbot_id, user_id, role, content, timestamp, conversation_id) "
-                    "VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                    "INSERT INTO messages (id, chatbot_id, user_id, role, content, timestamp, conversation_id, grounded, latency_ms) "
+                    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                     (
                         str(uuid.uuid4()),
                         chatbot_id,
@@ -685,6 +1154,8 @@ async def chat_stream(chatbot_id: str, request: ChatRequest):
                         full_response,
                         datetime.now().isoformat(),
                         conversation_id,
+                        grounded,
+                        int((time.perf_counter() - started) * 1000),
                     ),
                 )
                 conn2.commit()

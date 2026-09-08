@@ -1,184 +1,218 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { motion, AnimatePresence } from 'motion/react';
-import { Lineicons } from "@lineiconshq/react-lineicons";
-import {
-  DashboardSquare1Outlined,
-  BotpressOutlined,
-  Database2Outlined,
-  PlayOutlined,
-  Rocket5Outlined,
-  BarChart4Outlined,
-  CreditCardMultipleOutlined,
-  Gear1Outlined,
-  Bell1Outlined,
-  Bolt2Outlined,
-  ChevronDownOutlined,
-  ExitOutlined,
-  MenuHamburger1Outlined,
-  XmarkOutlined
-} from "@lineiconshq/free-icons";
 import { useRouter } from 'next/navigation';
 import { signOut, useSession } from '@/lib/nextAuthReact';
-import { Button } from './ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { ScrollArea } from './ui/scroll-area';
 import { toast } from 'sonner';
 import { Toaster } from './ui/sonner';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from './ui/dropdown-menu';
-import type { MenuItem } from '@/lib/types/ui';
+import { DashboardShell } from '@/components/dashboard/shell';
+import { DEFAULT_PAGE, isAgentPage, resolvePage, type PageId } from '@/components/dashboard/nav';
+import { LowCreditsBanner, readCredits } from '@/components/dashboard/upsell';
+import { PanelSkeleton } from '@/components/dashboard/kit';
+import { isOnboarded, resolveFirstRun } from '@/lib/onboarding';
 
-// window.location access moved inside useEffect to prevent SSR errors
+/* ==========================================================================
+   The console
+   --------------------------------------------------------------------------
+   This file owns three things and delegates everything else: the data, the
+   current place, and which screen renders. It used to also own a sidebar, a
+   header, a mobile drawer and an inline billing screen — all of which now
+   live in `dashboard/shell.tsx` and `BillingPage.tsx` where they can be
+   reused and reasoned about.
 
-const DashboardPage = dynamic(() => import('@/components/DashboardPage'));
-const MyChatbotsPage = dynamic(() => import('@/components/Mychatbots'));
-const PlaygroundPage = dynamic(() => import('./playground').then((mod) => mod.PlaygroundPage));
-const DeployPage = dynamic(() => import('@/components/deploy').then((mod) => mod.DeployPage));
-const AnalyticsPage = dynamic(() => import('@/components/AnalyticsPage'));
-const SettingsPage = dynamic(() => import('@/components/SettingsPage'));
-const TrainingPage = dynamic(() => import('@/components/TrainingPage'));
+   Two behaviours changed on purpose:
 
-function BillingPage({
-  userProfile,
-  stats,
-  chatbotCount,
-}: {
-  userProfile: any;
-  stats: any;
-  chatbotCount: number;
-}) {
-  const credits = userProfile?.credits ?? 0;
-  const trials = userProfile?.freeTrialRemaining ?? 0;
-  const totalMessages = stats?.totalMessages ?? 0;
+   · The place is in the URL (`?p=knowledge&bot=42`). Before, it was React
+     state, so a refresh dropped you back on Overview, the back button left
+     the console entirely, and no screen could be linked to a colleague.
 
-  return (
-    <Card className="mx-auto max-w-4xl border-white/80 bg-white/90 shadow-xl shadow-slate-200/60 dark:border-slate-800/80 dark:bg-slate-950/70 dark:shadow-none">
-      <CardHeader>
-        <CardTitle>Billing & Usage</CardTitle>
-        <CardDescription>Monitor credits and upgrade when you are ready to scale.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <div className="rounded-xl border border-slate-200/70 p-4 dark:border-slate-800">
-            <p className="text-xs text-muted-foreground">Credits</p>
-            <p className="stat-value mt-1 text-2xl font-semibold">{credits}</p>
-          </div>
-          <div className="rounded-xl border border-slate-200/70 p-4 dark:border-slate-800">
-            <p className="text-xs text-muted-foreground">Free Trials</p>
-            <p className="stat-value mt-1 text-2xl font-semibold">{trials}</p>
-          </div>
-          <div className="rounded-xl border border-slate-200/70 p-4 dark:border-slate-800">
-            <p className="text-xs text-muted-foreground">Monthly Messages</p>
-            <p className="stat-value mt-1 text-2xl font-semibold">{Number(totalMessages).toLocaleString()}</p>
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground">You currently manage {chatbotCount} chatbot(s). Upgrade your plan for higher limits.</p>
-      </CardContent>
-    </Card>
-  );
-}
+   · A brand-new account is sent to `/onboarding` once — and only once. The
+     OAuth callback cannot know whether the person signing in is new, so the
+     decision is made here, where the bot list is already being fetched: no
+     chatbots *and* no record of having been offered first run means first
+     run. Skipping or finishing it writes that record, so nobody is bounced
+     out of the console twice. An account that owns a chatbot never sees it.
+   ========================================================================== */
+
+const DashboardPage = dynamic(() => import('@/components/DashboardPage'), {
+  loading: () => <PanelSkeleton bodyHeight="h-72" />,
+});
+const MyChatbotsPage = dynamic(() => import('@/components/Mychatbots'), {
+  loading: () => <PanelSkeleton bodyHeight="h-64" />,
+});
+const PlaygroundPage = dynamic(() => import('./playground').then((mod) => mod.PlaygroundPage), {
+  loading: () => <PanelSkeleton bodyHeight="h-[28rem]" />,
+});
+const DeployPage = dynamic(() => import('@/components/deploy').then((mod) => mod.DeployPage), {
+  loading: () => <PanelSkeleton bodyHeight="h-64" />,
+});
+const AnalyticsPage = dynamic(() => import('@/components/AnalyticsPage'), {
+  loading: () => <PanelSkeleton bodyHeight="h-72" />,
+});
+const SettingsPage = dynamic(() => import('@/components/SettingsPage'), {
+  loading: () => <PanelSkeleton bodyHeight="h-64" />,
+});
+const TrainingPage = dynamic(() => import('@/components/TrainingPage'), {
+  loading: () => <PanelSkeleton bodyHeight="h-64" />,
+});
+const BillingPage = dynamic(() => import('@/components/BillingPage'), {
+  loading: () => <PanelSkeleton bodyHeight="h-72" />,
+});
+const ConversationsPage = dynamic(() => import('@/components/ConversationsPage'), {
+  loading: () => <PanelSkeleton bodyHeight="h-72" />,
+});
+const IntegrationsPage = dynamic(() => import('@/components/IntegrationsPage'), {
+  loading: () => <PanelSkeleton bodyHeight="h-64" />,
+});
 
 const payload = {
-  name: "user.me",
-  chatbot: "chatbot.list",
-  stats: "stats.get",
-  analytics: "analytics.get",
-  chatbot_sharing_get: "chatbot.share.get",
-  chatbot_conversation_get: "chatbot.conversation.get"
-}
-
-const menuItems: MenuItem[] = [
-  { icon: DashboardSquare1Outlined, label: 'Dashboard', id: 'dashboard' },
-  { icon: BotpressOutlined, label: 'My Chatbots', id: 'chatbots' },
-  { icon: Database2Outlined, label: 'Training & Data', id: 'training' },
-  { icon: PlayOutlined, label: 'Playground', id: 'playground' },
-  { icon: Rocket5Outlined, label: 'Deploy', id: 'deploy' },
-  { icon: BarChart4Outlined, label: 'Analytics', id: 'analytics' },
-  { icon: CreditCardMultipleOutlined, label: 'Billing', id: 'billing' },
-  { icon: Gear1Outlined, label: 'Settings', id: 'settings' },
-];
+  name: 'user.me',
+  chatbot: 'chatbot.list',
+  stats: 'stats.get',
+  analytics: 'analytics.get',
+  chatbot_sharing_get: 'chatbot.share.get',
+  chatbot_conversation_get: 'chatbot.conversation.get',
+};
 
 const TEMP_DISABLE_CREDIT_BLOCKADE = true;
 
+function botIdOf(bot: any): string | null {
+  const raw = bot?.id ?? bot?._id ?? null;
+  return raw === null || raw === undefined ? null : String(raw);
+}
+
 export function ChatInterface() {
-  const [currentPage, setCurrentPage] = useState('dashboard');
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [page, setPage] = useState<PageId>(DEFAULT_PAGE);
+  const [botId, setBotId] = useState<string | null>(null);
   const [chatbots, setChatbots] = useState<any[]>([]);
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [analytics, setAnalytics] = useState(null);
-  const [selectedChatbot, setSelectedChatbot] = useState(null);
+  const [stats, setStats] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
   const router = useRouter();
   const { data: session } = useSession();
-  const remainingCredits = userProfile?.credits ?? 0;
-  const remainingFreeTrials = userProfile?.freeTrialRemaining ?? 0;
-  const hasUsageQuota = remainingCredits > 0 || remainingFreeTrials > 0;
-  const canCreateChatbot = TEMP_DISABLE_CREDIT_BLOCKADE || hasUsageQuota;
 
+  const credits = useMemo(() => readCredits(userProfile), [userProfile]);
+  const canCreateChatbot = TEMP_DISABLE_CREDIT_BLOCKADE || credits.spendable > 0;
+
+  /* The selected bot is explicit state, not a silent `chatbots[0]` fallback in
+     seven different render branches. When it resolves to the first bot we say
+     so in the URL, so the switcher and the address bar never disagree. */
+  const selectedChatbot = useMemo(() => {
+    if (chatbots.length === 0) return null;
+    const match = chatbots.find((bot) => botIdOf(bot) === botId);
+    return match ?? chatbots[0];
+  }, [chatbots, botId]);
+
+  const writeUrl = useCallback(
+    (nextPage: PageId, nextBot: string | null, mode: 'push' | 'replace') => {
+      if (typeof window === 'undefined') return;
+      const params = new URLSearchParams(window.location.search);
+      if (nextPage === DEFAULT_PAGE) params.delete('p');
+      else params.set('p', nextPage);
+      if (nextBot) params.set('bot', nextBot);
+      else params.delete('bot');
+      const query = params.toString();
+      const url = `${window.location.pathname}${query ? `?${query}` : ''}`;
+      window.history[mode === 'push' ? 'pushState' : 'replaceState'](null, '', url);
+    },
+    [],
+  );
+
+  /* Adopt the URL after mount rather than in a lazy initializer: the server
+     renders without a query string, so reading it during the first render
+     would hand React two different trees to reconcile. */
   useEffect(() => {
-    async function resultsfromBFF() {
-      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-      const response = await fetch(`${baseUrl}/api/bff`, {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
-      const data = await response.json();
-      setUserProfile(data.name);
-      setChatbots(chatbots),
-      setStats(stats),
-      setAnalytics(analytics),
-    
-      console.log(data);
-
-    }
-
-    void resultsfromBFF();
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = resolvePage(params.get('p'));
+    if (fromUrl) setPage(fromUrl);
+    const bot = params.get('bot');
+    if (bot) setBotId(bot);
   }, []);
 
-  const handleCreatePageAccess = () => {
+  useEffect(() => {
+    function onPop() {
+      const params = new URLSearchParams(window.location.search);
+      setPage(resolvePage(params.get('p')) ?? DEFAULT_PAGE);
+      setBotId(params.get('bot'));
+    }
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  /* Keep the address bar honest about which bot is on screen. */
+  useEffect(() => {
+    const resolved = botIdOf(selectedChatbot);
+    if (resolved && resolved !== botId) {
+      setBotId(resolved);
+      writeUrl(page, resolved, 'replace');
+    }
+  }, [selectedChatbot, botId, page, writeUrl]);
+
+  /* First run, decided once. `firstRunRef` matters: without it a slow /api
+     round trip can re-run this after the router has already started moving,
+     and the customer gets two navigations for one decision. */
+  const firstRunRef = useRef(false);
+  useEffect(() => {
+    if (loading || firstRunRef.current) return;
+    if (chatbots.length > 0) {
+      // Owning a chatbot is proof enough; stop offering first run for good.
+      if (!isOnboarded()) resolveFirstRun();
+      return;
+    }
+    if (!session || isOnboarded()) return;
+    firstRunRef.current = true;
+    router.replace('/onboarding');
+  }, [loading, chatbots.length, session, router]);
+
+  /* An agent screen with no agent is a broken screen. If the last bot is
+     deleted while Deploy is open, fall back rather than render an empty frame. */
+  useEffect(() => {
+    if (!loading && chatbots.length === 0 && isAgentPage(page)) {
+      setPage(DEFAULT_PAGE);
+      writeUrl(DEFAULT_PAGE, null, 'replace');
+    }
+  }, [loading, chatbots.length, page, writeUrl]);
+
+  const navigate = useCallback(
+    (next: PageId) => {
+      const target = isAgentPage(next) && chatbots.length === 0 ? DEFAULT_PAGE : next;
+      setPage(target);
+      writeUrl(target, botId, 'push');
+      if (typeof window !== 'undefined') window.scrollTo({ top: 0 });
+    },
+    [botId, chatbots.length, writeUrl],
+  );
+
+  const selectChatbot = useCallback(
+    (bot: any) => {
+      const id = botIdOf(bot);
+      setBotId(id);
+      writeUrl(page, id, 'push');
+    },
+    [page, writeUrl],
+  );
+
+  const handleCreatePageAccess = useCallback(() => {
     router.push('/onboarding');
-  };
+  }, [router]);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     await signOut({ callbackUrl: '/' });
-  };
+  }, []);
 
-  useEffect(() => {
-    if (session) {
-      fetchData();
-    }
-  }, [session]);
-
-  useEffect(() => {
-    (false);
-  }, [currentPage]);
-
-  const onboardingGateRef = useRef(false);
-
-  useEffect(() => {
-    if (!loading && chatbots.length === 0 && !onboardingGateRef.current) {
-      onboardingGateRef.current = true;
-      router.push('/onboarding');
-    }
-  }, [loading, chatbots, router]);
-
-  const fetchData = async () => {
+  /* ---- data ----------------------------------------------------------------
+     Unchanged contract: same endpoints, same fallbacks, same critical flags.
+     The only edit is that the BFF call no longer ends in three self-
+     assignments (`setChatbots(chatbots)`) that overwrote nothing and logged
+     the whole response to the console on every mount. */
+  const fetchData = useCallback(async () => {
     try {
       if (!session) return;
 
-      const fetchJson = async (
-        endpoint: string,
-        opts: { fallback: any; critical: boolean },
-      ) => {
+      const fetchJson = async (endpoint: string, opts: { fallback: any; critical: boolean }) => {
         try {
           const res = await fetch(endpoint);
           const contentType = res.headers.get('content-type') || '';
@@ -203,7 +237,9 @@ export function ChatInterface() {
             return JSON.parse(rawBody);
           }
 
-          throw new Error(`${endpoint}: Expected JSON but received ${contentType || 'unknown content type'}`);
+          throw new Error(
+            `${endpoint}: Expected JSON but received ${contentType || 'unknown content type'}`,
+          );
         } catch (error) {
           if (opts.critical) throw error;
           console.warn(`Non-critical data fetch failed for ${endpoint}:`, error);
@@ -228,235 +264,126 @@ export function ChatInterface() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session]);
+
+  /* The BFF and `/api/users/me` both describe the same person, and both used
+     to write `userProfile` unconditionally — so whichever response landed last
+     decided what the credit meter said. REST wins now; the BFF only fills the
+     gap when it arrives first or `/api/users/me` failed. */
+  useEffect(() => {
+    async function resultsfromBFF() {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+      const response = await fetch(`${baseUrl}/api/bff`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      setUserProfile((current: any) => current ?? data?.name ?? null);
+    }
+
+    void resultsfromBFF().catch((error) => {
+      console.warn('BFF profile prefetch failed:', error);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (session) void fetchData();
+  }, [session, fetchData]);
+
+  /* ---- render -------------------------------------------------------------- */
+
+  function screen() {
+    switch (page) {
+      case 'chatbots':
+        return (
+          <MyChatbotsPage
+            chatbots={chatbots}
+            loading={loading}
+            onSelectChatbot={(bot: any) => {
+              selectChatbot(bot);
+              navigate('playground');
+            }}
+            onRefresh={fetchData}
+            canCreateChatbot={canCreateChatbot}
+            onCreateChatbot={handleCreatePageAccess}
+          />
+        );
+      case 'inbox':
+        return (
+          <ConversationsPage
+            chatbots={chatbots}
+            loading={loading}
+            onNavigate={(next: string) => navigate(next as PageId)}
+            onSelectChatbot={selectChatbot}
+          />
+        );
+      case 'integrations':
+        return (
+          <IntegrationsPage
+            chatbots={chatbots}
+            selectedChatbot={selectedChatbot}
+            loading={loading}
+            onNavigate={(next: string) => navigate(next as PageId)}
+          />
+        );
+      case 'billing':
+        return (
+          <BillingPage userProfile={userProfile} stats={stats} chatbotCount={chatbots.length} />
+        );
+      case 'knowledge':
+        return <TrainingPage chatbot={selectedChatbot} />;
+      case 'playground':
+        return <PlaygroundPage chatbot={selectedChatbot} />;
+      case 'deploy':
+        return <DeployPage chatbot={selectedChatbot} />;
+      case 'analytics':
+        return (
+          <AnalyticsPage
+            analytics={analytics}
+            chatbots={chatbots}
+            loading={loading}
+            onNavigate={(next: string) => navigate(next as PageId)}
+            onSelectChatbot={selectChatbot}
+          />
+        );
+      case 'settings':
+        return <SettingsPage chatbot={selectedChatbot} />;
+      case 'dashboard':
+      default:
+        return (
+          <DashboardPage
+            stats={stats}
+            chatbots={chatbots}
+            loading={loading}
+            canCreateChatbot={canCreateChatbot}
+            onCreateChatbot={handleCreatePageAccess}
+            userProfile={userProfile}
+            analytics={analytics}
+            onNavigate={(next: string) => navigate(next as PageId)}
+            onSelectChatbot={selectChatbot}
+          />
+        );
+    }
+  }
 
   return (
-    <div className="relative flex h-screen overflow-hidden bg-[#f7f5f3] text-slate-900 dark:bg-[radial-gradient(circle_at_top,_#0f172a_0%,_#020617_45%,_#020617_100%)] dark:text-slate-100">
-      <div className="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-amber-300/35 blur-3xl dark:bg-amber-500/10" />
-      <div className="pointer-events-none absolute -right-16 bottom-10 h-80 w-80 rounded-full bg-cyan-300/30 blur-3xl dark:bg-cyan-500/10" />
+    <>
       <Toaster />
-
-      <AnimatePresence>
-        {mobileSidebarOpen && (
-          <>
-            <motion.button
-              key="mobile-sidebar-overlay"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-30 bg-slate-950/45 backdrop-blur-sm md:hidden"
-              onClick={() => setMobileSidebarOpen(false)}
-              aria-label="Close mobile sidebar"
-            />
-
-            <motion.aside
-              key="mobile-sidebar"
-              initial={{ x: -320 }}
-              animate={{ x: 0 }}
-              exit={{ x: -320 }}
-              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-              className="fixed inset-y-0 left-0 z-40 flex w-[min(86vw,20rem)] flex-col border-r border-white/50 bg-white/92 shadow-2xl backdrop-blur-2xl dark:border-slate-800/70 dark:bg-slate-950/92 md:hidden"
-            >
-              <div className="flex h-16 items-center justify-between border-b border-white/70 px-4 dark:border-slate-800/80">
-                <div className="flex items-center gap-2.5">
-                  <div className="relative h-[46px] w-[120px]">
-                    <p className="absolute left-[5px] top-[5px] whitespace-nowrap text-[24px] leading-6 [font-family:'Jersey_10'] text-slate-900 dark:text-slate-100">
-                      <span className="text-slate-900 dark:text-slate-100">Turbo</span>
-                      <span className="inline-block text-slate-900 dark:text-slate-100">
-                        chat
-                      </span>
-                    </p>
-                    <p className="pt-[30px] text-[11px] text-slate-500 dark:text-slate-400">Workspace</p>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setMobileSidebarOpen(false)}
-                  aria-label="Close menu"
-                >
-                  <Lineicons icon={XmarkOutlined} size={16} />
-                </Button>
-              </div>
-
-              <ScrollArea className="flex-1 px-3 py-4">
-                <nav className="space-y-1.5">
-                  {menuItems.map((item) => (
-                    <Button
-                      key={`drawer-${item.id}`}
-                      variant={currentPage === item.id ? 'secondary' : 'ghost'}
-                      className={`h-10 w-full justify-start rounded-xl px-3 text-sm ${currentPage === item.id
-                        ? 'bg-slate-900 text-white shadow-md shadow-slate-400/30 dark:bg-slate-100 dark:text-slate-900'
-                        : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-slate-100'
-                        }`}
-                      onClick={() => setCurrentPage(item.id)}
-                    >
-                    <Lineicons icon={item.icon as any} size={16} className="mr-2 shrink-0" />
-                      {item.label}
-                    </Button>
-                  ))}
-                </nav>
-              </ScrollArea>
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* Sidebar */}
-      <aside className="relative z-10 hidden w-72 shrink-0 border-r border-white/50 bg-white dark:border-slate-800/70 dark:bg-slate-950/60 md:flex md:flex-col">
-        {/* Logo */}
-        <div className="h-20 flex items-center px-6 border-b border-white/60 dark:border-slate-800/80">
-          <div className="flex items-center gap-2">
-            <div className="relative h-[46px] w-[120px]">
-              <span className="absolute left-[5px] top-[5px] whitespace-nowrap text-[24px] leading-6 [font-family:'Jersey_10'] text-slate-900 dark:text-slate-100">
-                <span className="text-slate-900 dark:text-slate-100">Turbo</span>
-                <span className="inline-block text-slate-900 dark:text-slate-100">
-                  chat
-                </span>
-              </span>
-              <span className="block pt-[30px] text-xs text-slate-500 dark:text-slate-400">Workspace Console</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <ScrollArea className="flex-1 px-4 py-5">
-          <p className="px-2 pb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Navigation</p>
-          <nav className="space-y-1.5">
-            {menuItems.map((item) => (
-                <Button
-                  key={item.id}
-                  variant={currentPage === item.id ? 'secondary' : 'ghost'}
-                  className={`w-full justify-start text-sm h-10 rounded-xl px-3 ${currentPage === item.id
-                    ? 'bg-slate-900 text-white shadow-md shadow-slate-400/30 dark:bg-slate-100 dark:text-slate-900'
-                    : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-slate-100'
-                    }`}
-                  onClick={() => setCurrentPage(item.id)}
-                >
-                  <Lineicons icon={item.icon as any} size={16} className="mr-2 shrink-0" />
-                  {item.label}
-                </Button>
-              ))}
-            </nav>
-        </ScrollArea>
-
-        {/* User Profile */}
-        <div className="p-4 border-t border-white/70 dark:border-slate-800/80">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="w-full justify-start h-auto p-3 rounded-2xl border border-white/80 bg-white/80 hover:bg-white dark:border-slate-800 dark:bg-slate-900/70 dark:hover:bg-slate-900">
-                <Avatar className="w-7 h-7 mr-2">
-                  <AvatarFallback className="text-xs">JD</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 text-left min-w-0">
-                  <div className="text-sm font-medium truncate">Rakesh Jha</div>
-                  <div className="text-xs text-muted-foreground truncate">{userProfile?.plan || 'Free'} Plan • {remainingCredits} Credits • {remainingFreeTrials} Free Trials</div>
-                </div>
-                <Lineicons icon={ChevronDownOutlined} size={16} className="ml-2" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem onClick={handleLogout}>
-                <Lineicons icon={ExitOutlined} size={16} className="mr-2" />
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </aside>
-
-      <div className="dashboard-app relative z-10 flex flex-1 flex-col overflow-hidden">
-        <header className="h-16 border-b border-white/70 dark:border-slate-800/80 flex items-center justify-between px-4 md:px-6 bg-white/65 backdrop-blur-2xl dark:bg-slate-950/55">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 md:hidden"
-              onClick={() => setMobileSidebarOpen(true)}
-              aria-label="Open menu"
-            >
-              <Lineicons icon={MenuHamburger1Outlined} size={18} />
-            </Button>
-
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight">
-                {menuItems.find(item => item.id === currentPage)?.label || 'Dashboard'}
-              </h1>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="relative">
-            <Lineicons icon={Bell1Outlined} size={16} />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-full border-amber-300/60 bg-gradient-to-r from-amber-100/90 to-yellow-50 px-4 shadow-[0_8px_24px_rgba(245,158,11,0.25)] transition hover:from-amber-100 hover:to-amber-50 dark:border-amber-500/40 dark:from-amber-950/50 dark:to-amber-900/30"
-              onClick={() => router.push('/pricing')}
-            >
-              <Lineicons icon={CreditCardMultipleOutlined} size={14} className="mr-1.5 text-amber-700 dark:text-amber-300" />
-              <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">{remainingCredits} Credits</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-full border-cyan-300/60 bg-gradient-to-r from-cyan-100/85 to-sky-50 px-4 shadow-[0_8px_24px_rgba(6,182,212,0.22)] transition hover:from-cyan-100 hover:to-sky-100 dark:border-cyan-500/40 dark:from-cyan-950/50 dark:to-sky-900/30"
-              onClick={() => router.push('/pricing')}
-            >
-              <Lineicons icon={Bolt2Outlined} size={14} className="mr-1.5 text-cyan-700 dark:text-cyan-300" />
-              <span className="text-sm font-semibold text-cyan-700 dark:text-cyan-300">{remainingFreeTrials} Trials</span>
-            </Button>
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-destructive">
-              <Lineicons icon={ExitOutlined} size={16} className="mr-2" />
-              <span className="text-sm">Logout</span>
-            </Button>
-          </div>
-        </header>
-
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="p-4 md:p-6">
-            {currentPage === 'dashboard' && (
-              <DashboardPage
-                stats={stats}
-                chatbots={chatbots}
-                loading={loading}
-                canCreateChatbot={canCreateChatbot}
-                onCreateChatbot={handleCreatePageAccess}
-                userProfile={userProfile}
-                analytics={analytics}
-              />
-            )}
-            {currentPage === 'chatbots' && (
-              <MyChatbotsPage
-                chatbots={chatbots}
-                loading={loading}
-                onSelectChatbot={(bot: any) => { setSelectedChatbot(bot); setCurrentPage('playground'); }}
-                onRefresh={fetchData}
-                canCreateChatbot={canCreateChatbot}
-                onCreateChatbot={handleCreatePageAccess}
-              />
-            )}
-            {currentPage === 'playground' && <PlaygroundPage chatbot={selectedChatbot || chatbots[0]} />}
-            {currentPage === 'deploy' && <DeployPage chatbot={selectedChatbot || chatbots[0]} />}
-            {currentPage === 'analytics' && <AnalyticsPage analytics={analytics} />}
-            {currentPage === 'billing' && (
-              <BillingPage
-                userProfile={userProfile}
-                stats={stats}
-                chatbotCount={chatbots.length}
-              />
-            )}
-            {currentPage === 'settings' && <SettingsPage chatbot={selectedChatbot || chatbots[0]} />}
-            {currentPage === 'training' && <TrainingPage />}
-          </div>
-        </main>
-      </div>
-    </div>
+      <DashboardShell
+        page={page}
+        onNavigate={navigate}
+        chatbots={chatbots}
+        selectedChatbot={selectedChatbot}
+        onSelectChatbot={selectChatbot}
+        onCreateChatbot={handleCreatePageAccess}
+        onSignOut={handleLogout}
+        user={session?.user ?? {}}
+        credits={credits}
+        loading={loading}
+      >
+        <LowCreditsBanner state={credits} />
+        {screen()}
+      </DashboardShell>
+    </>
   );
 }

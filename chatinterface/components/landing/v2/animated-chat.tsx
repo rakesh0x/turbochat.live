@@ -122,7 +122,7 @@ export function AnimatedChat() {
                     {step.sources.map((src) => (
                       <span
                         key={src}
-                        className="inline-flex items-center gap-1 rounded-md bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-700 dark:bg-violet-500/10 dark:text-violet-300"
+                        className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 font-mono text-[10px] text-foreground/70"
                       >
                         <Link2 className="h-2.5 w-2.5" />
                         {src}
