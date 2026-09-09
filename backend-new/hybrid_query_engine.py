@@ -62,4 +62,10 @@ def store_chunks(chunks: list[str], embeddings: list[list[float]]) -> None:
         print(f"embeddings failed")
 
 #--- Retreival system for query using efficient methods -----#
-def retreive_chunks()
+def rrf(dense_ids, sparse_ids, k=60):
+    scores = {}
+    for c, cid in enumerate(dense_ids):
+        scores[cid] = scores.get(cid, 0) + 1/ (k+c+1)
+    for c, cid in enumerate(sparse_ids):
+        scores[cid] = scores.get(cid, 0) + 1/ (k+c+1)
+    return sorted(scores, key=lambda cid: scores[cid], reverse=True)
