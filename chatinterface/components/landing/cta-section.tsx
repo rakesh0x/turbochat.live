@@ -10,7 +10,7 @@ export function CtaSection() {
       <div className="absolute inset-0 bg-gradient-to-b from-cyan-950/20 via-slate-950/10 to-transparent" />
 
       <div className="relative max-w-3xl mx-auto text-center">
-        <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl mb-4">Ship better support with TurboChat</h2>
+        <h2 className="font-display font-medium text-3xl md:text-4xl lg:text-5xl mb-4">Ship better support with TurboChat</h2>
         <p className="text-muted-foreground mb-8 max-w-md mx-auto">
           The best custom AI chatbot for SaaS support. Train AI chatbot on website docs, embed an AI
           support widget, and reduce support ticket volume with AI &mdash; all in one RAG chatbot platform.

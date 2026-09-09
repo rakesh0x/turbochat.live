@@ -42,7 +42,7 @@ function PricingSectionInline() {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <span className="inline-block px-4 py-1.5 text-sm border rounded-full mb-6">Pricing</span>
-          <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-balance">Simple plans as you scale</h2>
+          <h2 className="font-display font-medium text-3xl md:text-4xl lg:text-5xl text-balance">Simple plans as you scale</h2>
           <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
             Start free, prove value quickly, then upgrade as chat volume grows. Every plan is designed for faster
             support and better customer experience.
@@ -63,7 +63,7 @@ function PricingSectionInline() {
                     Most popular
                   </span>
                 ) : null}
-                <h3 className="font-serif text-2xl mb-1">{plan.name}</h3>
+                <h3 className="font-display font-medium text-2xl mb-1">{plan.name}</h3>
                 <p className="text-sm text-muted-foreground">{plan.subtitle}</p>
               </div>
 

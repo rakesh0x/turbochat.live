@@ -9,7 +9,7 @@ export function HowItWorks() {
         {/* Section header */}
         <div className="text-center mb-20">
           <span className="inline-block px-4 py-1.5 text-sm border rounded-full mb-6">How it works</span>
-          <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-balance">
+          <h2 className="font-display font-medium text-3xl md:text-4xl lg:text-5xl text-balance">
             The fastest way to
             <br />
             launch AI support on your site
@@ -24,7 +24,7 @@ export function HowItWorks() {
         {/* Step 1 */}
         <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
           <div className="order-2 md:order-1">
-            <h3 className="font-serif text-2xl md:text-3xl mb-4">1. Train AI chatbot on website docs</h3>
+            <h3 className="font-display font-medium text-2xl md:text-3xl mb-4">1. Train AI chatbot on website docs</h3>
             <p className="text-muted-foreground leading-relaxed">
               Add your website, help center, PDFs, and product docs. TurboChat uses RAG (Retrieval-Augmented
               Generation) to index your content so responses stay grounded in your actual business information.
@@ -42,7 +42,7 @@ export function HowItWorks() {
             <BrandCard />
           </div>
           <div>
-            <h3 className="font-serif text-2xl md:text-3xl mb-4">2. Match your brand voice</h3>
+            <h3 className="font-display font-medium text-2xl md:text-3xl mb-4">2. Match your brand voice</h3>
             <p className="text-muted-foreground leading-relaxed">
               Set logo, colors, assistant name, and response tone. Keep your support experience on-brand instead of
               looking like a generic third-party widget.
@@ -53,7 +53,7 @@ export function HowItWorks() {
         {/* Step 3 */}
         <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
           <div className="order-2 md:order-1">
-            <h3 className="font-serif text-2xl md:text-3xl mb-4">3. Embed AI support widget on your website</h3>
+            <h3 className="font-display font-medium text-2xl md:text-3xl mb-4">3. Embed AI support widget on your website</h3>
             <p className="text-muted-foreground leading-relaxed">
               Copy a single snippet to embed an AI support widget on your website. Launch on your own domain
               and product site. Customers get instant RAG chatbot answers in the same place they browse docs and features.
@@ -70,7 +70,7 @@ export function HowItWorks() {
             <PaymentsCard />
           </div>
           <div>
-            <h3 className="font-serif text-2xl md:text-3xl mb-4">4. Reduce support ticket volume with AI</h3>
+            <h3 className="font-display font-medium text-2xl md:text-3xl mb-4">4. Reduce support ticket volume with AI</h3>
             <p className="text-muted-foreground leading-relaxed">
               Start with a free trial, then move to paid plans as your volume grows. TurboChat helps reduce
               customer support ticket volume with AI automation built for SaaS support teams &mdash; an
@@ -81,7 +81,7 @@ export function HowItWorks() {
 
         {/* Step 5 */}
         <div className="text-center mb-16">
-          <h3 className="font-serif text-2xl md:text-3xl mb-4">5. Go live in minutes</h3>
+          <h3 className="font-display font-medium text-2xl md:text-3xl mb-4">5. Go live in minutes</h3>
           <p className="text-muted-foreground max-w-lg mx-auto mb-6">
             Your assistant is ready to answer onboarding, pricing, setup, and product questions 24/7 so your team can
             focus on high-impact support.

@@ -8,7 +8,7 @@ export function HeroSection() {
     <section className="relative w-full overflow-hidden bg-white">
       <div className="relative max-w-7xl mx-auto px-6 pt-16 pb-8">
         <div className="text-center mx-auto">
-          <h1 className="mx-auto max-w-5xl font-serif text-4xl md:text-5xl lg:text-[72px] leading-[1.05] tracking-[-0.04em]">
+          <h1 className="mx-auto max-w-5xl font-display font-medium text-4xl md:text-5xl lg:text-[72px] leading-[1.05] tracking-[-0.04em]">
             Your customers have questions.
             <br />
             Your website has the answers.

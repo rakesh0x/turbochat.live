@@ -4,81 +4,183 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ==========================================================================
+   Turbochat palette — "The Highlighted Answer"
+   --------------------------------------------------------------------------
+   One palette for the whole product, so the marketing site and the console
+   read as the same object. The physical version of this product is a reading
+   desk: cool paper, ink, a highlighter, and a library-teal pen.
+
+     paper   the ground. Cool grey-green, deliberately not warm cream.
+     ink     text, primary buttons, and the commerce plate.
+     marker  #F2E14B, and it means one thing: "the answer came from here."
+             Never a button fill, never a border, never decoration.
+     signal  library teal. Links, focus rings, crawl activity, healthy meters.
+
+   Depth is a single strategy, committed to: 1px low-opacity ink hairlines plus
+   small tonal shifts between canvas / raised / sunk. No drop shadows are used
+   for structure, which is why the interface still reads in dark mode, where
+   shadows carry almost nothing.
+   ========================================================================== */
+
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* the three paper tones */
+  --paper: #eceee9;
+  --paper-raised: #f6f7f4;
+  --paper-sunk: #e2e5df;
+
+  --ink: #14181b;
+  --ink-quiet: #5b655f;
+
+  --surface-2: var(--paper-sunk);
+  --border: rgba(20, 24, 27, 0.1);
+  --border-strong: rgba(20, 24, 27, 0.2);
+
+  /* retrieval marker — reserved */
+  --marker: #f2e14b;
+  --marker-deep: #e4d22c;
+  --marker-on: #14181b;
+
+  /* signal */
+  --signal: #1d6e68;
+  --signal-ink: #175752;
+  --signal-soft: #e0eae7;
+  --signal-border: rgba(29, 110, 104, 0.26);
+
+  /* status, mixed for paper rather than borrowed from a stock ramp */
+  --success: #2e6a4e;
+  --success-ink: #23543e;
+  --success-soft: #e2ebe3;
+  --success-border: rgba(46, 106, 78, 0.24);
+  --warning: #8a5a12;
+  --warning-soft: #f2ecdc;
+  --warning-border: rgba(138, 90, 18, 0.24);
+  --danger: #8d3128;
+  --danger-soft: #f2e4e1;
+  --danger-border: rgba(141, 49, 40, 0.22);
+
+  /* the plate — commerce, at most once per screen */
+  --plate: #14181b;
+  --plate-2: #0d1113;
+  --plate-foreground: #f3f4f1;
+  --plate-quiet: rgba(243, 244, 241, 0.6);
+
+  /* shadcn contract, pointed at the palette above */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--paper-raised);
+  --card-foreground: var(--ink);
+  --popover: #f9faf7;
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: #f6f7f4;
+  --secondary: var(--paper-sunk);
+  --secondary-foreground: var(--ink);
+  --muted: var(--paper-sunk);
+  --muted-foreground: var(--ink-quiet);
+  --accent: #e5e8e2;
+  --accent-foreground: var(--ink);
+  --destructive: var(--danger);
+  --destructive-foreground: #f6f7f4;
+  --input: rgba(20, 24, 27, 0.14);
+  --ring: var(--signal);
+  --radius: 0.5rem;
+
+  --chart-1: #1d6e68;
+  --chart-2: #14181b;
+  --chart-3: #8a5a12;
+  --chart-4: #2e6a4e;
+  --chart-5: #8d3128;
+
+  /* the sidebar shares the canvas and is separated by a rule, not a colour —
+     two grounds would split the app into "sidebar world" and "content world" */
+  --sidebar: var(--paper);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--ink);
+  --sidebar-primary-foreground: #f6f7f4;
+  --sidebar-accent: #e5e8e2;
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--signal);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  --paper: #0b0f11;
+  --paper-raised: #12171a;
+  --paper-sunk: #171e21;
+
+  --ink: #e9ece8;
+  --ink-quiet: #8b968f;
+
+  --surface-2: var(--paper-sunk);
+  --border: rgba(233, 236, 232, 0.12);
+  --border-strong: rgba(233, 236, 232, 0.22);
+
+  --marker: #f2e14b;
+  --marker-deep: #e4d22c;
+  --marker-on: #14181b;
+
+  --signal: #4fa79e;
+  --signal-ink: #93d2ca;
+  --signal-soft: rgba(29, 110, 104, 0.2);
+  --signal-border: rgba(79, 167, 158, 0.3);
+
+  --success: #5ca37d;
+  --success-ink: #9bcbb0;
+  --success-soft: rgba(46, 106, 78, 0.2);
+  --success-border: rgba(92, 163, 125, 0.28);
+  --warning: #d6a44b;
+  --warning-soft: rgba(138, 90, 18, 0.22);
+  --warning-border: rgba(214, 164, 75, 0.28);
+  --danger: #d4776b;
+  --danger-soft: rgba(141, 49, 40, 0.24);
+  --danger-border: rgba(212, 119, 107, 0.28);
+
+  /* an ink plate on an ink canvas would vanish, so in the dark it lifts */
+  --plate: #1a2124;
+  --plate-2: #10161a;
+  --plate-foreground: #edf0ec;
+  --plate-quiet: rgba(237, 240, 236, 0.58);
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--paper-raised);
+  --card-foreground: var(--ink);
+  --popover: #161c1f;
+  --popover-foreground: var(--ink);
+  --primary: #e9ece8;
+  --primary-foreground: #0b0f11;
+  --secondary: var(--paper-sunk);
+  --secondary-foreground: var(--ink);
+  --muted: var(--paper-sunk);
+  --muted-foreground: var(--ink-quiet);
+  --accent: #1a2023;
+  --accent-foreground: var(--ink);
+  --destructive: var(--danger);
+  --destructive-foreground: #0b0f11;
+  --input: rgba(233, 236, 232, 0.16);
+  --ring: var(--signal);
+
+  --chart-1: #4fa79e;
+  --chart-2: #e9ece8;
+  --chart-3: #d6a44b;
+  --chart-4: #5ca37d;
+  --chart-5: #d4776b;
+
+  --sidebar: var(--paper);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: #e9ece8;
+  --sidebar-primary-foreground: #0b0f11;
+  --sidebar-accent: #1a2023;
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--signal);
 }
 
 @theme inline {
-  --font-sans: var(--font-geist-sans), "Inter", sans-serif;
-  --font-serif: "Fraunces", Georgia, serif;
-  --font-mono: var(--font-geist-mono), "Geist Mono", "Geist Mono Fallback";
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-inter-tight), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -115,6 +217,30 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* product tokens — the vocabulary every screen is built from */
+  --color-surface-2: var(--surface-2);
+  --color-border-strong: var(--border-strong);
+  --color-signal: var(--signal);
+  --color-signal-ink: var(--signal-ink);
+  --color-signal-soft: var(--signal-soft);
+  --color-signal-border: var(--signal-border);
+  --color-marker: var(--marker);
+  --color-marker-deep: var(--marker-deep);
+  --color-marker-on: var(--marker-on);
+  --color-plate: var(--plate);
+  --color-plate-foreground: var(--plate-foreground);
+  --color-plate-quiet: var(--plate-quiet);
+  --color-success: var(--success);
+  --color-success-ink: var(--success-ink);
+  --color-success-soft: var(--success-soft);
+  --color-success-border: var(--success-border);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-border: var(--warning-border);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-border: var(--danger-border);
   --animate-blink-cursor: blink-cursor 1.2s step-end infinite;
 
   @keyframes blink-cursor {
@@ -138,13 +264,1074 @@
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "liga" 1, "calt" 1;
+    font-optical-sizing: auto;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* display sizes need negative tracking to stop reading as loose */
+  .font-display {
+    letter-spacing: -0.021em;
   }
 }
 
 .dashboard-app :where(h1:not(.font-sans), h2:not(.font-sans), h3:not(.font-sans)) {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
 }
 
 .dashboard-app :where([data-slot="card-title"], .stat-label, .section-title, .stat-value) {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
+  letter-spacing: -0.015em;
+}
+
+/* ------------------------------------------------------------------ */
+/* Landing page polish                                                  */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Smooth scrolling.
+ *
+ * Lenis drives the page by writing `documentElement.scrollTop` on every
+ * animation frame. Per CSSOM-View that write inherits the element's computed
+ * `scroll-behavior`, so a blanket `scroll-behavior: smooth` made each frame
+ * kick off a *native* smooth animation that the next frame cancelled — the
+ * page then crawls behind the wheel and stutters. Lenis normally ships a
+ * stylesheet that neutralises this; @studio-freight/lenis@1 has no CSS file,
+ * so its required rules live here. Native smooth stays on for routes where
+ * Lenis is not mounted (the dashboard, /pricing, …).
+ */
+html:not(.lenis) {
+  scroll-behavior: smooth;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+/* inner scrollers (chat logs, code panels) keep their own wheel events */
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* iframes swallow wheel events mid-flick and stall the page */
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not(.lenis) {
+    scroll-behavior: auto;
+  }
+}
+
+::selection {
+  background: var(--tc-marker);
+  color: var(--foreground);
+}
+
+@keyframes tc-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-tc-marquee {
+  animation: tc-marquee var(--marquee-duration, 42s) linear infinite;
+}
+
+@keyframes tc-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes tc-ping-soft {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--signal) 45%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 7px color-mix(in oklab, var(--signal) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--signal) 0%, transparent);
+  }
+}
+
+.animate-tc-ping-soft {
+  animation: tc-ping-soft 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.tc-bg-grid {
+  background-image: linear-gradient(to right, rgba(20, 24, 27, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(20, 24, 27, 0.05) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+.dark .tc-bg-grid {
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+}
+
+.tc-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ------------------------------------------------------------------ */
+/* Retrieval marker — reserved for "this is where the answer came from" */
+/* ------------------------------------------------------------------ */
+
+:root {
+  /* the wash the marker paints. Lower in the dark, where yellow shouts. */
+  --tc-marker: rgba(242, 225, 75, 0.6);
+}
+
+.dark {
+  --tc-marker: rgba(242, 225, 75, 0.24);
+}
+
+.tc-marker {
+  background-image: linear-gradient(var(--tc-marker), var(--tc-marker));
+  background-repeat: no-repeat;
+  background-position: 0 0.14em;
+  background-size: 0% 0.94em;
+  border-radius: 1px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  transition: background-size 720ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tc-marker[data-lit="true"] {
+  background-size: 100% 0.94em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tc-marker {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Workflow stage animations                                            */
+/* ------------------------------------------------------------------ */
+
+@keyframes tc-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes tc-progress-y {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes tc-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-tc-rise {
+  animation: tc-rise 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes tc-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.86) translateY(8px);
+  }
+  60% {
+    transform: scale(1.02) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-tc-pop {
+  animation: tc-pop 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.tc-well {
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.6);
+}
+
+.dark .tc-well {
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
+}
+
+.tc-raise {
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.7),
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 12px 32px -20px rgba(15, 23, 42, 0.18);
+}
+
+.dark .tc-raise {
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 16px 40px -24px rgba(0, 0, 0, 0.8);
+}
+
+.tc-scrollbar-none {
+  scrollbar-width: none;
+}
+
+.tc-scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+/* ------------------------------------------------------------------ */
+/* Insight cards — scrub cursor and tooltip over the chart canvas       */
+/* ------------------------------------------------------------------ */
+
+/* liveline clears its canvas rather than painting a background, so the
+ * overlay reads against the card. `pan-y` keeps a vertical flick scrolling
+ * the page instead of scrubbing the chart. */
+.tc-insight-stage {
+  touch-action: pan-y;
+}
+
+.tc-insight-cursor {
+  position: absolute;
+  top: 8px;
+  bottom: 20px;
+  width: 1px;
+  margin-left: -0.5px;
+  background: color-mix(in oklab, var(--foreground) 22%, transparent);
+  pointer-events: none;
+}
+
+.tc-insight-tip-anchor {
+  position: absolute;
+  top: 6px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.tc-insight-tip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--popover) 90%, transparent);
+  padding: 3px 8px;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--popover-foreground);
+  box-shadow: 0 6px 18px -12px rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(6px);
+}
+
+.tc-insight-tip-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tc-insight-tip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+}
+
+/* ==========================================================================
+   The console vocabulary
+   --------------------------------------------------------------------------
+   These live in `@layer components` on purpose: Tailwind's utilities sit in a
+   later layer, so `tc-meter h-1` or `tc-tile rounded-xl` still does what it
+   reads like. Written unlayered, the component class would win and every
+   override would silently fail.
+   ========================================================================== */
+
+@layer components {
+  /* ---- type ------------------------------------------------------------ */
+
+  /* The console's type ladder, in one place — because nine sizes between 10px
+     and 18px is not a ladder, it is a smear. What was here ran body copy at
+     13px, every label and pill at 11px and monograms at 10px, so the text a
+     customer actually reads was the smallest thing on the screen, and five
+     unrelated components shared one size and were told apart by nothing.
+
+     Seven roles now, and 12px is the floor:
+
+       eyebrow · micro    12px mono   section keys, table heads, pills, keycaps
+       path · meta·label  13px        raw material, supporting text, labels
+       body               14px        anything read in sentences
+       lede               15px        the paragraph under a title
+       heading            16px        a panel's name
+       title              18px        a group of panels
+       display-md         26-30px     the page
+
+     One-pixel steps do plenty of work when the face and the weight step with
+     them: 13px mono beside 14px sans beside 16px display at 600 is a clear
+     hierarchy, where 13/14/15px in one face at one weight is not. So sizes
+     rise at the bottom and the ceiling stays put — figures and page titles
+     were already right, and inflating those would only cost everything
+     underneath its room.
+
+     Every rule carries its own line-height, because the pairing *is* the
+     role: a label wants 1.45 and a paragraph wants 1.6. Leaving that to
+     whichever `leading-*` a screen happened to remember is how one description
+     ended up at 1.45 and the next at 1.71. */
+
+  /* The small mono label. Mixed case, not caps: half of these are paths
+     (`/crawl`, `/index`) and `/CRAWL` is not a path anyone has ever typed.
+     Tracking eased from 0.04em as the size went up — letter-spacing is a fix
+     for small type, and at 12px there is less to fix. */
+  .tc-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: 0.032em;
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* A chip, a pill, a keycap, a status. The eyebrow's size so a row of small
+     furniture reads as one system, but no tracking bump: these sit inside
+     borders, where extra letter-spacing only looks loose. */
+  .tc-micro {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.35;
+    letter-spacing: 0.004em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* A host, a path, an id, a count. The product's raw material. */
+  .tc-path {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    letter-spacing: -0.008em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Supporting text: the second line of a row, a hint under a field, a note
+     beside a figure. Quiet, and never the thing read first. */
+  .tc-meta {
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    letter-spacing: -0.006em;
+  }
+
+  /* What a thing is called, in a row or above a control. The same size as the
+     text it labels — the weight is what separates them, and a label that has
+     to be bigger to be found is a label in the wrong place. */
+  .tc-label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.45;
+    letter-spacing: -0.008em;
+  }
+
+  /* Read in sentences. The console's default, and the size every other one is
+     measured against. */
+  .tc-body {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    letter-spacing: -0.009em;
+  }
+
+  /* The paragraph under a page or section title, and only there. One step up
+     from body, so the top of a screen reads downhill without another heading. */
+  .tc-lede {
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    letter-spacing: -0.011em;
+  }
+
+  /* A panel's name. Display face at 600, where the weight does more work than
+     the size — which is what keeps a heading from shouting. */
+  .tc-heading {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.016em;
+  }
+
+  /* A group of panels. */
+  .tc-title {
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.021em;
+  }
+
+  /* Any number that changes. Columns of digits must not dance. */
+  .tc-num {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+  }
+
+  /* 500 at display sizes reads heavier than 600 at 16px, so a page title is
+     lighter than the panel titles under it and still louder. */
+  .tc-display {
+    font-family: var(--font-display);
+    font-weight: 500;
+    line-height: 1.14;
+    letter-spacing: -0.021em;
+    text-wrap: balance;
+  }
+
+  .tc-display-md {
+    font-size: clamp(1.625rem, 1.35rem + 1.1vw, 1.875rem);
+    letter-spacing: -0.024em;
+  }
+
+  .tc-display-lg {
+    font-size: clamp(2rem, 1.4rem + 2.6vw, 2.875rem);
+    line-height: 1.06;
+    letter-spacing: -0.032em;
+  }
+
+  /* A figure is read, not spelled: display face, optical size high, tabular. */
+  .tc-figure {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.028em;
+    font-variant-numeric: tabular-nums;
+    font-variation-settings: "opsz" 72;
+  }
+
+  .tc-figure-lg {
+    font-size: clamp(2rem, 1.7rem + 1.1vw, 2.375rem);
+  }
+
+
+  /* The public pages keep the tighter scale the console has outgrown. Only
+     two of them are affected — /privacy and /terms are the only marketing
+     surfaces that use these classes at all; the landing page, /pricing and
+     the blog use none of them — but "only two" is not a reason to silently
+     retype someone else's page.
+
+     Scoped this way round on purpose: console values as the base, marketing
+     as the exception. Half the console's chrome — dropdowns, the command
+     palette, the credits dialog, the chatbot switcher — renders in a portal
+     on <body>, outside any wrapper a console layout could hang a class on, so
+     a `.tc-console` scope would have quietly missed all of it. */
+  .tc-marketing .tc-eyebrow {
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+  }
+
+  .tc-marketing .tc-path {
+    font-size: 0.75rem;
+    line-height: 1.45;
+    letter-spacing: -0.005em;
+  }
+
+  .tc-marketing .tc-display-md {
+    font-size: clamp(1.5rem, 1.25rem + 1vw, 1.75rem);
+  }
+
+  /* ---- surfaces -------------------------------------------------------- */
+
+  /* One surface treatment for panels and tiles alike. What separates a thing
+     you read from a thing you scan is its density, not its decoration. */
+  .tc-panel,
+  .tc-tile {
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    background-color: var(--card);
+  }
+
+  /* Recessed: inputs, wells, a quoted figure inside a panel. */
+  .tc-inset {
+    border: 1px solid var(--border);
+    border-radius: 0.625rem;
+    background-color: var(--surface-2);
+  }
+
+  /* The plate. Commerce, once per screen. Ink — never the marker. */
+  .tc-plate {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border: 1px solid transparent;
+    border-radius: 0.75rem;
+    background-image:
+      radial-gradient(
+        120% 150% at 100% 0%,
+        color-mix(in oklab, var(--signal) 20%, transparent),
+        transparent 60%
+      ),
+      linear-gradient(158deg, var(--plate) 0%, var(--plate-2) 100%);
+    color: var(--plate-foreground);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .dark .tc-plate {
+    border-color: var(--border-strong);
+  }
+
+  /* ---- structure ------------------------------------------------------- */
+
+  /* A rule that stops before the edges, so it separates rows without drawing
+     a box around them. */
+  .tc-hairline {
+    height: 1px;
+    margin: 0;
+    border: 0;
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      var(--border-strong) 8%,
+      var(--border-strong) 92%,
+      transparent
+    );
+  }
+
+  /* Interactive lift, inside a borders-only system: the edge firms up and an
+     inset wash tints whatever colour the surface already is — so a warning
+     tile stays a warning tile on hover instead of turning back into paper. */
+  .tc-lift {
+    transition-property: border-color, box-shadow, transform;
+    transition-duration: 160ms;
+    transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .tc-lift:hover {
+    border-color: var(--border-strong);
+    box-shadow: inset 0 0 0 999px color-mix(in oklab, var(--foreground) 3%, transparent);
+    transform: translateY(-1px);
+  }
+
+  .tc-lift:active {
+    transform: translateY(0) scale(0.995);
+  }
+
+  .tc-lift:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* ---- the meter ------------------------------------------------------- */
+
+  /* A depleting quantity is a bar. The hue is the upgrade prompt. */
+  .tc-meter {
+    position: relative;
+    height: 6px;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 999px;
+    background-color: color-mix(in oklab, var(--foreground) 10%, transparent);
+  }
+
+  .tc-meter-bar {
+    display: block;
+    height: 100%;
+    width: var(--tc-fill, 0%);
+    border-radius: inherit;
+    background-color: var(--signal);
+    transition:
+      width 560ms cubic-bezier(0.23, 1, 0.32, 1),
+      background-color 200ms linear;
+  }
+
+  .tc-meter[data-on-plate] {
+    background-color: color-mix(in oklab, var(--plate-foreground) 22%, transparent);
+  }
+
+  .tc-meter[data-on-plate] .tc-meter-bar {
+    background-color: var(--plate-foreground);
+  }
+
+  .tc-meter[data-level="low"] .tc-meter-bar {
+    background-color: var(--warning);
+  }
+
+  .tc-meter[data-level="empty"] .tc-meter-bar {
+    background-color: var(--danger);
+  }
+
+  /* ---- small parts ----------------------------------------------------- */
+
+  /* Empty states get a faint dot field: the surface reads as prepared and
+     waiting rather than broken. */
+  .tc-dotfield {
+    background-image: radial-gradient(
+      color-mix(in oklab, var(--foreground) 9%, transparent) 1px,
+      transparent 1px
+    );
+    background-size: 14px 14px;
+    background-position: -1px -1px;
+  }
+
+  .tc-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tc-shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, var(--foreground) 7%, transparent),
+      transparent
+    );
+    animation: tc-shimmer 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .tc-live-dot {
+    position: relative;
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 999px;
+    background-color: var(--signal);
+  }
+
+  .tc-live-dot::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border: 1px solid var(--signal);
+    border-radius: inherit;
+    opacity: 0;
+    animation: tc-live 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+
+  /* Something is being fetched off a customer's site right now. */
+  .tc-crawl {
+    background-image: repeating-linear-gradient(
+      115deg,
+      color-mix(in oklab, var(--signal) 26%, transparent) 0 6px,
+      transparent 6px 12px
+    );
+    animation: tc-crawl 1.1s linear infinite;
+  }
+
+  /* ---- waiting ---------------------------------------------------------- */
+  /* One keyframe drives every pattern in the loader grid; each cell supplies
+     its own duration and delay, so a pattern is data (a list of delays) rather
+     than a stylesheet of its own. */
+  .tc-pixel {
+    animation: tc-pixel-on var(--pixel-dur, 1200ms) var(--pixel-ease, ease-in-out)
+      var(--pixel-delay, 0ms) infinite both;
+  }
+
+  /* A label that sweeps rather than blinks. The gradient is clipped to the
+     glyphs, so the text is the animation and nothing sits behind it. */
+  .tc-shimmer-text {
+    background-image: linear-gradient(
+      100deg,
+      var(--muted-foreground) 22%,
+      var(--foreground) 46%,
+      var(--muted-foreground) 70%
+    );
+    background-size: 200% 100%;
+    background-position: 0 0;
+    background-repeat: no-repeat;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    animation: tc-shimmer-text 2.4s linear infinite;
+  }
+}
+
+@keyframes tc-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes tc-live {
+  0% {
+    opacity: 0.7;
+    transform: scale(0.6);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+}
+
+@keyframes tc-crawl {
+  to {
+    background-position: -24px 0;
+  }
+}
+
+@keyframes tc-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translate3d(0, -4px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+}
+
+/* The off state is a visible 14%, not zero: a grid that blinks to nothing
+   reads as a rendering fault, and the shape of the pattern is the point. */
+@keyframes tc-pixel-on {
+  0%,
+  100% {
+    opacity: 0.14;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes tc-shimmer-text {
+  to {
+    background-position: 200% 0;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* The collapsing rail                                                  */
+/* ------------------------------------------------------------------ */
+/* One attribute, `data-sidebar-collapsed` on the <aside>, is the single
+   source of truth. React animates one number — the width — and CSS derives
+   everything that follows. The alternative, conditional classNames on a dozen
+   descendants, re-renders the whole rail on every toggle and still cannot
+   stagger the copy behind the width.
+
+   The copy leaves before the rail narrows and arrives after it widens, which
+   is why it fades instead of unmounting: text reflowing inside a box that is
+   itself mid-animation is the one thing that reads as broken. */
+
+.sidebar-copy {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition:
+    opacity var(--sidebar-copy-duration, 180ms) var(--sidebar-easing, ease) 120ms,
+    transform var(--sidebar-copy-duration, 180ms) var(--sidebar-easing, ease) 120ms;
+}
+
+[data-sidebar-collapsed='true'] .sidebar-copy {
+  opacity: 0;
+  transform: translate3d(calc(var(--sidebar-copy-offset, 8px) * -1), 0, 0);
+  pointer-events: none;
+  /* No delay outbound: the copy has to clear before the width starts moving. */
+  transition-delay: 0ms;
+}
+
+/* A row's icon sits 16px from the rail's left edge in both states, so the one
+   landmark the reader tracks holds still while everything around it moves.
+   2.25rem is the 56px rail less the 8px `mx-2` on either side. */
+.sidebar-row {
+  width: auto;
+}
+
+[data-sidebar-collapsed='true'] .sidebar-row {
+  width: 2.25rem;
+}
+
+/* Two arrows that swap, not one arrow that rotates: a spin is a state change
+   you have to decode, two directions are two labels. Only ever one of the
+   pair is hit-testable, so a collapsed rail cannot be collapsed again. */
+.sidebar-collapse-control {
+  opacity: 1;
+  transition-delay: 120ms;
+}
+
+.sidebar-expand-control {
+  opacity: 0;
+  pointer-events: none;
+}
+
+[data-sidebar-collapsed='true'] .sidebar-collapse-control {
+  opacity: 0;
+  pointer-events: none;
+  transition-delay: 0ms;
+}
+
+[data-sidebar-collapsed='true'] .sidebar-expand-control {
+  opacity: 1;
+  pointer-events: auto;
+  transition-delay: 120ms;
+}
+
+/* One highlight serves a whole group, so it must never take the pointer or
+   paint over the row that is the actual button. */
+.sidebar-glide-highlight {
+  z-index: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tc-shimmer::after,
+  .tc-live-dot::after,
+  .tc-crawl {
+    animation: none;
+  }
+
+  /* The entrance animations were left out of this block until the onboarding
+     flow started using them for every step change — six of them in a row is
+     exactly the case the preference exists for. Opacity still resolves to 1
+     because `both` holds the final keyframe. */
+  .animate-tc-rise,
+  .animate-tc-pop {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
+
+  .tc-meter-bar {
+    transition: none;
+  }
+
+  .tc-lift:hover,
+  .tc-lift:active {
+    transform: none;
+  }
+
+  /* The rail still changes width — a collapsed rail that stayed 264px wide
+     would be a broken control, not a calmer one. What stops is the travel:
+     copy, rows, controls and the glide highlight all snap to their end state.
+     `!important` is not decoration here; the durations are set inline on the
+     element so React can own the numbers, and inline styles otherwise win. */
+  [data-sidebar-collapsed],
+  .sidebar-copy,
+  .sidebar-row,
+  .sidebar-collapse-control,
+  .sidebar-expand-control,
+  .sidebar-glide-highlight {
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+  }
+
+  /* `both` holds the last keyframe, so a 1ms grid is a lit grid, not a blank
+     one. The loader's elapsed counter is unaffected — it is a timer, not an
+     animation, and someone waiting still deserves to know how long. */
+  .tc-pixel {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+    animation-iteration-count: 1;
+  }
+
+  .tc-shimmer-text {
+    animation: none;
+    background-image: none;
+    color: inherit;
+    -webkit-text-fill-color: currentColor;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* First-run motion                                                     */
+/* ------------------------------------------------------------------ */
+/* The onboarding flow replaces its entire question six times over, which
+   is a harder motion problem than anything else in the console: a screen
+   that swaps with no direction leaves the reader unsure whether they went
+   forward or back, and a screen that animates every element at once reads
+   as a splash. So the vocabulary is small and fixed here rather than being
+   re-invented per step — direction on the step, sequence inside it, and
+   single-control feedback for a tick landing, a value arriving, a CTA that
+   has only just become usable, and an answer that will not do.
+
+   Durations are deliberately shorter than `tc-rise`'s 420ms. That one is a
+   panel appearing once on a dashboard; these fire on every keystroke and
+   every tap, and anything slower than ~260ms starts to feel like lag. */
+
+@keyframes tc-step-forward {
+  from {
+    opacity: 0;
+    transform: translate3d(12px, 3px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes tc-step-back {
+  from {
+    opacity: 0;
+    transform: translate3d(-12px, 3px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.tc-step[data-dir='forward'] {
+  animation: tc-step-forward 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.tc-step[data-dir='back'] {
+  animation: tc-step-back 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Children arrive in reading order. Capped at eight because a ninth delayed
+   child would land after the reader has already started answering, and the
+   last one has to be under ~300ms for the screen to feel settled. */
+.tc-stagger > * {
+  animation: tc-rise 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.tc-stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.tc-stagger > *:nth-child(2) {
+  animation-delay: 40ms;
+}
+.tc-stagger > *:nth-child(3) {
+  animation-delay: 80ms;
+}
+.tc-stagger > *:nth-child(4) {
+  animation-delay: 120ms;
+}
+.tc-stagger > *:nth-child(5) {
+  animation-delay: 155ms;
+}
+.tc-stagger > *:nth-child(6) {
+  animation-delay: 190ms;
+}
+.tc-stagger > *:nth-child(7) {
+  animation-delay: 220ms;
+}
+.tc-stagger > *:nth-child(8) {
+  animation-delay: 250ms;
+}
+
+/* A tick landing. The overshoot is what makes a selection feel confirmed
+   rather than merely recorded, and it is the only spring in the flow. */
+@keyframes tc-tick {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  55% {
+    transform: scale(1.14);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-tc-tick {
+  animation: tc-tick 260ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* A value arriving in the preview rail. Down-from-above rather than a fade,
+   because a fade between two numbers is indistinguishable from a re-render. */
+@keyframes tc-value {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-tc-value {
+  animation: tc-value 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* A control that has only now become usable. One pulse, never a loop: a
+   looping CTA is an advertisement, and this is an answer to "what changed?" */
+@keyframes tc-ready {
+  0% {
+    box-shadow: 0 0 0 0 var(--signal-soft);
+  }
+  100% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+}
+
+.animate-tc-ready {
+  animation: tc-ready 640ms ease-out both;
+}
+
+/* An answer that will not do. Small enough to read as a shake of the head
+   rather than an error dialog, and it never repeats. */
+@keyframes tc-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-3px);
+  }
+  40% {
+    transform: translateX(3px);
+  }
+  60% {
+    transform: translateX(-2px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+.animate-tc-shake {
+  animation: tc-shake 320ms ease-in-out both;
+}
+
+/* A segment filling left to right. `tc-progress` already scales an axis; the
+   origin is what it was missing. */
+.animate-tc-progress {
+  animation: tc-progress 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: left center;
+}
+
+/* Everything above is decoration on top of a state change that has already
+   happened, so removing it costs nothing but the flourish. `both` holds the
+   final keyframe, which is why a 1ms duration lands on the right result
+   rather than on an invisible element. */
+@media (prefers-reduced-motion: reduce) {
+  .tc-step[data-dir='forward'],
+  .tc-step[data-dir='back'],
+  .tc-stagger > *,
+  .animate-tc-tick,
+  .animate-tc-value,
+  .animate-tc-ready,
+  .animate-tc-shake,
+  .animate-tc-progress {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
 }

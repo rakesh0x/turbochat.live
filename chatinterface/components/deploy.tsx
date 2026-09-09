@@ -1,41 +1,130 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import posthog from "posthog-js";
-import { toast } from "sonner";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Lineicons } from "@lineiconshq/react-lineicons";
-import { Spinner3Outlined, Globe1Outlined, GithubOutlined, Rocket5Outlined, CopyAiOutlined, Download1Outlined } from "@lineiconshq/free-icons";
+import { useCallback, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
+import posthog from 'posthog-js';
+import { toast } from 'sonner';
+import { Lineicons } from '@lineiconshq/react-lineicons';
+import {
+  AppleBrandOutlined,
+  CopyAiOutlined,
+  DiscordOutlined,
+  Download1Outlined,
+  GithubOutlined,
+  Globe1Outlined,
+  Html5Outlined,
+  Link2AngularRightOutlined,
+  Rocket5Outlined,
+  SlackOutlined,
+  Spinner3Outlined,
+  WebhooksOutlined,
+  WhatsappOutlined,
+  WordpressOutlined,
+} from '@lineiconshq/free-icons';
+import { Button } from '@/components/ui/button';
+import {
+  Bone,
+  CopyField,
+  EmptyState,
+  ErrorState,
+  Fact,
+  FutureTile,
+  Hairline,
+  KeyValue,
+  LiveTag,
+  Mono,
+  PageHeader,
+  Panel,
+  PanelBody,
+  PanelFooter,
+  PanelHeader,
+  PanelSkeleton,
+  StatusPill,
+} from '@/components/dashboard/kit';
+import type { DeployPageProps } from '@/lib/types/ui';
 
-export function DeployPage({ chatbot }: { chatbot: any }) {
+/* ==========================================================================
+   Deploy  ·  /embed
+   --------------------------------------------------------------------------
+   Two shipping routes, and the screen has to make the difference obvious: a
+   script tag you paste into your own site, or a hosted page we serve for you.
+   The old version buried both behind a tab strip labelled "HTML" and
+   "Publish", which named the *artefact* rather than the decision.
+
+   Nothing here claims to know whether the install worked. There is no ping
+   from a customer's site back to us, so the Verify panel is a checklist the
+   reader performs, not a green tick we invent. The channels at the bottom are
+   drawn honestly: dashed, dimmed, labelled Planned, never clickable.
+   ========================================================================== */
+
+/* Channels we intend to build. Order is by how often customers ask. */
+const PLANNED_CHANNELS = [
+  { icon: SlackOutlined, name: 'Slack', note: 'Answer in a channel or a direct message' },
+  { icon: WhatsappOutlined, name: 'WhatsApp', note: 'A business number on the same index' },
+  { icon: DiscordOutlined, name: 'Discord', note: 'A bot user in your community server' },
+  { icon: AppleBrandOutlined, name: 'iOS SDK', note: 'A native Swift view for your app' },
+  { icon: WordpressOutlined, name: 'WordPress', note: 'A plugin, so no theme files to edit' },
+  { icon: WebhooksOutlined, name: 'Webhook', note: 'Post a question, receive the answer' },
+];
+
+/** A numbered instruction list. The kit has no ordered-list primitive, and
+    install steps are the one place on this screen where order is the point. */
+function Steps({ items }: { items: ReactNode[] }) {
+  return (
+    <ol className="space-y-2.5">
+      {items.map((item, index) => (
+        <li key={index} className="flex gap-3">
+          <span
+            aria-hidden="true"
+            className="tc-num mt-px flex size-5 shrink-0 items-center justify-center rounded-full border border-border bg-surface-2 tc-micro text-muted-foreground"
+          >
+            {index + 1}
+          </span>
+          <span className="min-w-0 tc-meta text-muted-foreground">{item}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+export function DeployPage({ chatbot }: DeployPageProps) {
   const [shareLoading, setShareLoading] = useState(false);
   const [shareSlug, setShareSlug] = useState<string | null>(null);
   const [isSharePublic, setIsSharePublic] = useState(false);
   const [host, setHost] = useState('');
+  /* Presentational only: the fetch below was already best-effort, this just
+     lets the panel say "loading" and "that request failed" out loud. */
+  const [shareStatus, setShareStatus] = useState<'loading' | 'ready' | 'error'>('loading');
 
   useEffect(() => {
     setHost(window.location.origin);
   }, []);
 
-  useEffect(() => {
-    const loadShareState = async () => {
-      if (!chatbot?.id) return;
-      try {
-        const response = await fetch(`/api/chatbots/${chatbot.id}/share`);
-        if (!response.ok) return;
-        const data = await response.json();
-        setShareSlug(data?.shareSlug || null);
-        setIsSharePublic(Boolean(data?.isPublic));
-      } catch {
-        // best-effort share status load
+  const loadShareState = useCallback(async () => {
+    if (!chatbot?.id) {
+      setShareStatus('ready');
+      return;
+    }
+    setShareStatus('loading');
+    try {
+      const response = await fetch(`/api/chatbots/${chatbot.id}/share`);
+      if (!response.ok) {
+        setShareStatus('error');
+        return;
       }
-    };
-
-    loadShareState();
+      const data = await response.json();
+      setShareSlug(data?.shareSlug || null);
+      setIsSharePublic(Boolean(data?.isPublic));
+      setShareStatus('ready');
+    } catch {
+      // best-effort share status load
+      setShareStatus('error');
+    }
   }, [chatbot?.id]);
+
+  useEffect(() => {
+    loadShareState();
+  }, [loadShareState]);
 
   const reliableHost = host.replace('localhost', '127.0.0.1');
   const hostedShareUrl = shareSlug ? `${host}/share/${shareSlug}` : '';
@@ -95,94 +184,194 @@ export function DeployPage({ chatbot }: { chatbot: any }) {
 
   if (!chatbot) {
     return (
-      <Card className="max-w-2xl mx-auto">
-        <CardContent className="pt-12 pb-12 text-center">
-          <p className="text-muted-foreground">Please select a chatbot to deploy</p>
-        </CardContent>
-      </Card>
+      <>
+        <PageHeader
+          eyebrow="/embed"
+          title="Deploy"
+          description="Put a chatbot on your own site with one script tag, or hand out a hosted page that needs no site at all."
+        />
+        <Panel>
+          <PanelBody className="pt-5">
+            <EmptyState
+              icon={Rocket5Outlined}
+              title="No chatbot selected"
+              body="Choose a chatbot from the switcher and its embed snippet, public link and install checks appear here."
+            />
+          </PanelBody>
+        </Panel>
+      </>
     );
   }
 
+  const displayHost = host.replace(/^https?:\/\//, '');
+
+  /* The one snippet a customer pastes. Built from the same two values the
+     downloadable files below are built from, so the three cannot drift. */
+  const embedSnippet = [
+    `<script src="${reliableHost}/widget.js"></script>`,
+    '<script>',
+    "  window.addEventListener('load', function () {",
+    '    ChatbotWidget.init({',
+    `      chatbotId: "${chatbot.id}",`,
+    `      apiUrl: "${reliableHost}/api"`,
+    '    });',
+    '  });',
+    '</script>',
+  ].join('\n');
+
+  /* What a support thread actually needs, in one paste. */
+  const installDetails = [
+    `chatbot: ${chatbot.name ?? '—'}`,
+    `chatbotId: ${chatbot.id ?? '—'}`,
+    `widget: ${reliableHost}/widget.js`,
+    `apiUrl: ${reliableHost}/api`,
+    `hostedPage: ${isSharePublic && hostedShareUrl ? hostedShareUrl : 'not published'}`,
+  ].join('\n');
+
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <Tabs defaultValue="html" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 gap-2 rounded-2xl border border-white/80 bg-white/80 p-2 backdrop-blur md:grid-cols-2 dark:border-slate-800/80 dark:bg-slate-900/70">
-          <TabsTrigger value="html">HTML</TabsTrigger>
-          <TabsTrigger value="publish">Publish</TabsTrigger>
-        </TabsList>
+    <>
+      <PageHeader
+        eyebrow="/embed"
+        title="Deploy"
+        description="Two ways to ship this bot: a script tag on your own site, or a hosted page we serve for you. Both answer from the same index."
+        meta={
+          <>
+            <Fact
+              label="state"
+              value={isSharePublic ? 'published' : 'draft'}
+              tone={isSharePublic ? 'signal' : 'quiet'}
+            />
+            <Fact label="bot" value={chatbot.name ?? '—'} />
+            <Fact label="host" value={displayHost || '—'} />
+          </>
+        }
+        actions={
+          <Button onClick={handlePublishHosted} disabled={shareLoading}>
+            <Lineicons
+              icon={shareLoading ? Spinner3Outlined : Globe1Outlined}
+              size={14}
+              className={shareLoading ? 'animate-spin' : undefined}
+              aria-hidden="true"
+              focusable="false"
+            />
+            {isSharePublic ? 'Republish page' : 'Publish page'}
+          </Button>
+        }
+      />
 
-        <TabsContent value="publish" className="space-y-4">
-          <Card className="border-white/80 bg-white/90 shadow-xl shadow-slate-200/60 dark:border-slate-800/80 dark:bg-slate-950/70 dark:shadow-none">
-            <CardHeader>
-              <CardTitle>Publish Hosted Mini Site</CardTitle>
-              <CardDescription>Publish a live share page for this chatbot with one click.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between rounded-xl border border-slate-200/80 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/60">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Visibility</p>
-                  <p className="text-xs text-muted-foreground">
-                    {isSharePublic ? 'Public link is active' : 'Public link is currently private'}
+      {shareStatus === 'loading' ? (
+        <PanelSkeleton bodyHeight="h-24" />
+      ) : shareStatus === 'error' ? (
+        <Panel>
+          <PanelHeader eyebrow="Hosted page" title="Publish status" />
+          <PanelBody>
+            <ErrorState
+              title="Could not read the publish status"
+              body="The hosted page may well still be live — we simply could not check. Nothing was changed."
+              onRetry={loadShareState}
+            />
+          </PanelBody>
+        </Panel>
+      ) : (
+        <Panel>
+          <PanelHeader
+            eyebrow="Hosted page"
+            title={isSharePublic ? 'Live for anyone with the link' : 'Not published'}
+            description={
+              isSharePublic
+                ? 'We serve this page for you. No site to edit, no snippet, no deploy.'
+                : 'Publishing mints a public URL that opens straight into this chatbot. Nothing is reachable until you publish.'
+            }
+            action={isSharePublic ? <LiveTag /> : <StatusPill status="draft" />}
+          />
+          <PanelBody>
+            {hostedShareUrl ? (
+              <CopyField value={hostedShareUrl} label="Public link" />
+            ) : (
+              <p className="tc-inset px-3.5 py-3 tc-meta text-muted-foreground">
+                No link has been minted for this chatbot yet. Publish once and the URL stays the
+                same from then on.
+              </p>
+            )}
+          </PanelBody>
+          <PanelFooter className="justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => hostedShareUrl && window.open(hostedShareUrl, '_blank', 'noopener,noreferrer')}
+              disabled={!hostedShareUrl || !isSharePublic}
+            >
+              <Lineicons
+                icon={Link2AngularRightOutlined}
+                size={14}
+                aria-hidden="true"
+                focusable="false"
+              />
+              Open live page
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-danger hover:border-danger-border hover:bg-danger-soft hover:text-danger"
+              onClick={handleUnpublishHosted}
+              disabled={shareLoading || !isSharePublic}
+            >
+              Unpublish
+            </Button>
+          </PanelFooter>
+        </Panel>
+      )}
+
+      <Panel>
+        <PanelHeader
+          eyebrow="Install"
+          title="One script tag on your own site"
+          description="Works anywhere you can edit HTML — plain HTML, Next.js, WordPress, Webflow, Shopify."
+          action={<Mono className="text-muted-foreground">widget.js</Mono>}
+        />
+        <PanelBody className="space-y-6">
+          {host ? (
+            <CopyField value={embedSnippet} label="Embed snippet" multiline />
+          ) : (
+            <Bone className="h-36 w-full" />
+          )}
+
+          <Steps
+            items={[
+              'Copy the snippet above.',
+              <>
+                Paste it immediately before the closing <Mono>{'</body>'}</Mono> tag, on every page
+                that should offer the bot.
+              </>,
+              'Deploy your site. The launcher appears in the bottom-right corner.',
+            ]}
+          />
+
+          <Hairline />
+
+          <div>
+            <p className="tc-eyebrow mb-3">Or take the files</p>
+            <div className="grid gap-3.5 sm:grid-cols-2">
+              <div className="tc-tile flex flex-col gap-3 p-4">
+                <span className="flex size-8 items-center justify-center rounded-lg border border-border bg-surface-2">
+                  <Lineicons
+                    icon={GithubOutlined}
+                    size={15}
+                    className="text-muted-foreground"
+                    aria-hidden="true"
+                    focusable="false"
+                  />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="tc-label text-foreground">
+                    Repo bundle
+                  </p>
+                  <p className="mt-0.5 tc-meta text-muted-foreground">
+                    A README and an index.html. Commit both, turn on GitHub Pages, and the bot is
+                    hosted for free.
                   </p>
                 </div>
-                <Badge variant={isSharePublic ? 'default' : 'secondary'}>
-                  {isSharePublic ? 'Published' : 'Unpublished'}
-                </Badge>
-              </div>
-
-              {hostedShareUrl ? (
-                <div className="relative">
-                  <pre className="overflow-x-auto rounded-xl border border-slate-200/80 bg-slate-950 p-4 text-sm text-slate-100 dark:border-slate-800">
-                    <code>{hostedShareUrl}</code>
-                  </pre>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="absolute right-2 top-2"
-                    onClick={() => handleCopy(hostedShareUrl)}
-                  >
-                    <Lineicons icon={CopyAiOutlined} size={16} />
-                  </Button>
-                </div>
-              ) : null}
-
-              <div className="flex flex-wrap gap-2">
-                <Button onClick={handlePublishHosted} disabled={shareLoading} className="gap-2">
-                  {shareLoading ? <Lineicons icon={Spinner3Outlined} size={16} className="animate-spin" /> : <Lineicons icon={Globe1Outlined} size={16} />}
-                  Publish Mini Site
-                </Button>
-                <Button variant="outline" onClick={handleUnpublishHosted} disabled={shareLoading || !isSharePublic}>
-                  Unpublish
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => hostedShareUrl && window.open(hostedShareUrl, '_blank', 'noopener,noreferrer')}
-                  disabled={!hostedShareUrl || !isSharePublic}
-                >
-                  Open Live Page
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="html" className="space-y-4">
-          <Card className="border-white/80 bg-white/90 shadow-xl shadow-slate-200/60 dark:border-slate-800/80 dark:bg-slate-950/70 dark:shadow-none">
-            <CardHeader>
-              <CardTitle>HTML Export</CardTitle>
-              <CardDescription>Generate standalone files for simple website deployment.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white to-slate-50 p-4 dark:border-slate-800 dark:from-slate-900 dark:to-slate-900/70">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Lineicons icon={GithubOutlined} size={20} className="text-primary" />
-                  </div>
-                  <h4 className="font-semibold text-sm">Option A: GitHub Repo</h4>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Users can download this bundle, commit to GitHub, and enable GitHub Pages for instant hosting.
-                  </p>
-                  <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => {
+                <Button variant="outline" size="sm" className="w-full" onClick={() => {
                     posthog.capture("chatbot_embed_downloaded", {
                       chatbot_id: chatbot?.id,
                       chatbot_name: chatbot?.name,
@@ -213,20 +402,30 @@ This repository contains my AI Chatbot frontend, powered by [ChatBot AI RAG-as-a
                       htmlA.click();
                     }, 500);
                   }}>
-                    <Lineicons icon={Download1Outlined} size={12} />
-                    Download Repo Bundle
-                  </Button>
-                </div>
+                  <Lineicons icon={Download1Outlined} size={14} aria-hidden="true" focusable="false" />
+                  Download bundle
+                </Button>
+              </div>
 
-                <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white to-amber-50 p-4 dark:border-slate-800 dark:from-slate-900 dark:to-amber-950/20">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Lineicons icon={Rocket5Outlined} size={20} className="text-primary" />
-                  </div>
-                  <h4 className="font-semibold text-sm">Option B: All-in-One Site</h4>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    A single HTML file containing both the structure and the interactive widget. Perfect for landing pages.
+              <div className="tc-tile flex flex-col gap-3 p-4">
+                <span className="flex size-8 items-center justify-center rounded-lg border border-border bg-surface-2">
+                  <Lineicons
+                    icon={Html5Outlined}
+                    size={15}
+                    className="text-muted-foreground"
+                    aria-hidden="true"
+                    focusable="false"
+                  />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="tc-label text-foreground">
+                    Single page
                   </p>
-                  <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => {
+                  <p className="mt-0.5 tc-meta text-muted-foreground">
+                    One index.html with the page and the widget in it. Upload it anywhere static.
+                  </p>
+                </div>
+                <Button variant="outline" size="sm" className="w-full" onClick={() => {
                     posthog.capture("chatbot_embed_downloaded", {
                       chatbot_id: chatbot?.id,
                       chatbot_name: chatbot?.name,
@@ -267,15 +466,75 @@ This repository contains my AI Chatbot frontend, powered by [ChatBot AI RAG-as-a
                     htmlA.download = 'index.html';
                     htmlA.click();
                   }}>
-                    <Lineicons icon={Download1Outlined} size={12} />
-                    Export index.html
-                  </Button>
-                </div>
+                  <Lineicons icon={Download1Outlined} size={14} aria-hidden="true" focusable="false" />
+                  Export index.html
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div >
+            </div>
+          </div>
+        </PanelBody>
+      </Panel>
+
+      <Panel>
+        <PanelHeader
+          eyebrow="Verify"
+          title="Check that it landed"
+          description="We cannot see your site, so nothing below is detected for you — there is no install ping back to us. These four checks take about a minute and catch the usual causes."
+          action={
+            <Button variant="outline" size="sm" onClick={() => handleCopy(installDetails)}>
+              <Lineicons icon={CopyAiOutlined} size={14} aria-hidden="true" focusable="false" />
+              Copy details
+            </Button>
+          }
+        />
+        <PanelBody className="space-y-6">
+          <Steps
+            items={[
+              'Hard-reload the page you pasted the snippet into, so you are not reading cached HTML.',
+              'Look for the launcher in the bottom-right corner.',
+              <>
+                If it is missing, open the browser console and confirm <Mono>widget.js</Mono> loaded
+                — a 404 means the snippet is on a different domain than the one above.
+              </>,
+              'Ask the bot one question, then open Analytics: the message should be counted there.',
+            ]}
+          />
+
+          <Hairline />
+
+          <KeyValue
+            items={[
+              { label: 'Chatbot ID', value: chatbot.id ?? '—' },
+              { label: 'Widget script', value: host ? `${reliableHost}/widget.js` : '—' },
+              { label: 'API base', value: host ? `${reliableHost}/api` : '—' },
+              {
+                label: 'Hosted page',
+                value: isSharePublic && hostedShareUrl ? hostedShareUrl : 'not published',
+              },
+            ]}
+          />
+        </PanelBody>
+      </Panel>
+
+      <Panel>
+        <PanelHeader
+          eyebrow="Channels"
+          title="Where else this bot could live"
+          description="The widget and the hosted page are the only channels that work today. The rest are on the roadmap and will appear here — as real controls — once connected."
+        />
+        <PanelBody>
+          <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
+            {PLANNED_CHANNELS.map((channel) => (
+              <FutureTile
+                key={channel.name}
+                icon={channel.icon}
+                name={channel.name}
+                note={channel.note}
+              />
+            ))}
+          </div>
+        </PanelBody>
+      </Panel>
+    </>
   );
 }

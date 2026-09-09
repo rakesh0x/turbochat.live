@@ -6,7 +6,7 @@ export function BlogSection() {
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-12">
           <span className="inline-block px-4 py-1.5 text-sm border rounded-full mb-6">Blog</span>
-          <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-balance">
+          <h2 className="font-display font-medium text-3xl md:text-4xl lg:text-5xl text-balance">
             Latest from TurboChat
           </h2>
           <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
@@ -18,7 +18,7 @@ export function BlogSection() {
         <Link href="/blog" className="block group">
           <div className="bg-card border rounded-2xl p-8 hover:shadow-md transition-shadow">
             <p className="text-xs text-muted-foreground mb-3">Guide &middot; June 2026</p>
-            <h3 className="font-serif text-2xl mb-3 group-hover:text-foreground/80 transition-colors">
+            <h3 className="font-display font-medium text-2xl mb-3 group-hover:text-foreground/80 transition-colors">
               How to Train AI Chatbot on Website Docs: A Step-by-Step Guide
             </h3>
             <p className="text-muted-foreground text-sm leading-relaxed mb-4">

@@ -1,19 +1,30 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Geist_Mono, Inter, Inter_Tight } from 'next/font/google';
 import './globals.css'
 import { Analytics } from "@vercel/analytics/next"
 import Script from "next/script";
 
 import Image from "next/image";
 
-const geistSans = Geist({
+/* One voice, two cuts: Inter for everything you read, Inter Tight for the
+ * display sizes where normal Inter's spacing starts to look loose. Mono is
+ * kept for the product chrome (paths, thresholds, code). */
+const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-geist-sans',
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const interTight = Inter_Tight({
+  subsets: ['latin'],
+  variable: '--font-inter-tight',
+  display: 'swap',
 });
 
 const geistMono = Geist_Mono({
   subsets: ['latin'],
   variable: '--font-geist-mono',
+  display: 'swap',
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || "https://turbochat.live";
@@ -23,9 +34,6 @@ export const metadata: Metadata = {
   title: {
     default: "Turbochat AI | AI Chatbot for Your Website — Train on Docs & Deploy in Minutes",
     template: "%s | Turbochat AI",
-  },
-  icons: {
-    icon: '/Turbochatlogo.png'
   },
   description: "Create, train, and deploy an AI chatbot for your website in minutes. Turbochat is a RAG chatbot platform for customer service that learns from your help center, PDFs, and product docs to answer support tickets automatically. The best custom AI chatbot for SaaS support — an affordable Intercom alternative for startups.",
   applicationName: "Turbochat AI",
@@ -119,7 +127,7 @@ const jsonLd = {
       "@type": "Organization",
       name: "Turbochat AI",
       url: siteUrl,
-      logo: `${siteUrl}/Turbochatlogo.png`,
+      logo: `${siteUrl}/brand/turbochat-mark-512.png`,
       description: "AI chatbot platform for customer support automation.",
     },
   ],
@@ -133,7 +141,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} ${interTight.variable} ${geistMono.variable}`}
+    >
       <head>
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-ZGFGY6QD5V"
@@ -149,10 +161,6 @@ export default function RootLayout({
           `}
         </Script>
 
-        <link
-          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&display=swap"
-          rel="stylesheet"
-        />
 
         <script
           type="application/ld+json"

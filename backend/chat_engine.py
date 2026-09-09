@@ -1,6 +1,7 @@
 import asyncio
 import json
 import re
+import time
 import unicodedata
 from datetime import datetime
 from typing import List
@@ -446,7 +447,24 @@ def _needs_rewrite(query: str) -> bool:
 
 
 async def ask_question(chatbot_id: str, query: str, history: List[dict] = []) -> str:
+    """The original string contract, kept for callers that only want the text."""
+    result = await ask_question_with_meta(chatbot_id, query, history)
+    return result["response"]
+
+
+async def ask_question_with_meta(chatbot_id: str, query: str, history: List[dict] = []) -> dict:
+    """Answer, plus the two facts the dashboard cannot reconstruct later.
+
+    `grounded` records whether retrieval actually found something to answer
+    from. It is known here and nowhere else: by the time the message rows are
+    written the context has been discarded, and the reply's wording is not a
+    reliable signal. `latency_ms` is wall-clock generation time, which the
+    stored timestamps cannot express because both rows are inserted after the
+    answer exists. Persisting them is what lets Analytics report an answer rate
+    and a response time instead of estimating either.
+    """
     loop = asyncio.get_event_loop()
+    started = time.perf_counter()
 
     standalone_query = query
     if history and _needs_rewrite(query):
@@ -497,7 +515,20 @@ async def ask_question(chatbot_id: str, query: str, history: List[dict] = []) ->
     prompt = _build_prompt(query, semantic_context, structured_context)
     prompt = clean_text(prompt)
     response = await loop.run_in_executor(executor, get_llm_response, prompt)
-    return response.strip()
+    return {
+        "response": response.strip(),
+        "grounded": is_grounded(semantic_context, structured_context),
+        "latency_ms": int((time.perf_counter() - started) * 1000),
+    }
+
+
+def is_grounded(semantic_context: str, structured_context: str) -> bool:
+    """True when the prompt carried real context, i.e. not the fallback branch.
+
+    Mirrors the condition `_build_prompt` branches on, so the flag can never
+    disagree with the prompt the model actually received.
+    """
+    return bool((semantic_context or "").strip() or (structured_context or "").strip())
 
 
 def _build_prompt(query: str, semantic_context: str, structured_context: str) -> str:
