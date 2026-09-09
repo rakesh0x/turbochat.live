@@ -34,5 +34,3 @@
                            │
                        Top K
 
-> Need to get the query first from the client side code
-> 
